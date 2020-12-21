@@ -2,6 +2,7 @@ import math
 import operator
 import re
 import treelib
+import argparse
 
 NUM_REGEX = re.compile(r"([0-9]+\.?[0-9]*)|([0-9]*\.?[0-9]+)")
 VAR_REGEX = re.compile(r"[a-zA-Z][_a-zA-Z0-9]*")
@@ -270,11 +271,17 @@ def pretty_print_parse_tree(root):
     tree.show(key=lambda node: node.data)
 
 def main():
-    SAMPLE = "x=5*3;y=1;pi+x-y"
-    parse_tree = parse_math_expression(SAMPLE)
-    print(SAMPLE)
-    pretty_print_parse_tree(parse_tree)
-    print(parse_tree.eval(CONSTANTS.copy()))
+    parser = argparse.ArgumentParser(description="A toy calculator language.")
+    parser.add_argument("x", help="The statements to evaluate.")
+    parser.add_argument("--print-tree",
+                        action="store_true",
+                        help="Whether to print the parse tree instead of evaluating it.")
+    args = parser.parse_args()
+    parse_tree = parse_math_expression(args.x)
+    if args.print_tree:
+        pretty_print_parse_tree(parse_tree)
+    else:
+        print(parse_tree.eval(CONSTANTS.copy()))
 
 if __name__ == "__main__":
     main()
