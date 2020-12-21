@@ -29,5 +29,5 @@ Evaluation:
 
 ### TODO
 * Tests.
-* Plan other possible language features.
+* Features: logs; rational numbers & accompanying float to force decimal; other number bases?; units.
 * Plan what to do with it (maybe just dump it somewhere, maybe write about it, maybe tune it to my twisted needs).

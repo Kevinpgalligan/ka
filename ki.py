@@ -69,7 +69,8 @@ CONST_TOKENS = [
     Tokens.MINUS,
     Tokens.MULT,
     Tokens.DIV,
-    Tokens.MOD
+    Tokens.MOD,
+    Tokens.EXP
 ]
 
 class Token:
@@ -254,7 +255,8 @@ def token_to_op(token):
         Tokens.MINUS: operator.sub,
         Tokens.MULT: operator.mul,
         Tokens.DIV: operator.truediv,
-        Tokens.MOD: operator.mod
+        Tokens.MOD: operator.mod,
+        Tokens.EXP: operator.pow
     }[token.tag]
 
 def pretty_print_parse_tree(root):
