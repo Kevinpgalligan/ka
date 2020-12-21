@@ -17,7 +17,6 @@ $ ka 'x=5*3;y=1;pi+x-y' --show-tree
 ```
 
 ### TODO
-* Review associativity rules.
 * unary operator.
 * Tests.
 * log & other mathematical functions.

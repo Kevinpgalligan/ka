@@ -93,11 +93,10 @@ def parse_sum(t):
 
 def parse_binary_op(t, parse_operand, operator_tokens):
     left = parse_operand(t)
-    if t.peak_any(*operator_tokens):
+    while t.peak_any(*operator_tokens):
         token = t.read_next()
-        return operator_node(token.tag,
-                             token_to_op(token),
-                             [left, parse_binary_op(t, parse_operand, operator_tokens)])
+        # Ensures that all operators are left-associative.
+        left = operator_node(token.tag, token_to_op(token), [left, parse_operand(t)])
     return left
 
 def parse_factor(t):
