@@ -1,4 +1,4 @@
-### Description
+### ka
 A toy calculator language.
 
 ```
@@ -29,5 +29,11 @@ Evaluation:
 
 ### TODO
 * Tests.
-* Features: logs; rational numbers & accompanying float to force decimal; other number bases?; units.
-* Plan what to do with it (maybe just dump it somewhere, maybe write about it, maybe tune it to my twisted needs).
+* unary operator.
+* log & other mathematical functions.
+* type hierarchy / rational numbers & accompanying 'f' function to force float.
+* other number bases?
+* units.
+* nCk and n!, as well as lazy combinatorics resolution
+* Put it on PyPI.
+* Mayyyyybe some other application, like a Slack app.
