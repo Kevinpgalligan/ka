@@ -1,3 +1,50 @@
+"""
+The grammar. Symbols given short names in order
+to keep it concise. Kinda confusing usage of +
+and *. [a-z]* means "0 or more of these terminal
+symbols". X*, on the other hand, is the name of
+a generating (?) symbol. But they're kinda related
+uses.
+
+High-level description: valid strings are sequences
+of statements, separated by a semicolon. Each statement
+can be either an assignment (create / change the value
+of a variable), or an expression. An expression is a sum
+of products. A product is a multiplication of factors.
+A factor is.... you get the drift. Layering the grammar
+in this way guarantees operator precedence.
+
+X+ → X X*
+X* → ε | ';' | ';' X X*     # empty statements are invalid!
+X  → A | E
+A  → I '=' E
+I  → [a-zA-Z][a-zA-Z0-9]*
+E  → S+
+S+ → P+ S*
+S* → ε | [+-] P+ S*
+P+ → F+ P*
+P* → ε | [*/%] F+ P*
+F+ → F F*
+F* → ε | '^' F F*
+F  → U T
+U  → ε | [+-]
+T  → '(' E ')' | N | I
+N  → <a number of some description, I ain't
+      gonna specify right now 'cause it's going
+      to change>
+
+Long names:
+    X = statement
+    A = assignment
+    I = identifier
+    E = expression
+    S = sum
+    P = product
+    F = factor
+    U = unary operator
+    T = like an unsigned factor
+"""
+
 import operator
 import treelib
 
@@ -53,6 +100,12 @@ def operator_node(label, op, children):
         return op(*child_values)
     return ParseNode(label=label, children=children, eval_fn=eval_fn)
 
+# Could merge this with operator_node().
+def sign_node(label, sign_fn, child):
+    def eval_fn(_, child_values, *_s):
+        return sign_fn(*child_values)
+    return ParseNode(label=label, children=[child], eval_fn=eval_fn)
+
 def assignment_node(name, expression):
     def eval_fn(_, child_values, environment):
         environment[name] = child_values[0]
@@ -89,7 +142,7 @@ def parse_expression(t):
     return parse_sum(t)
 
 def parse_sum(t):
-    return parse_binary_op(t, parse_factor, [Tokens.PLUS, Tokens.MINUS])
+    return parse_binary_op(t, parse_product, [Tokens.PLUS, Tokens.MINUS])
 
 def parse_binary_op(t, parse_operand, operator_tokens):
     left = parse_operand(t)
@@ -99,13 +152,35 @@ def parse_binary_op(t, parse_operand, operator_tokens):
         left = operator_node(token.tag, token_to_op(token), [left, parse_operand(t)])
     return left
 
+def token_to_op(token):
+    return {
+        Tokens.PLUS: operator.add,
+        Tokens.MINUS: operator.sub,
+        Tokens.MULT: operator.mul,
+        Tokens.DIV: operator.truediv,
+        Tokens.MOD: operator.mod,
+        Tokens.EXP: operator.pow
+    }[token.tag]
+
+def parse_product(t):
+    return parse_binary_op(t, parse_factor, [Tokens.MULT, Tokens.DIV, Tokens.MOD])
+
 def parse_factor(t):
-    return parse_binary_op(t, parse_term, [Tokens.MULT, Tokens.DIV, Tokens.MOD])
+    return parse_binary_op(t, parse_term, [Tokens.EXP])
 
 def parse_term(t):
-    return parse_binary_op(t, parse_value, [Tokens.EXP])
+    if t.peak_any(Tokens.PLUS, Tokens.MINUS):
+        token = t.read_next()
+        return sign_node(token.tag, token_to_sign(token), parse_unsigned_term(t))
+    return parse_unsigned_term(t)
 
-def parse_value(t):
+def token_to_sign(token):
+    return {
+        Tokens.PLUS: operator.pos,
+        Tokens.MINUS: operator.neg
+    }[token.tag]
+
+def parse_unsigned_term(t):
     token = t.read_next()
     if token.tag == Tokens.LBRACKET:
         expression = parse_expression(t)
@@ -117,13 +192,3 @@ def parse_value(t):
         return variable_node(token.meta('name'))
     else:
         raise Exception("Unexpected token: " + token.tag)
-
-def token_to_op(token):
-    return {
-        Tokens.PLUS: operator.add,
-        Tokens.MINUS: operator.sub,
-        Tokens.MULT: operator.mul,
-        Tokens.DIV: operator.truediv,
-        Tokens.MOD: operator.mod,
-        Tokens.EXP: operator.pow
-    }[token.tag]

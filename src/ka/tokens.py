@@ -84,12 +84,21 @@ class BagOfTokens:
             raise Exception("Missing token(s): " + str(tags))
         self.ptr += len(tags)
 
+class UnknownTokenError(Exception):
+    def __init__(self, index):
+        self.index = index
+
 def tokenise(s):
+    """
+    raises: UnknownTokenError
+    """
     i = 0
     i = skip_whitespace(i, s)
     tokens = []
     while i < len(s):
         token = read_token(i, s)
+        if token is None:
+            raise UnknownTokenError(i)
         i = skip_whitespace(token.end_index_excl, s)
         tokens.append(token)
     return BagOfTokens(tokens)
@@ -128,4 +137,4 @@ def read_const_token(i, s):
     for t in CONST_TOKENS:
         if s.startswith(t, i):
             return Token(t, i, i+len(t))
-    raise Exception(f"Couldn't match {s[i]} with a known token!")
+    return None
