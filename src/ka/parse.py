@@ -46,7 +46,6 @@ Long names:
 """
 
 import operator
-import treelib
 
 from .tokens import Tokens
 
@@ -73,6 +72,10 @@ class ParseNode:
         return "".join(["ParseNode[", str(self.label), "]"])
 
 def pretty_print_parse_tree(root):
+    # This is the only place we use treelib, and the
+    # import adds noticeable delay. So only import when
+    # needed.
+    import treelib
     tree = treelib.Tree()
     stack = [(root, None, 0)]
     i = 0
@@ -118,24 +121,64 @@ def statements_node(children):
     return ParseNode(children=children, eval_fn=eval_fn)
 
 def parse_tokens(tokens):
-    return parse_statements(tokens)
+    return parse_statements(BagOfTokens(tokens))
+
+class BagOfTokens:
+    def __init__(self, tokens):
+        self.tokens = tokens
+        self.ptr = 0
+
+    def empty(self):
+        return self.ptr >= len(self.tokens)
+
+    def next_are(self, *tags):
+        return all(self.check_type(i, tag) for i, tag in enumerate(tags))
+
+    def next_is_one_of(self, *tags):
+        return any(self.check_type(0, tag) for tag in tags)
+
+    def check_type(self, i, t):
+        return self.ptr+i < len(self.tokens) and t == self.tokens[self.ptr+i].tag
+
+    def read(self, *tags):
+        token = self._read_single_token(f"Expected one of {tags} but reached end.")
+        if token.tag not in tags:
+            raise ParsingError(f"Expected one of {tags} but got '{token.tag}'.",
+                               # Subtract 1 because the read advanced the pointer.
+                               self.ptr-1)
+        return token
+
+    def read_any(self):
+        return self._read_single_token("Reached end unexpectedly.")
+
+    def _read_single_token(self, msg):
+        if self.ptr >= len(self.tokens):
+            raise ParsingError(msg, self.ptr)
+        token = self.tokens[self.ptr]
+        self.ptr += 1
+        return token
+
+class ParsingError(Exception):
+    def __init__(self, msg, token_index):
+        super().__init__(msg)
+        self.token_index = token_index
 
 def parse_statements(t):
     statements = []
     while not t.empty():
         statements.append(parse_statement(t))
         if not t.empty():
-            t.expect(Tokens.STATEMENT_SEPARATOR)
+            t.read(Tokens.STATEMENT_SEPARATOR)
     return statements_node(statements)
 
 def parse_statement(t):
-    if t.peak(Tokens.VAR, Tokens.ASSIGNMENT_OP):
+    if t.next_are(Tokens.VAR, Tokens.ASSIGNMENT_OP):
         return parse_assignment(t)
     return parse_expression(t)
 
 def parse_assignment(t):
     var_token = t.read(Tokens.VAR)
-    t.expect(Tokens.ASSIGNMENT_OP)
+    t.read(Tokens.ASSIGNMENT_OP)
     return assignment_node(var_token.meta('name'), parse_expression(t))
 
 def parse_expression(t):
@@ -146,8 +189,8 @@ def parse_sum(t):
 
 def parse_binary_op(t, parse_operand, operator_tokens):
     left = parse_operand(t)
-    while t.peak_any(*operator_tokens):
-        token = t.read_next()
+    while t.next_is_one_of(*operator_tokens):
+        token = t.read_any()
         # Ensures that all operators are left-associative.
         left = operator_node(token.tag, token_to_op(token), [left, parse_operand(t)])
     return left
@@ -169,8 +212,8 @@ def parse_factor(t):
     return parse_binary_op(t, parse_term, [Tokens.EXP])
 
 def parse_term(t):
-    if t.peak_any(Tokens.PLUS, Tokens.MINUS):
-        token = t.read_next()
+    if t.next_is_one_of(Tokens.PLUS, Tokens.MINUS):
+        token = t.read_any()
         return sign_node(token.tag, token_to_sign(token), parse_unsigned_term(t))
     return parse_unsigned_term(t)
 
@@ -181,14 +224,17 @@ def token_to_sign(token):
     }[token.tag]
 
 def parse_unsigned_term(t):
-    token = t.read_next()
+    token = t.read_any()
     if token.tag == Tokens.LBRACKET:
         expression = parse_expression(t)
-        t.expect(Tokens.RBRACKET)
+        t.read(Tokens.RBRACKET)
         return expression
     elif token.tag == Tokens.NUM:
         return value_node(token.meta('value'))
     elif token.tag == Tokens.VAR:
         return variable_node(token.meta('name'))
     else:
-        raise Exception("Unexpected token: " + token.tag)
+        # Ugly that we have to tweak the index. Should be able
+        # to retrieve the next token without moving forward the
+        # pointer, perhaps.
+        raise ParsingError("Unexpected token: " + token.tag, t.ptr-1)

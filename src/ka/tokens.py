@@ -52,38 +52,6 @@ CONST_TOKENS = [
     Tokens.EXP
 ]
 
-class BagOfTokens:
-    def __init__(self, tokens):
-        self.tokens = tokens
-        self.ptr = 0
-
-    def empty(self):
-        return self.ptr >= len(self.tokens)
-    
-    def peak(self, *tags):
-        return all(self.check_type(i, tag) for i, tag in enumerate(tags))
-
-    def peak_any(self, *tags):
-        return any(self.check_type(0, tag) for tag in tags)
-
-    def check_type(self, i, t):
-        return self.ptr+i < len(self.tokens) and t == self.tokens[self.ptr+i].tag
-
-    def read(self, t):
-        if not self.check_type(self.ptr, t):
-            raise Exception(f"Expected token of type {t} but was {self.tokens[self.ptr].tag}")
-        return self.read_next()
-
-    def read_next(self):
-        token = self.tokens[self.ptr]
-        self.ptr += 1
-        return token
-
-    def expect(self, *tags):
-        if not self.peak(*tags):
-            raise Exception("Missing token(s): " + str(tags))
-        self.ptr += len(tags)
-
 class UnknownTokenError(Exception):
     def __init__(self, index):
         self.index = index
@@ -101,7 +69,7 @@ def tokenise(s):
             raise UnknownTokenError(i)
         i = skip_whitespace(token.end_index_excl, s)
         tokens.append(token)
-    return BagOfTokens(tokens)
+    return tokens
 
 def skip_whitespace(i, s):
     while i < len(s) and s[i].isspace():

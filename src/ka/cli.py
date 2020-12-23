@@ -17,7 +17,7 @@ def main():
                         help="Whether to print the parse tree instead of evaluating it.")
     args = parser.parse_args()
     try:
-        tokens = tokenise(args.x, ERROR_CONTEXT_SIZE)
+        tokens = tokenise(args.x)
     except UnknownTokenError as e:
         alert_unknown_token(e, args.x)
         sys.exit(1)

@@ -22,9 +22,9 @@ def test_tokenise_valid_tokens():
         (Tokens.VAR, "x")
     ]
     s = "=;()+-*/%^123+abc1-22x"
-    bag = tokenise(s)
+    tokens = tokenise(s)
     actual = [(token.tag, s[token.begin_index_incl:token.end_index_excl])
-              for token in bag.tokens]
+              for token in tokens]
     assert expected == actual
 
 def test_tokenise_unknown():
