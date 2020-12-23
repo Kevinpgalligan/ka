@@ -65,6 +65,9 @@ def test_parse_multiple_statements():
                 ParseNode("x=", children=[ParseNode(0)]),
                 ParseNode("x")]))
 
+def test_parse_no_tokens():
+    validate_parse([], ParseNode("", children=[]))
+
 def validate_parsing_error(tokens):
     with pytest.raises(ParsingError):
         parse_tokens(tokens)

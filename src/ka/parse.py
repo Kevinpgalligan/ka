@@ -140,10 +140,10 @@ class BagOfTokens:
     def check_type(self, i, t):
         return self.ptr+i < len(self.tokens) and t == self.tokens[self.ptr+i].tag
 
-    def read(self, *tags):
-        token = self._read_single_token(f"Expected one of {tags} but reached end.")
-        if token.tag not in tags:
-            raise ParsingError(f"Expected one of {tags} but got '{token.tag}'.",
+    def read(self, tag):
+        token = self._read_single_token(f"Expected '{tag}' but reached end.")
+        if token.tag != tag:
+            raise ParsingError(f"Expected '{tag}' but got '{token.tag}'.",
                                # Subtract 1 because the read advanced the pointer.
                                self.ptr-1)
         return token
@@ -159,8 +159,8 @@ class BagOfTokens:
         return token
 
 class ParsingError(Exception):
-    def __init__(self, msg, token_index):
-        super().__init__(msg)
+    def __init__(self, message, token_index):
+        self.message = message
         self.token_index = token_index
 
 def parse_statements(t):

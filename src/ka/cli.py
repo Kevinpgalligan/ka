@@ -2,7 +2,7 @@ import argparse
 import sys
 
 from .tokens import tokenise, UnknownTokenError
-from .parse import parse_tokens, pretty_print_parse_tree
+from .parse import parse_tokens, pretty_print_parse_tree, ParsingError
 from .eval import eval_parse_tree
 
 ERROR_CONTEXT_SIZE = 5
@@ -16,24 +16,45 @@ def main():
                         action="store_true",
                         help="Whether to print the parse tree instead of evaluating it.")
     args = parser.parse_args()
+    s = args.x
     try:
-        tokens = tokenise(args.x)
+        tokens = tokenise(s)
     except UnknownTokenError as e:
-        alert_unknown_token(e, args.x)
-        sys.exit(1)
-    parse_tree = parse_tokens(tokens)
+        error("Unknown token!", e.index, s)
+    try:
+        parse_tree = parse_tokens(tokens)
+    except ParsingError as e:
+        # 3 cases:
+        #  a) there are no tokens, it's the empty string.
+        #  b) we read all the tokens and then needed another one.
+        #  c) unexpected token.
+        if not tokens:
+            index = 0
+        elif e.token_index >= len(tokens):
+            index = tokens[-1].end_index_excl
+        else:
+            index = tokens[e.token_index].begin_index_incl
+        error(e.message, index, s)
     if args.show_tree:
         pretty_print_parse_tree(parse_tree)
     else:
-        print(eval_parse_tree(parse_tree))
+        result = eval_parse_tree(parse_tree)
+        if result is None:
+            print()
+        else:
+            print(result)
 
-def alert_unknown_token(e, s):
-    context_low_index = max(0, e.index-ERROR_CONTEXT_SIZE)
-    context_high_index = min(len(s), e.index+ERROR_CONTEXT_SIZE+1)
-    left_fade = "" if context_low_index == 0 else "..."
-    right_fade = "" if context_high_index == len(s) else "..."
-    print("\n".join([
-        "Unknown token!",
-        "",
-        " "*INDENT + left_fade + s[context_low_index:context_high_index] + right_fade,
-        " "*(INDENT+len(left_fade)+e.index-context_low_index) + "^"]))
+def error(msg, index, s):
+    error_lines = [msg]
+    if s:
+        context_low_index = max(0, index-ERROR_CONTEXT_SIZE)
+        context_high_index = min(len(s), index+ERROR_CONTEXT_SIZE+1)
+        left_fade = "" if context_low_index == 0 else "..."
+        right_fade = "" if context_high_index == len(s) else "..."
+        error_lines.append("")
+        error_lines.append(
+            " "*INDENT + left_fade + s[context_low_index:context_high_index] + right_fade)
+        error_lines.append(
+            " "*(INDENT+len(left_fade)+index-context_low_index) + "^")
+    print("\n".join(error_lines), file=sys.stderr)
+    sys.exit(1)

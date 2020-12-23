@@ -30,3 +30,6 @@ def test_tokenise_valid_tokens():
 def test_tokenise_unknown():
     with pytest.raises(UnknownTokenError):
         tokenise("@")
+
+def test_tokenise_empty():
+    assert [] == tokenise("")
