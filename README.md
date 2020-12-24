@@ -17,10 +17,9 @@ $ ka 'x=5*3;y=1;pi+x-y' --show-tree
 ```
 
 ### TODO
-* Fix CLI so it doesn't interpret leading negative unary operator as a flag: <https://docs.python.org/3/library/argparse.html#arguments-containing>
-* log & other mathematical functions.
-* type hierarchy / rational numbers & accompanying 'f' function to force float.
 * units.
+* log & other mathematical functions. Functions to coerce to int, float, whatever.
+* Fix CLI so it doesn't interpret leading negative unary operator as a flag: <https://docs.python.org/3/library/argparse.html#arguments-containing>
 * nCk and n!, as well as lazy combinatorics resolution
 * Handle runtime errors (e.g. incompatible units, division by 0, and the like).
 * Documentation (features / interesting things; usage; the grammar, example files + ability to execute files)

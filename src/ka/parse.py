@@ -1,53 +1,7 @@
-"""
-The grammar. Symbols given short names in order
-to keep it concise. Kinda confusing usage of +
-and *. [a-z]* means "0 or more of these terminal
-symbols". X*, on the other hand, is the name of
-a generating (?) symbol. But they're kinda related
-uses.
-
-High-level description: valid strings are sequences
-of statements, separated by a semicolon. Each statement
-can be either an assignment (create / change the value
-of a variable), or an expression. An expression is a sum
-of products. A product is a multiplication of factors.
-A factor is.... you get the drift. Layering the grammar
-in this way guarantees operator precedence.
-
-X+ → X X*
-X* → ε | ';' | ';' X X*     # empty statements are invalid!
-X  → A | E
-A  → I '=' E
-I  → [a-zA-Z][a-zA-Z0-9]*
-E  → S+
-S+ → P+ S*
-S* → ε | [+-] P+ S*
-P+ → F+ P*
-P* → ε | [*/%] F+ P*
-F+ → F F*
-F* → ε | '^' F F*
-F  → U T
-U  → ε | [+-]
-T  → '(' E ')' | N | I
-N  → <a number of some description, I ain't
-      gonna specify right now 'cause it's going
-      to change>
-
-Long names:
-    X = statement
-    A = assignment
-    I = identifier
-    E = expression
-    S = sum
-    P = product
-    F = factor
-    U = unary operator
-    T = like an unsigned factor
-"""
-
 import operator
 
 from .tokens import Tokens
+from .types import wrap_binary_op, wrap_unary_op, number, divide
 
 def just_return_label(label, *args):
     return label
@@ -196,14 +150,14 @@ def parse_binary_op(t, parse_operand, operator_tokens):
     return left
 
 def token_to_op(token):
-    return {
+    return wrap_binary_op({
         Tokens.PLUS: operator.add,
         Tokens.MINUS: operator.sub,
         Tokens.MULT: operator.mul,
-        Tokens.DIV: operator.truediv,
+        Tokens.DIV: divide,
         Tokens.MOD: operator.mod,
         Tokens.EXP: operator.pow
-    }[token.tag]
+    }[token.tag])
 
 def parse_product(t):
     return parse_binary_op(t, parse_factor, [Tokens.MULT, Tokens.DIV, Tokens.MOD])
@@ -218,10 +172,10 @@ def parse_term(t):
     return parse_unsigned_term(t)
 
 def token_to_sign(token):
-    return {
+    return wrap_unary_op({
         Tokens.PLUS: operator.pos,
         Tokens.MINUS: operator.neg
-    }[token.tag]
+    }[token.tag])
 
 def parse_unsigned_term(t):
     token = t.read_any()
@@ -230,7 +184,7 @@ def parse_unsigned_term(t):
         t.read(Tokens.RBRACKET)
         return expression
     elif token.tag == Tokens.NUM:
-        return value_node(token.meta('value'))
+        return value_node(number(token.meta('value')))
     elif token.tag == Tokens.VAR:
         return variable_node(token.meta('name'))
     else:

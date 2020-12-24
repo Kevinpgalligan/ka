@@ -1,8 +1,9 @@
 import math
+from .types import number
 
 CONSTANTS = {
-    "e": math.e,
-    "pi": math.pi
+    "e": number(math.e),
+    "pi": number(math.pi)
 }
 
 def eval_parse_tree(root):
