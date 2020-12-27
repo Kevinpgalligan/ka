@@ -17,8 +17,9 @@ $ ka 'x=5*3;y=1;pi+x-y' --show-tree
 ```
 
 ### TODO
-* units.
 * log & other mathematical functions. Functions to coerce to int, float, whatever.
+* Refactor, move eval code away from tree maybe?
+* Units.
 * Fix CLI so it doesn't interpret leading negative unary operator as a flag: <https://docs.python.org/3/library/argparse.html#arguments-containing>
 * nCk and n!, as well as lazy combinatorics resolution
 * Handle runtime errors (e.g. incompatible units, division by 0, and the like).

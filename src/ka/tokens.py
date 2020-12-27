@@ -36,8 +36,9 @@ class Tokens:
     DIV = '/'
     MOD = '%'
     EXP = '^'
-    VAR = 'var'
-    NUM = 'num'
+    VAR = 'variable'
+    NUM = 'number'
+    FUNCTION_ARG_SEPARATOR = ','
 
 CONST_TOKENS = [
     Tokens.ASSIGNMENT_OP,
@@ -49,7 +50,8 @@ CONST_TOKENS = [
     Tokens.MULT,
     Tokens.DIV,
     Tokens.MOD,
-    Tokens.EXP
+    Tokens.EXP,
+    Tokens.FUNCTION_ARG_SEPARATOR
 ]
 
 class UnknownTokenError(Exception):

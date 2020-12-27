@@ -47,10 +47,14 @@ def value_node(v):
 
 def variable_node(name):
     def eval_fn(label, _, environment):
-        if name in environment:
-            return environment[name]
-        raise Exception("Unknown variable: " + name)
+        return environment.get_variable(name)
     return ParseNode(label=name, eval_fn=eval_fn)
+
+def funcall_node(name, children):
+    def eval_fn(label, child_values, environment):
+        f = environment.get_function(label)
+        return f(*child_values)
+    return ParseNode(label=name, children=children, eval_fn=eval_fn)
 
 def operator_node(label, op, children):
     def eval_fn(_, child_values, *_s):
@@ -65,7 +69,7 @@ def sign_node(label, sign_fn, child):
 
 def assignment_node(name, expression):
     def eval_fn(_, child_values, environment):
-        environment[name] = child_values[0]
+        environment.set_variable(name, child_values[0])
         return child_values[0]
     return ParseNode(label=name+"=", children=[expression], eval_fn=eval_fn)
 
@@ -178,17 +182,37 @@ def token_to_sign(token):
     }[token.tag])
 
 def parse_unsigned_term(t):
-    token = t.read_any()
-    if token.tag == Tokens.LBRACKET:
+    if t.next_is_one_of(Tokens.LBRACKET):
+        t.read(Tokens.LBRACKET)
         expression = parse_expression(t)
         t.read(Tokens.RBRACKET)
         return expression
-    elif token.tag == Tokens.NUM:
-        return value_node(number(token.meta('value')))
-    elif token.tag == Tokens.VAR:
-        return variable_node(token.meta('name'))
+    elif t.next_is_one_of(Tokens.NUM):
+        return parse_number(t)
+    elif t.next_are(Tokens.VAR, Tokens.LBRACKET):
+        return parse_function(t)
+    elif t.next_is_one_of(Tokens.VAR):
+        return parse_variable(t)
     else:
-        # Ugly that we have to tweak the index. Should be able
-        # to retrieve the next token without moving forward the
-        # pointer, perhaps.
-        raise ParsingError("Unexpected token: " + token.tag, t.ptr-1)
+        raise ParsingError("Unexpected token.", t.ptr)
+
+def parse_number(t):
+    return value_node(number(t.read(Tokens.NUM).meta('value')))
+
+def parse_function(t):
+    name = t.read(Tokens.VAR).meta('name')
+    t.read(Tokens.LBRACKET)
+    node = funcall_node(name, parse_args(t))
+    t.read(Tokens.RBRACKET)
+    return node
+
+def parse_args(t):
+    args = []
+    while not t.next_is_one_of(Tokens.RBRACKET):
+        if args:
+            t.read(Tokens.FUNCTION_ARG_SEPARATOR)
+        args.append(parse_expression(t))
+    return args
+
+def parse_variable(t):
+    return variable_node(t.read(Tokens.VAR).meta('name'))
