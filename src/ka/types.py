@@ -17,17 +17,6 @@ def get_initial_type(x):
         return Rational(x)
     raise TypeError(f"Tried to cast '{type(x)}' to a number.")
 
-def wrap_binary_op(op):
-    def new_op(n1, n2):
-        n1, n2 = coerce(n1, n2)
-        return number(op(n1.x, n2.x))
-    return new_op
-
-def wrap_unary_op(op):
-    def new_op(n):
-        return number(op(n.x))
-    return new_op
-
 def coerce(n1, n2):
     if type(n1) == type(n2):
         return n1, n2

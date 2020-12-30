@@ -1,0 +1,65 @@
+==== Brainstorming session #1 ====
+Existing type hierarchy:
+
+  Integer < Rational < Float
+
+A "Combinatorics" type could be a subtype of rationals.
+
+How to get 1000!/999!, for example, to evaluate to 1000 without doing a bunch of dumb computation.
+
+Orrrrr...
+
+  nCk = n!/k!(n-k)!
+
+Depending on the size of n & k, may want to reduce this to an integer. Or resort to Sterling's approximation & make it a float.
+
+Dunno how to keep it lazy. What sorta framework is required.
+
+Factorial. A type of rational?
+
+Fit into general framework of functions. Binary operators, functions of 2 arguments. Just parsed differently.
+
+Ughhhh, I don't know anymore. Examples to handle:
+
+  1000! + 250!
+  nCk = n!/k!(n-k)!
+  1000!/999!
+  1000!^1000!
+  10C3*p^4*(1-p)^7
+
+After further consideration. Factorial type. Between Rational & Float. That will mean that integers & rationals are absorbed into Factorial type. Not sure.
+
+If you try to do 1000!/999! naively in Python, you get an overflow. Okay, lazy approach is the only one that works in that case. But HOW DO YOU INTEGRATE IT INTO A LINEAR TYPE HIERARCHY? OR HOW DO YOU EXTEND THE HIERARCHY TO HANDLE IT?
+
+==== Brainstorming session #2 ====
+After messing around with the design of functions for a while, I think I've come up with a general solution. Based on stuff I've recalled from SICP.
+
+Combinatoric type doesn't have to be a number.
+
+Operations to consider: +, -, /, *, ^, %, !, C
+
+Dispatch on function name & argument types:
+
+  +, Combinatoric, Combinatoric   # resolve them, add the result
+  /, Combinatoric, Combinatoric   # flip the second one, compose
+  /, Combinatoric, Rational       # flip the rational, incorporate into Combinatoric
+  /, Combinatoric, Float          # absorb float into running yolk
+  /, Rational, Combinatoric       # similar to above
+  /, Float, Combinatoric          # similar to above
+
+Well, you get the point. It requires a lot of elbow grease, and lots of testing to cover all the cases, but I plan to have only 4-5 types, anyway.
+
+Preserve the Number hierarchy.
+
+  Integer < Rational < Float < Number
+
+Just need a wrapper function for Python's built-in operators. Registers a function that takes 2 (or whatever) Number types, coerces them until they're the same, then applies the built-in operator to their internal type.
+
+I believe this is what the SICP folks had in mind.
+
+Closing thoughts:
+
+* It won't take much "elbow grease" to implement this system before adding the Combinatoric / Factorial / Whatever type. Just need the wrapper for built-in operators.
+* I haven't considered how this would integrate with units. Units can be an extra layer on top, perhaps? But they have to somehow be able to call into the dispatch system in order to do the conversions.
+* More generally, need to be able to call dispatch system from within the functions.
+* 

@@ -1,23 +1,14 @@
 import operator
 
 from .tokens import Tokens
-from .types import wrap_binary_op, wrap_unary_op, number, divide
-
-def just_return_label(label, *args):
-    return label
+from .types import number
+from .eval import EvalModes
 
 class ParseNode:
-    def __init__(self, label="", children=None, eval_fn=just_return_label):
-        """label: self-explanatory. Not necessarily a string.
-        children: child nodes.
-        eval_fn: used to evaluate the node."""
+    def __init__(self, label="", children=None, eval_mode=EvalModes.LABEL_IS_VALUE):
         self.label = label
         self.children = children if children else []
-        self.eval_fn = eval_fn
-
-    def eval(self, environment):
-        child_values =  [child.eval(environment) for child in self.children]
-        return self.eval_fn(self.label, child_values, environment)
+        self.eval_mode = eval_mode
 
     def __repr__(self):
         return str(self)
@@ -42,41 +33,8 @@ def pretty_print_parse_tree(root):
         i += 1
     tree.show(key=lambda node: node.data)
 
-def value_node(v):
-    return ParseNode(label=v)
-
-def variable_node(name):
-    def eval_fn(label, _, environment):
-        return environment.get_variable(name)
-    return ParseNode(label=name, eval_fn=eval_fn)
-
 def funcall_node(name, children):
-    def eval_fn(label, child_values, environment):
-        f = environment.get_function(label)
-        return f(*child_values)
-    return ParseNode(label=name, children=children, eval_fn=eval_fn)
-
-def operator_node(label, op, children):
-    def eval_fn(_, child_values, *_s):
-        return op(*child_values)
-    return ParseNode(label=label, children=children, eval_fn=eval_fn)
-
-# Could merge this with operator_node().
-def sign_node(label, sign_fn, child):
-    def eval_fn(_, child_values, *_s):
-        return sign_fn(*child_values)
-    return ParseNode(label=label, children=[child], eval_fn=eval_fn)
-
-def assignment_node(name, expression):
-    def eval_fn(_, child_values, environment):
-        environment.set_variable(name, child_values[0])
-        return child_values[0]
-    return ParseNode(label=name+"=", children=[expression], eval_fn=eval_fn)
-
-def statements_node(children):
-    def eval_fn(_, child_values, *_s):
-        return child_values[-1] if child_values else None
-    return ParseNode(children=children, eval_fn=eval_fn)
+    return ParseNode(label=name, children=children, eval_mode=EvalModes.FUNCALL)
 
 def parse_tokens(tokens):
     return parse_statements(BagOfTokens(tokens))
@@ -127,7 +85,7 @@ def parse_statements(t):
         statements.append(parse_statement(t))
         if not t.empty():
             t.read(Tokens.STATEMENT_SEPARATOR)
-    return statements_node(statements)
+    return ParseNode(children=statements, eval_mode=EvalModes.STATEMENTS)
 
 def parse_statement(t):
     if t.next_are(Tokens.VAR, Tokens.ASSIGNMENT_OP):
@@ -137,7 +95,9 @@ def parse_statement(t):
 def parse_assignment(t):
     var_token = t.read(Tokens.VAR)
     t.read(Tokens.ASSIGNMENT_OP)
-    return assignment_node(var_token.meta('name'), parse_expression(t))
+    return ParseNode(label=var_token.meta('name')+"=",
+                     children=[parse_expression(t)],
+                     eval_mode=EvalModes.ASSIGNMENT)
 
 def parse_expression(t):
     return parse_sum(t)
@@ -149,19 +109,9 @@ def parse_binary_op(t, parse_operand, operator_tokens):
     left = parse_operand(t)
     while t.next_is_one_of(*operator_tokens):
         token = t.read_any()
-        # Ensures that all operators are left-associative.
-        left = operator_node(token.tag, token_to_op(token), [left, parse_operand(t)])
+        # Ensuring that all operators are left-associative.
+        left = funcall_node(token.tag, [left, parse_operand(t)])
     return left
-
-def token_to_op(token):
-    return wrap_binary_op({
-        Tokens.PLUS: operator.add,
-        Tokens.MINUS: operator.sub,
-        Tokens.MULT: operator.mul,
-        Tokens.DIV: divide,
-        Tokens.MOD: operator.mod,
-        Tokens.EXP: operator.pow
-    }[token.tag])
 
 def parse_product(t):
     return parse_binary_op(t, parse_factor, [Tokens.MULT, Tokens.DIV, Tokens.MOD])
@@ -172,14 +122,8 @@ def parse_factor(t):
 def parse_term(t):
     if t.next_is_one_of(Tokens.PLUS, Tokens.MINUS):
         token = t.read_any()
-        return sign_node(token.tag, token_to_sign(token), parse_unsigned_term(t))
+        return funcall_node(token.tag, [parse_unsigned_term(t)])
     return parse_unsigned_term(t)
-
-def token_to_sign(token):
-    return wrap_unary_op({
-        Tokens.PLUS: operator.pos,
-        Tokens.MINUS: operator.neg
-    }[token.tag])
 
 def parse_unsigned_term(t):
     if t.next_is_one_of(Tokens.LBRACKET):
@@ -197,7 +141,8 @@ def parse_unsigned_term(t):
         raise ParsingError("Unexpected token.", t.ptr)
 
 def parse_number(t):
-    return value_node(number(t.read(Tokens.NUM).meta('value')))
+    return ParseNode(label=number(t.read(Tokens.NUM).meta('value')),
+                     eval_mode=EvalModes.LABEL_IS_VALUE)
 
 def parse_function(t):
     name = t.read(Tokens.VAR).meta('name')
@@ -215,4 +160,5 @@ def parse_args(t):
     return args
 
 def parse_variable(t):
-    return variable_node(t.read(Tokens.VAR).meta('name'))
+    return ParseNode(label=t.read(Tokens.VAR).meta('name'),
+                     eval_mode=EvalModes.VARIABLE)
