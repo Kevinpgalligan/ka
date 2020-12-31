@@ -10,6 +10,10 @@ def validate_result(s, expected):
     tree = parse_tokens(tokens)
     assert expected == eval_parse_tree(tree)
 
+def validate_results(cases):
+    for s, expected in cases:
+        validate_result(s, expected)
+
 def test_empty():
     validate_result("", None)
 
@@ -37,9 +41,27 @@ def test_coercion():
     # point shit.
     validate_result("(3/2)*1.2", Fraction(3, 2)*1.2)
 
-def test_some_equations():
-    validate_result("r=2.5;pi*r^2", math.pi * 2.5**2)
-    validate_result("x=3;x^2+2*x+1", 16)
-    validate_result("n=5;n*(n+1)/2", 15)
-    validate_result("(3/2)%1", Fraction(1, 2))
-    validate_result("(3/2)^2", Fraction(9, 4))
+def test_equations_and_functions():
+    validate_results([
+        ("r=2.5;pi*r^2", math.pi * 2.5**2),
+        ("x=3;x^2+2*x+1", 16),
+        ("n=5;n*(n+1)/2", 15),
+        ("(3/2)%1", Fraction(1, 2)),
+        ("(3/2)^2", Fraction(9, 4)),
+        ("-1+2", 1),
+        ("+1+2", 3),
+        ("sin(0)", 0),
+        ("cos(0)", 1),
+        ("tan(0)", 0),
+        ("sqrt(4)", 2),
+        ("ln(e)", 1),
+        ("log10(10)", 1),
+        ("log2(2)", 1),
+        ("abs(-3/2)", Fraction(3, 2)),
+        ("floor(1.7)", 1),
+        ("ceil(1.7)", 2),
+        ("round(1.4)", 1),
+        ("i(1.8+0.5)", 2),
+        ("f(3/2)", 1.5),
+        ("log(2, 2)", 1)
+    ])

@@ -61,7 +61,9 @@ NUMERIC_FUNCTIONS = [
     ("abs", abs),
     ("floor", math.floor),
     ("ceil", math.ceil),
-    ("round", round)
+    ("round", round),
+    ("i", int),
+    ("f", float)
 ]
 for name, f in NUMERIC_FUNCTIONS:
     register_numeric_function(name, f)

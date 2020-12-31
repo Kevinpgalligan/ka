@@ -62,4 +62,21 @@ Closing thoughts:
 * It won't take much "elbow grease" to implement this system before adding the Combinatoric / Factorial / Whatever type. Just need the wrapper for built-in operators.
 * I haven't considered how this would integrate with units. Units can be an extra layer on top, perhaps? But they have to somehow be able to call into the dispatch system in order to do the conversions.
 * More generally, need to be able to call dispatch system from within the functions.
-* 
+
+==== Brainstorming session #3 ====
+After letting it roll about in my head for a while, I think I need to integrate units into the type hierarchy. There should be a Unit type.
+
+  Integer < Rational < Float < Number
+  Combinatoric < Number
+  Unit (on its own)
+  Quantity (has a value & a unit)
+
+Do Integer, Rational & Float need their own type, separate from Combinatoric?
+
+Rational could be a subtype of Combinatoric. Combinatoric could be a subtype of Float. But I'm not sure.
+
+Might be easier to add units first. They're kinda independent of the Combinatoric type.
+
+Could Numbers be a unitless quantity? i.e. Number < Quantity. I should take a look @ Frink. Useful: http://futureboy.us/frinkdocs/#HowFrinkIsDifferent
+
+TODO: think through Quantity type, which operations / functions make sense with units.
