@@ -63,7 +63,7 @@ class Float(Number):
         # Go straight to integers. Converting floats
         # to rationals results in ugly-looking fractions
         # due to rounding issues.
-        return Integer(math.modf(self.x)[1])
+        return Integer(int(math.modf(self.x)[1]))
 
     def move_up(self):
         raise TypeError(
@@ -89,6 +89,12 @@ class Rational(Number):
     def move_up(self):
         return Float(float(self.x))
 
+    def numerator(self):
+        return self.x.numerator
+
+    def denominator(self):
+        return self.x.denominator
+
     def __str__(self):
         return f"{self.x.numerator}/{self.x.denominator}"
 
@@ -105,6 +111,12 @@ class Integer(Number):
 
     def move_up(self):
         return Rational(fractions.Fraction(self.x, 1))
+
+    def numerator(self):
+        return self.x
+
+    def denominator(self):
+        return 1
 
 TYPE_HIERARCHY = [
     Float,

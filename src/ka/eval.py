@@ -1,6 +1,6 @@
 import math
 from .types import number
-from .functions import FUNCTIONS
+from .functions import dispatch
 
 CONSTANTS = {
     "e": number(math.e),
@@ -17,7 +17,6 @@ class EvalModes:
 class EvalEnvironment:
     def __init__(self):
         self._variables = CONSTANTS.copy()
-        self._functions = FUNCTIONS.copy()
 
     def set_variable(self, name, value):
         self._variables[name] = value
@@ -28,12 +27,6 @@ class EvalEnvironment:
             # TODO custom exception
             raise Exception("fuck")
         return self._variables[name]
-
-    def get_function(self, name):
-        if name not in self._functions:
-            # TODO proper exception
-            raise Exception("fuck")
-        return self._functions[name]
 
 def eval_parse_tree(root):
     return eval_node(root, EvalEnvironment())
@@ -51,7 +44,7 @@ def eval_based_on_mode(node, env, child_values):
     if mode == EvalModes.VARIABLE:
         return env.get_variable(node.label)
     if mode == EvalModes.FUNCALL:
-        return call_function(env.get_function(node.label), child_values)
+        return dispatch(node.label, child_values)
     if mode == EvalModes.ASSIGNMENT:
         # Assume that the node is labelled "x=" if we're
         # assigning a value to the variable "x". And there
@@ -60,12 +53,3 @@ def eval_based_on_mode(node, env, child_values):
     if mode == EvalModes.STATEMENTS:
         return child_values[-1] if child_values else None
     raise Exception("TODO unknown eval mode")
-
-def call_function(f, args):
-    # TODO:
-    # 1. incorrect number of args 
-    # 2. coerce types if necessary.
-    # 3. just call it?
-    # Might need some complicated typing stuff.
-    # Like, find closest-matching type signature.
-    return 0

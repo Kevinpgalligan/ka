@@ -11,8 +11,8 @@ INDENT = 2
 def main():
     parser = argparse.ArgumentParser(description="A calculator language.")
     parser.add_argument("x", help="The statements to evaluate.")
-    parser.add_argument("--show-tree",
-                        "-s",
+    parser.add_argument("--tree",
+                        "-t",
                         action="store_true",
                         help="Whether to print the parse tree instead of evaluating it.")
     args = parser.parse_args()
@@ -35,7 +35,7 @@ def main():
         else:
             index = tokens[e.token_index].begin_index_incl
         error(e.message, index, s)
-    if args.show_tree:
+    if args.tree:
         pretty_print_parse_tree(parse_tree)
     else:
         result = eval_parse_tree(parse_tree)

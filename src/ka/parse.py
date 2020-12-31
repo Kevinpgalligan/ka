@@ -1,5 +1,3 @@
-import operator
-
 from .tokens import Tokens
 from .types import number
 from .eval import EvalModes
