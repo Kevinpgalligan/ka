@@ -36,9 +36,10 @@ class Tokens:
     DIV = '/'
     MOD = '%'
     EXP = '^'
-    VAR = 'variable'
+    VAR = 'identifier'
     NUM = 'number'
     FUNCTION_ARG_SEPARATOR = ','
+    FACTORIAL = '!'
 
 CONST_TOKENS = [
     Tokens.ASSIGNMENT_OP,
@@ -51,7 +52,8 @@ CONST_TOKENS = [
     Tokens.DIV,
     Tokens.MOD,
     Tokens.EXP,
-    Tokens.FUNCTION_ARG_SEPARATOR
+    Tokens.FUNCTION_ARG_SEPARATOR,
+    Tokens.FACTORIAL
 ]
 
 class UnknownTokenError(Exception):
@@ -79,19 +81,15 @@ def skip_whitespace(i, s):
     return i
 
 def read_token(i, s):
-    read_fn = get_read_fn(i, s)
-    return read_fn(i, s)
-
-def get_read_fn(i, s):
     if s[i].isalpha():
-        return read_var_token
+        m = VAR_REGEX.match(s, i)
+        return Token(Tokens.VAR, m.start(), m.end(), name=m.group(0))
     if s[i].isnumeric() or s[i] == '.':
-        return read_num_token
-    return read_const_token
-
-def read_var_token(i, s):
-    m = VAR_REGEX.match(s, i)
-    return Token(Tokens.VAR, m.start(), m.end(), name=m.group(0))
+        return read_num_token(i, s)
+    for t in CONST_TOKENS:
+        if s.startswith(t, i):
+            return Token(t, i, i+len(t))
+    return None
 
 def read_num_token(i, s):
     m = NUM_REGEX.match(s, i)
@@ -102,9 +100,3 @@ def read_num_token(i, s):
     else:
         value = int(raw_value)
     return Token(Tokens.NUM, m.start(), m.end(), value=value)
-
-def read_const_token(i, s):
-    for t in CONST_TOKENS:
-        if s.startswith(t, i):
-            return Token(t, i, i+len(t))
-    return None

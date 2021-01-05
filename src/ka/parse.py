@@ -124,6 +124,13 @@ def parse_term(t):
     return parse_unsigned_term(t)
 
 def parse_unsigned_term(t):
+    term = parse_unsigned_term_without_factorial(t)
+    if not t.next_is_one_of(Tokens.FACTORIAL):
+        return term
+    token = t.read_any()
+    return funcall_node(token.tag, [term])
+
+def parse_unsigned_term_without_factorial(t):
     if t.next_is_one_of(Tokens.LBRACKET):
         t.read(Tokens.LBRACKET)
         expression = parse_expression(t)

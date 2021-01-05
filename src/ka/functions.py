@@ -2,7 +2,7 @@ import collections
 import operator
 import math
 
-from .types import Number, Float, divide, coerce, number
+from .types import Number, Float, Integer, divide, coerce, number
 
 FUNCTIONS = collections.defaultdict(list)
 
@@ -37,6 +37,16 @@ def register_numeric_function(name, f, num_args=1):
         return number(f(*[n.x for n in ns]))
     register_function(new_f, name, num_args*(Number,))
 
+def choose(n, k):
+    # Import inside the function since scipy is slow to load.
+    # Will get rid of scipy dependency if possible.
+    import scipy.special
+    return number(scipy.special.comb(n.x, k.x, exact=True))
+
+def factorial(n):
+    import scipy.special
+    return number(scipy.special.factorial(n.x, exact=True))
+
 BINARY_OPS = [
     ("+", operator.add),
     ("-", operator.sub),
@@ -68,3 +78,5 @@ NUMERIC_FUNCTIONS = [
 for name, f in NUMERIC_FUNCTIONS:
     register_numeric_function(name, f)
 register_numeric_function("log", lambda base, x: math.log(x, base), num_args=2)
+register_function(choose, "C", (Integer, Integer))
+register_function(factorial, "!", (Integer,))

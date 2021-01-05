@@ -79,4 +79,11 @@ Might be easier to add units first. They're kinda independent of the Combinatori
 
 Could Numbers be a unitless quantity? i.e. Number < Quantity. I should take a look @ Frink. Useful: http://futureboy.us/frinkdocs/#HowFrinkIsDifferent
 
-TODO: think through Quantity type, which operations / functions make sense with units.
+Need to think through Quantity type, which operations / functions make sense with units.
+
++, -, /, *, ^, %, !, C
+
++: yes, units stay the same
+-: yes, units stay the same
+/: yes, creates a new unit
+*: yes, creates a new unit
