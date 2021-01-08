@@ -53,7 +53,7 @@ $ ka 'x=5*3;y=1;pi+x-y' --tree
 * Units.
 * Lazy combinatorics type.
 * Fix CLI so it doesn't interpret leading negative unary operator as a flag: <https://docs.python.org/3/library/argparse.html#arguments-containing>
-* Refactor ugly parse tree label for assignment.
+* Refactor ugly divide(), leverage dispatch.
 * Handle runtime errors (e.g. incompatible units, division by 0, overflow, and the like; overflow can happen during parsing!).
 * Accept more number input formats. 
 * Documentation (features / interesting things; usage; the grammar, example files + ability to execute files; DISPATCH TABLE (functions))

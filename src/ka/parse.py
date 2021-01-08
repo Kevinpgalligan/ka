@@ -25,7 +25,10 @@ def pretty_print_parse_tree(root):
     while stack:
         node, parent, node_index = stack.pop()
         # y u makin' me store the order of child nodes, treelib.
-        tree.create_node(str(node.label), i, parent=parent, data=node_index)
+        tree.create_node(str(node.label) + ("=" if node.eval_mode == EvalModes.ASSIGNMENT else ""),
+                         i,
+                         parent=parent,
+                         data=node_index)
         for child_index, child in enumerate(node.children):
             stack.append((child, i, child_index))
         i += 1
@@ -93,7 +96,7 @@ def parse_statement(t):
 def parse_assignment(t):
     var_token = t.read(Tokens.VAR)
     t.read(Tokens.ASSIGNMENT_OP)
-    return ParseNode(label=var_token.meta('name')+"=",
+    return ParseNode(label=var_token.meta('name'),
                      children=[parse_expression(t)],
                      eval_mode=EvalModes.ASSIGNMENT)
 

@@ -24,7 +24,7 @@ def test_parse_assignment():
         [t(Tokens.VAR, name="x"),
          t(Tokens.ASSIGNMENT_OP),
          t(Tokens.NUM, value=5)],
-        ParseNode("", children=[ParseNode("x=", children=[ParseNode(5)])]))
+        ParseNode("", children=[ParseNode("x", children=[ParseNode(5)])]))
 
 def test_parse_arithmetic():
     validate_parse(
@@ -62,7 +62,7 @@ def test_parse_multiple_statements():
          t(Tokens.VAR, name="x")],
         ParseNode("",
             children=[
-                ParseNode("x=", children=[ParseNode(0)]),
+                ParseNode("x", children=[ParseNode(0)]),
                 ParseNode("x")]))
 
 def test_parse_no_tokens():

@@ -46,10 +46,7 @@ def eval_based_on_mode(node, env, child_values):
     if mode == EvalModes.FUNCALL:
         return dispatch(node.label, child_values)
     if mode == EvalModes.ASSIGNMENT:
-        # Assume that the node is labelled "x=" if we're
-        # assigning a value to the variable "x". And there
-        # should be only 1 child. Should fix this kludge.
-        return env.set_variable(node.label[:-1], child_values[0])
+        return env.set_variable(node.label, child_values[0])
     if mode == EvalModes.STATEMENTS:
         return child_values[-1] if child_values else None
     raise Exception("TODO unknown eval mode")

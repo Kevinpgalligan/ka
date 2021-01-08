@@ -17,6 +17,9 @@ def dispatch(name, args):
     # TODO list the signatures.
     raise Exception(f"Didn't match any signatures of '{name}'.")
 
+def multiply(x, y):
+    return dispatch("*", (x, y))
+
 def register_function(f, name, arg_types):
     global FUNCTIONS
     FUNCTIONS[name].append((f, arg_types))

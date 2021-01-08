@@ -87,3 +87,10 @@ Need to think through Quantity type, which operations / functions make sense wit
 -: yes, units stay the same
 /: yes, creates a new unit
 *: yes, creates a new unit
+^: don't think so, but check Frink; I think only Unit^Number makes sense.
+%: don't think so, but check Frink; Unit%Number makes sense.
+!: no
+C: no
+sin/cos/tan: yes, with some units
+sqrt: I think so, depending on the unit (you might end up with metres^(1/2), don't think that makes sense though)
+ln, log10, log2, abs, floor, ceil, round, i, f: uhhh, I'm not sure. Could apply function to number part. 
