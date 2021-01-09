@@ -94,3 +94,47 @@ C: no
 sin/cos/tan: yes, with some units
 sqrt: I think so, depending on the unit (you might end up with metres^(1/2), don't think that makes sense though)
 ln, log10, log2, abs, floor, ceil, round, i, f: uhhh, I'm not sure. Could apply function to number part. 
+
+==== Brainstorming session #4 ====
+Playing around with Frink.
+
+(3ft) % (2ft) is valid. Unit types have to be conforming when you do modulus, though.
+
+Exponent must be dimensionless, i.e. 3^(2ft) is meaningless.
+
+Frink seems to convert all units to the base types. And print them like that. It doesn't seem like you can do "5Pa 3s", for example, and get Pascal-seconds. Even though that's a valid measure that Frink recognises. You instead get it in terms of base units: "15 m^-1 kg s^-1".
+
+That makes it easier to implement units, anyway.
+
+My current understanding: define base units (kg, m, s, etc). All units are defined in terms of those, as a vector with the exponent of each base unit. Including the base units themselves (kg would be <1, 0, 0, ..., 0>). Dimensionless (?) units like radians are all zero.
+
+That covers "coherent" units, i.e. ones that are defined solely in terms of the base units. "Incoherent" (?) units, like feet, come with a multiplier. Some units come with an offset.
+
+Frink dodges the Celcius / Fahrenheit problem by not really supporting those units properly. You do C[5] to get 5 degrees Celcius, IN KELVINS. 5degC returns 5 Kelvins. It seems like degC is just an alias for Kelvin. So, let's say we call "5degC^2" in our magical language, what does it do? How does it convert that to Kelvins?
+
+5degC = 5+273.15 (or whatever) Kelvins. What does degC^2 mean?
+
+0 degC = 273.15K
+0 degC^2 = 273.15^2 K^2
+x degC = (x + 273.15) K
+x degC^2 = (...) ???????????????
+
+Can't get my head around that. Maybe, for now, I can omit units that use an offset / affine transformation / whatever.
+
+OKAY. Interface could look something like this.
+
+BaseUnits.METRE returns DimensionVector<1,0,0,...> (or whatever it's called).
+
+register_unit("ft", "feet", 0.3*BaseUnits.METRE)
+
+^ UnitSignature(multiplier=0.3, <1, 0, 0, ....>)
+
+What happens when you do feet^2? UnitSignature(multiplier=0.3^2, <2, 0, 0, ...>)?
+
+HM.
+
+### Useful references
+* https://frinklang.org
+* https://en.wikipedia.org/wiki/International_System_of_Units
+* https://www.hillelwayne.com/post/frink/
+* https://gmpreussner.com/research/dimensional-analysis-in-programming-languages
