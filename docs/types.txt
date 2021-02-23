@@ -136,5 +136,6 @@ HM.
 ### Useful references
 * https://frinklang.org
 * https://en.wikipedia.org/wiki/International_System_of_Units
+* https://en.wikipedia.org/wiki/Dimensional_analysis
 * https://www.hillelwayne.com/post/frink/
 * https://gmpreussner.com/research/dimensional-analysis-in-programming-languages
