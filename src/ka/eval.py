@@ -13,6 +13,8 @@ class EvalModes:
     FUNCALL = "funcall"
     ASSIGNMENT = "assignment"
     STATEMENTS = "statements"
+    QUANTITY = "quantity"
+    UNIT_SIGNATURE = "unit-signature"
 
 class EvalEnvironment:
     def __init__(self):
@@ -49,4 +51,8 @@ def eval_based_on_mode(node, env, child_values):
         return env.set_variable(node.label, child_values[0])
     if mode == EvalModes.STATEMENTS:
         return child_values[-1] if child_values else None
+    if mode == EvalModes.QUANTITY:
+        raise Exception("TODO")
+    if mode == EvalModes.UNIT_SIGNATURE:
+        raise Exception("TODO")
     raise Exception("TODO unknown eval mode")

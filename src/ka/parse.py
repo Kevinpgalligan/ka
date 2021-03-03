@@ -3,10 +3,18 @@ from .types import number
 from .eval import EvalModes
 
 class ParseNode:
-    def __init__(self, label="", children=None, eval_mode=EvalModes.LABEL_IS_VALUE):
+    def __init__(self,
+                 label="",
+                 children=None,
+                 eval_mode=EvalModes.LABEL_IS_VALUE,
+                 value=None):
         self.label = label
         self.children = children if children else []
         self.eval_mode = eval_mode
+        # I added value later, was hackily using the
+        # label to store the value of the node. But
+        # these should really be 2 separate things.
+        self.value = value
 
     def __repr__(self):
         return str(self)
@@ -36,6 +44,15 @@ def pretty_print_parse_tree(root):
 
 def funcall_node(name, children):
     return ParseNode(label=name, children=children, eval_mode=EvalModes.FUNCALL)
+
+def quantity_node(term, unit_sig):
+    return ParseNode(label="quantity", children=[term, unit_sig], eval_mode=EvalModes.QUANTITY)
+
+def unit_signature_node(units):
+    return ParseNode(label=" ".join(f"{name}^{exp}" for name, exp in units),
+                     value=units,
+                     eval_mode=EvalModes.UNIT_SIGNATURE)
+
 
 def parse_tokens(tokens):
     return parse_statements(BagOfTokens(tokens))
@@ -121,6 +138,14 @@ def parse_factor(t):
     return parse_binary_op(t, parse_term, [Tokens.EXP])
 
 def parse_term(t):
+    term = parse_unitless_term(t)
+    if t.next_is_one_of(Tokens.VAR):
+        # It's a quantity! Which has a magnitude and
+        # a unit signature.
+        return quantity_node(term, parse_unit_signature(t))
+    return term
+
+def parse_unitless_term(t):
     if t.next_is_one_of(Tokens.PLUS, Tokens.MINUS):
         token = t.read_any()
         return funcall_node(token.tag, [parse_unsigned_term(t)])
@@ -170,3 +195,37 @@ def parse_args(t):
 def parse_variable(t):
     return ParseNode(label=t.read(Tokens.VAR).meta('name'),
                      eval_mode=EvalModes.VARIABLE)
+
+def parse_unit_signature(t):
+    units = parse_units(t)
+    if t.next_is_one_of(Tokens.UNIT_DIVIDE):
+        t.read_any()
+        units += parse_units(t, invert=True)
+    return unit_signature_node(units)
+
+def parse_units(t, invert=False):
+    units = []
+    while t.next_is_one_of(Tokens.VAR):
+        unit_name = t.read_any().meta('name')
+        exponent = 1
+        if t.next_is_one_of(Tokens.EXP):
+            t.read_any()
+            exponent = parse_integer(t)
+        if invert:
+            exponent = -exponent
+        units.append((unit_name, exponent))
+    if not units:
+        raise Exception("TODO: exception, expected units.")
+    return units
+
+def parse_integer(t):
+    sign = 1
+    if t.next_is_one_of(Tokens.PLUS, Tokens.MINUS):
+        token = t.read_any()
+        if token.tag == Tokens.MINUS:
+            sign = -1
+    i = sign * t.read(Tokens.NUM).meta('value')
+    if not isinstance(i, int):
+        raise Exception("TODO: exception, expected an integer literal.")
+    return i
+

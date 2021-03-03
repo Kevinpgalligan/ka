@@ -40,6 +40,7 @@ class Tokens:
     NUM = 'number'
     FUNCTION_ARG_SEPARATOR = ','
     FACTORIAL = '!'
+    UNIT_DIVIDE = '|'
 
 CONST_TOKENS = [
     Tokens.ASSIGNMENT_OP,
@@ -53,7 +54,8 @@ CONST_TOKENS = [
     Tokens.MOD,
     Tokens.EXP,
     Tokens.FUNCTION_ARG_SEPARATOR,
-    Tokens.FACTORIAL
+    Tokens.FACTORIAL,
+    Tokens.UNIT_DIVIDE
 ]
 
 class UnknownTokenError(Exception):
