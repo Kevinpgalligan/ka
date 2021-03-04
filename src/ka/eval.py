@@ -1,6 +1,7 @@
 import math
-from .types import number
-from .functions import dispatch
+from .types import Quantity, number, is_number
+from .functions import dispatch, multiply, add
+from .units import lookup_unit, QSPACE, UnitSignature
 
 CONSTANTS = {
     "e": number(math.e),
@@ -15,6 +16,10 @@ class EvalModes:
     STATEMENTS = "statements"
     QUANTITY = "quantity"
     UNIT_SIGNATURE = "unit-signature"
+
+class EvalError(Exception):
+    def __init__(self, message):
+        self.message = message
 
 class EvalEnvironment:
     def __init__(self):
@@ -51,8 +56,33 @@ def eval_based_on_mode(node, env, child_values):
         return env.set_variable(node.label, child_values[0])
     if mode == EvalModes.STATEMENTS:
         return child_values[-1] if child_values else None
-    if mode == EvalModes.QUANTITY:
-        raise Exception("TODO")
     if mode == EvalModes.UNIT_SIGNATURE:
-        raise Exception("TODO")
-    raise Exception("TODO unknown eval mode")
+        return make_unit_signature(node.value)
+    if mode == EvalModes.QUANTITY:
+        return make_quantity(child_values[0], child_values[1])
+    raise EvalError(f"Unknown evaluation mode: '{mode}' (This is a bug!)")
+
+def make_unit_signature(unit_exp_pairs):
+    offset = 0
+    multiple = 1
+    qv = QSPACE.get_zero()
+    for name, exp in unit_exp_pairs:
+        unit = lookup_unit(name)
+        if unit is None:
+            raise EvalError(f"Unknown unit '{name}'. (Remember that it's case-sensitive).")
+        qv *= unit.quantity_vector ** exp
+        multiple *= unit.multiple ** exp
+        offset = unit.offset
+        if offset != 0 and len(unit_exp_pairs) > 1:
+            raise EvalError(f"Can't combine unit '{name}' with other units, since it has an offset.")
+        if offset != 0 and exp != 1:
+            raise EvalError(f"Can't raise unit '{name}' to a power because it has an offset.")
+    return UnitSignature(qv, multiple, offset)
+
+def make_quantity(magnitude, unit_signature):
+    if not is_number(magnitude):
+        raise EvalError(f"Tried to add units to '{type(magnitude)}', which isn't a magnitude.")
+    return Quantity(add(
+                        multiply(magnitude, number(unit_signature.multiple)),
+                        number(unit_signature.offset)),
+                    unit_signature.quantity_vector)

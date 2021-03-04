@@ -3,10 +3,20 @@ from .functions import multiply
 import collections
 from fractions import Fraction as frac
 
-QUANTITY_TO_QV = {}
+QUANTITY_TO_QV = {} # <-- this is used only to check for mistakes
 QV_TO_QUANTITY = collections.defaultdict(list)
 NAME_TO_UNIT = {}
 SYMBOL_TO_UNIT = {}
+
+def lookup_unit(name):
+    """Returns Unit by the given name, if it
+    exists. Otherwise, return None."""
+    if name in NAME_TO_UNIT:
+        return NAME_TO_UNIT[name]
+    if name in SYMBOL_TO_UNIT:
+        return SYMBOL_TO_UNIT[name]
+    # TODO unit prefixes
+    return None
 
 class Vector:
     def __init__(self, xs):
@@ -60,7 +70,7 @@ class QuantityVector:
     def __pow__(self, a):
         return QuantityVector(a*self.v, self.names)
 
-    def __div__(self, other):
+    def __truediv__(self, other):
         return self * QuantityVector(-other.v, other.names)
 
     def __eq__(self, other):
@@ -84,8 +94,10 @@ class QuantitySpace:
             Vector(tuple(1 if name==basis_name else 0 for name in self.base_units)),
             self.base_units)
 
-class Unit:
+    def get_zero(self):
+        return QuantityVector(Vector(tuple(0 for _ in self.base_units)), self.base_units)
 
+class Unit:
     NO_PLURAL = "noplural"
 
     def __init__(self, symbol, singular_name, plural_name, quantities,
@@ -94,6 +106,12 @@ class Unit:
         self.singular_name = singular_name
         self.plural_name = plural_name
         self.quantities = quantities
+        self.quantity_vector = quantity_vector
+        self.multiple = multiple
+        self.offset = offset
+
+class UnitSignature:
+    def __init__(self, quantity_vector, multiple, offset):
         self.quantity_vector = quantity_vector
         self.multiple = multiple
         self.offset = offset
@@ -154,7 +172,7 @@ CD = QSPACE.get_basis_vector("cd")
 register_unit("s", "second", "time", S)
 register_unit("m", "metre", "length", M)
 # Nice edge case, Obama.
-register_unit("g", "gram", "mass", KG, multiple=rat(1,1000))
+register_unit("g", "gram", "mass", KG, multiple=frac(1,1000))
 register_unit("A", "ampere", "electric current", A)
 register_unit("K", "kelvin", "thermodynamic temperature", K)
 register_unit("mol", "mole", "amount of substance", MOL)
@@ -178,10 +196,10 @@ register_unit("F", "farad", "electrical capacitance", C / V)
 register_unit("Ω", "ohm", "electrical resistance", V / A)
 register_unit("S", "siemens", "electrical conductance", A / V, plural_name=Unit.NO_PLURAL)
 register_unit("Wb", "weber", "magnetix flux", V * S)
-register_unit("T", "tesla", ["magnetic induction", "magnetic flux density", KG * S**-2 * A**-1)
+register_unit("T", "tesla", ["magnetic induction", "magnetic flux density"], KG * S**-2 * A**-1)
 register_unit("H", "henry", "electrical inductance", V * S / A, plural_name="henries")
 # Degrees celcius is offset from 0 kelvin by -273.15 = -5463/20.
-register_unit("°C", "degC", "thermodynamic temperature", K, offset=-rat(5463, 20))
+register_unit("°C", "degC", "thermodynamic temperature", K, offset=-frac(5463, 20))
 register_unit("lm", "lumen", "luminous flux", CD)
 register_unit("lx", "lux", "illuminance", CD * M**-2, plural_name=Unit.NO_PLURAL)
 register_unit("Bq", "becquerel", "radioactivity", S**-1)

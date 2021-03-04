@@ -1,6 +1,14 @@
 import math
 import fractions
 
+class Quantity:
+    def __init__(self, mag, qv):
+        self.mag = mag
+        self.qv = qv
+
+def is_number(x):
+    return isinstance(x, Number)
+
 def number(x):
     n = get_initial_type(x)
     while n.can_move_down():

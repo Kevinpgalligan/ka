@@ -20,6 +20,9 @@ def dispatch(name, args):
 def multiply(x, y):
     return dispatch("*", (x, y))
 
+def add(x, y):
+    return dispatch("+", (x, y))
+
 def register_function(f, name, arg_types):
     global FUNCTIONS
     FUNCTIONS[name].append((f, arg_types))

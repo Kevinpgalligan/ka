@@ -78,13 +78,6 @@ def test_parse_unclosed_parentheses():
 def test_parse_empty_parentheses():
     validate_parsing_error([t(Tokens.LBRACKET), t(Tokens.RBRACKET)])
 
-def test_parse_statements_without_separator():
-    validate_parsing_error(
-        [t(Tokens.VAR, name="x"),
-         t(Tokens.ASSIGNMENT_OP),
-         t(Tokens.NUM, value=2),
-         t(Tokens.VAR, name="x")])
-
 def test_parse_adjacent_values_without_operator():
     validate_parsing_error([t(Tokens.NUM, value=1), t(Tokens.NUM, value=2)])
 
@@ -93,3 +86,45 @@ def test_parse_binary_op_with_missing_right_operand():
 
 def test_parse_binary_op_with_missing_left_operand():
     validate_parsing_error([t(Tokens.NUM, value=2), t(Tokens.NUM, value=1)])
+
+def test_parse_units():
+    validate_parse(
+        [t(Tokens.VAR, name="x"),
+         t(Tokens.VAR, name="feet"),
+         t(Tokens.EXP),
+         t(Tokens.NUM, value=2),
+         t(Tokens.VAR, name="s"),
+         t(Tokens.UNIT_DIVIDE),
+         t(Tokens.VAR, name="Pa"),
+         t(Tokens.EXP),
+         t(Tokens.NUM, value=-1),
+         t(Tokens.MULT),
+         t(Tokens.VAR, name="y"),
+         t(Tokens.VAR, name="metres")],
+        ParseNode("",
+            children=[
+                ParseNode("*",
+                    children=[
+                        ParseNode("quantity",
+                            children=[
+                                ParseNode("x"),
+                                ParseNode("feet^2 s^1 Pa^1")]),
+                        ParseNode("quantity",
+                            children=[
+                                ParseNode("y"),
+                                ParseNode("metres^1")])])]))
+
+def test_parse_units_when_non_integer_exponent():
+    validate_parsing_error([
+        t(Tokens.VAR, name="x"),
+        t(Tokens.VAR, name="m"),
+        t(Tokens.EXP),
+        t(Tokens.NUM, value=1.2)])
+
+def test_parse_units_when_missing_units_after_divide():
+    validate_parsing_error([
+        t(Tokens.VAR, name="x"),
+        t(Tokens.VAR, name="m"),
+        t(Tokens.EXP),
+        t(Tokens.NUM, value=2),
+        t(Tokens.UNIT_DIVIDE)])

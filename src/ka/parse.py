@@ -215,7 +215,7 @@ def parse_units(t, invert=False):
             exponent = -exponent
         units.append((unit_name, exponent))
     if not units:
-        raise Exception("TODO: exception, expected units.")
+        raise ParsingError("Missing units where expected.", t.ptr)
     return units
 
 def parse_integer(t):
@@ -226,6 +226,6 @@ def parse_integer(t):
             sign = -1
     i = sign * t.read(Tokens.NUM).meta('value')
     if not isinstance(i, int):
-        raise Exception("TODO: exception, expected an integer literal.")
+        raise ParsingError(f"Expected an integer literal, got a {type(i)}.", t.ptr-1)
     return i
 
