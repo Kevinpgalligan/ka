@@ -46,13 +46,10 @@ def funcall_node(name, children):
     return ParseNode(label=name, children=children, eval_mode=EvalModes.FUNCALL)
 
 def quantity_node(term, unit_sig):
-    return ParseNode(label="quantity", children=[term, unit_sig], eval_mode=EvalModes.QUANTITY)
-
-def unit_signature_node(units):
-    return ParseNode(label=" ".join(f"{name}^{exp}" for name, exp in units),
-                     value=units,
-                     eval_mode=EvalModes.UNIT_SIGNATURE)
-
+    return ParseNode(label=str(unit_sig),
+                     children=[term],
+                     eval_mode=EvalModes.QUANTITY,
+                     value=unit_sig)
 
 def parse_tokens(tokens):
     return parse_statements(BagOfTokens(tokens))
@@ -198,12 +195,25 @@ def parse_variable(t):
 
 def parse_unit_signature(t):
     units = parse_units(t)
+    inverted_units = []
     if t.next_is_one_of(Tokens.UNIT_DIVIDE):
         t.read_any()
-        units += parse_units(t, invert=True)
-    return unit_signature_node(units)
+        inverted_units = parse_units(t)
+    return UnitSignature(units, inverted_units)
 
-def parse_units(t, invert=False):
+class UnitSignature:
+    def __init__(self, units, inverted_units):
+        self.units = units
+        self.inverted_units = inverted_units
+
+    def __str__(self):  
+        s = " ".join(f"{name}^{exp}" for name, exp in self.units) 
+        if self.inverted_units:
+            s += " | "
+            s += " ".join(f"{name}^{exp}" for name, exp in self.inverted_units) 
+        return s
+
+def parse_units(t):
     units = []
     while t.next_is_one_of(Tokens.VAR):
         unit_name = t.read_any().meta('name')
@@ -211,8 +221,6 @@ def parse_units(t, invert=False):
         if t.next_is_one_of(Tokens.EXP):
             t.read_any()
             exponent = parse_integer(t)
-        if invert:
-            exponent = -exponent
         units.append((unit_name, exponent))
     if not units:
         raise ParsingError("Missing units where expected.", t.ptr)

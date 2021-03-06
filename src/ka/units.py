@@ -110,12 +110,6 @@ class Unit:
         self.multiple = multiple
         self.offset = offset
 
-class UnitSignature:
-    def __init__(self, quantity_vector, multiple, offset):
-        self.quantity_vector = quantity_vector
-        self.multiple = multiple
-        self.offset = offset
-
 def register_unit(symbol,
                   singular_name,
                   quantities,

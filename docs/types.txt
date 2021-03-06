@@ -131,7 +131,27 @@ register_unit("ft", "feet", 0.3*BaseUnits.METRE)
 
 What happens when you do feet^2? UnitSignature(multiplier=0.3^2, <2, 0, 0, ...>)?
 
-HM.
+This is the last thing I have to figure out. And, I think you do need to keep track of the multiplier.
+
+5ft / s <---- shit, a parsing ambiguity. Is is 5ft divided by the variable s, or 5ft per second?
+
+That's 2 remaining challenges, that I'm aware of:
+1) how to model units.
+2) how to resolve that parsing ambiguity. I really want to be able to write 5ft/s, but it seems impossible to do that without treating units as variables and polluting the namespace, i.e. doing it the Frink way.
+
+SOLUTION TO #2: 5ft|s, no parsing ambiguity. Works because I haven't added the logical OR operation.
+
+SOLUTION TO #1: think of the problem starting from the parsing step. If we parse, say, "1 feet^2|s", then "feet" needs to return a DimensionVector (or whatever it's called). As does "s". We square the "feet" one, invert the "s" one. Except, there also needs to be a multiplier for "feet".
+
+Maybe a unit can be a DimensionVector (or whatever)... plus a multiplier? In this case, we square the multiplier & apply it to the number.
+
+Also, the multiplier thing has to be done at runtime, given that the value of the quantity could be stored in a variable.
+
+OKAY. API:
+
+  register_unit("feet", aliases=["ft", "foot"], 0.35*BaseUnits.METRE)
+
+BaseUnits.METRE is actually a DimensionVector (or whatever). With a multiplier of 1. Multiplication is applied to the multiplier. Repeat this exercise for other possible units and we'll have the API figured. Q: how do you combine units? Q: how do you define units without a unique symbol, i.e. measures from existing units, e.g. m/s^2?
 
 ### Useful references
 * https://frinklang.org
