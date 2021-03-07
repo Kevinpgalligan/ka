@@ -105,14 +105,11 @@ def test_parse_units():
             children=[
                 ParseNode("*",
                     children=[
-                        ParseNode("quantity",
+                        ParseNode("feet^2 s^1 | Pa^-1",
+                            children=[ParseNode("x")]),
+                        ParseNode("metres^1",
                             children=[
-                                ParseNode("x"),
-                                ParseNode("feet^2 s^1 Pa^1")]),
-                        ParseNode("quantity",
-                            children=[
-                                ParseNode("y"),
-                                ParseNode("metres^1")])])]))
+                                ParseNode("y")])])]))
 
 def test_parse_units_when_non_integer_exponent():
     validate_parsing_error([

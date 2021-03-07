@@ -1,10 +1,13 @@
 import math
 
+import pytest
+
 from ka.tokens import tokenise
 from ka.parse import parse_tokens
-from ka.eval import eval_parse_tree
-from ka.types import Number, number, rational
+from ka.eval import eval_parse_tree, EvalError
+from ka.types import Quantity, Number, number, rational
 from ka.functions import multiply
+from ka.units import M, S, K
 
 def validate_result(s, expected):
     tokens = tokenise(s)
@@ -14,6 +17,10 @@ def validate_result(s, expected):
 def validate_results(cases):
     for s, expected in cases:
         validate_result(s, expected)
+
+def validate_fail(s):
+    with pytest.raises(EvalError):
+        eval_parse_tree(parse_tokens(tokenise(s)))
 
 def test_empty():
     validate_result("", None)
@@ -69,3 +76,31 @@ def test_equations_and_functions():
         ("C(3,1)", 3),
         ("3!", 6),
     ])
+
+def test_quantities():
+    validate_results([
+        ("5 m | s", Quantity(5, M / S)),
+        ("3m^2 s^-1", Quantity(3, M**2 * S**-1)),
+        ("100 degC", Quantity(-rational(3463, 20), K)),
+        ("5 feet seconds", Quantity(0.3048*5, M * S))])
+
+def test_quantity_of_quantity():
+    validate_fail("(5m)s")
+
+def test_unknown_unit():
+    validate_fail("10 flabberglooks | second")
+
+def test_offset_unit_with_exponent():
+    validate_fail("10 degC^2")
+
+def test_offset_unit_with_other_units():
+    validate_fail("10 degC seconds")
+
+def test_unit_prefixes():
+    validate_results([
+        ("5 km", Quantity(5000, M)),
+        ("1 kilometre", Quantity(1000, M)),
+        ("3 m | millisecond", Quantity(3000, M / S))])
+
+def test_prefix_for_offset_unit():
+    validate_fail("1 kilodegC")

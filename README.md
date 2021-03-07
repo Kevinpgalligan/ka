@@ -1,60 +1,12 @@
 ### ka(lculator)
-A CLI calculator.
-
-Features:
-
-* Minimal interface, type as little as possible to get results.
-
-```
-$ ka '3*(pi+1)'
-```
-* First-class support for rational numbers.
-* First-class support for combinatorics functions, and lazy evaluation of combinatorics.
-
-```
-> 5!
-120
-> 1000!/999!
-1000 # Python would overflow here
-```
-* Units.
-
-```
-> 5 feet to metres
-> 5ft + 1m
-```
-* An interpreter.
-* Common mathematical constants and functions (`pi`, `e`, `sin`, etc).
-* Assignment.
-
-```
-$ ka 'x=5*3;y=1;pi+x-y'
-17.141592653589793
-```
-* See the parse tree.
-
-```
-$ ka 'x=5*3;y=1;pi+x-y' --tree
-├── x=
-│   └── *
-│       ├── 5
-│       └── 3
-├── y=
-│   └── 1
-└── +
-    ├── pi
-    └── -
-        ├── x
-        └── y
-```
-* Strongly typed, dispatch.
+A calculator language.
 
 ### TODO
-* Unit tests for quantity evaluation.
-* Unit prefixes.
-* Fix bug: C(4,2) returns 6/1, something fucky going on with the type system there.
 * Use Python's built-in numerical type hierarchy, if possible. So that not everything needs to be wrapped. Will probably require quite a bit of refactoring.
+* Fix bug: C(4,2) returns 6/1, something fucky going on with the type system there.
+* Refactor: use ParseNode label only for appearance, store actual data as its value.
 * Integrate quantities into type system, quantity arithmetic / functions.
+* Bug: can't use symbol name of degrees Celcius, probably a unicode issue.
 * Fix CLI so it doesn't interpret leading negative unary operator as a flag: <https://docs.python.org/3/library/argparse.html#arguments-containing>
 * Refactor ugly divide(), leverage dispatch.
 * Handle runtime errors (e.g. incompatible units, division by 0, overflow, and the like; overflow can happen during parsing!).

@@ -8,15 +8,65 @@ QV_TO_QUANTITY = collections.defaultdict(list)
 NAME_TO_UNIT = {}
 SYMBOL_TO_UNIT = {}
 
+class Prefix:
+    def __init__(self, symbol_prefix, name_prefix, multiplier):
+        self.symbol_prefix = symbol_prefix
+        self.name_prefix = name_prefix
+        self.multiplier = multiplier
+
+PREFIX_DATA = [
+    ("yotta", "Y", 24),
+    ("zetta", "Z", 21),
+    ("exa", "E", 18),
+    ("peta", "P", 15),
+    ("tera", "T", 12),
+    ("giga", "G", 9),
+    ("mega", "M", 6),
+    ("kilo", "k", 3),
+    ("hecto", "h", 2),
+    ("deca", "da", 1),
+    ("deci", "d", -1),
+    ("centi", "c", -2),
+    ("milli", "m", -3),
+    ("micro", "μ", -6),
+    ("nano", "n", -9),
+    ("pico", "p", -12),
+    ("femto", "f", -15),
+    ("atto", "a", -18),
+    ("zepto", "z", -21),
+    ("yocto", "y", -24)
+]
+PREFIXES = [Prefix(symbol_prefix, name_prefix, 10**exp if exp>0 else frac(1, 10**-exp))
+            for name_prefix, symbol_prefix, exp in PREFIX_DATA]
+
+class InvalidPrefixError(Exception):
+    pass
+
 def lookup_unit(name):
     """Returns Unit by the given name, if it
-    exists. Otherwise, return None."""
+    exists. Otherwise, return None.
+    Raises InvalidPrefixError if a prefix is applied to
+    a unit with an offset, as doing so doesn't make sense."""
     if name in NAME_TO_UNIT:
         return NAME_TO_UNIT[name]
     if name in SYMBOL_TO_UNIT:
         return SYMBOL_TO_UNIT[name]
-    # TODO unit prefixes
+    for prefix in PREFIXES:
+        unprefixed = name[len(prefix.name_prefix):]
+        if name.startswith(prefix.name_prefix) and unprefixed in NAME_TO_UNIT:
+            return apply_prefix(prefix, NAME_TO_UNIT[unprefixed])
+        unprefixed = name[len(prefix.symbol_prefix):]
+        if name.startswith(prefix.symbol_prefix) and unprefixed in SYMBOL_TO_UNIT:
+            return apply_prefix(prefix, SYMBOL_TO_UNIT[unprefixed])
     return None
+
+def apply_prefix(prefix, unit):
+    # Don't need to update any of the other unit data besides
+    # the multiple, since the other stuff won't be used anywhere.
+    if unit.offset != 0:
+        raise InvalidPrefixError()
+    return Unit(unit.symbol, unit.singular_name, unit.plural_name, unit.quantities,
+                unit.quantity_vector, prefix.multiplier * unit.multiple, unit.offset)
 
 class Vector:
     def __init__(self, xs):
@@ -83,6 +133,9 @@ class QuantityVector:
         return " ".join(f"{name}^{exp}" if exp != 1 else name
                         for exp, name in zip(self.v, self.names)
                         if exp!=0)
+
+    def __str__(self):
+        return "QuantityVector(" + self.prettified() + ")"
 
 class QuantitySpace:
     def __init__(self, base_units):
@@ -201,10 +254,14 @@ register_unit("Gy", "gray", "absorbed dose", J / KG)
 register_unit("Sv", "sievert", "equivalent dose", J / KG)
 register_unit("kat", "katal", "catalytic activity", MOL * S**-1)
 
+### Fucked up units.
+register_unit("ft", "foot", "length", M, multiple=0.3048, plural_name="feet")
+
 # TODO
 # Add all these units:
 #   https://en.wikipedia.org/wiki/International_System_of_Units
 #   https://en.wikipedia.org/wiki/Non-SI_units_mentioned_in_the_SI
+# And: million / billion / other quantities. Bytes. What else...
 # Then run some tests to validate the units.
 # Check if that all words used in quantities are in the dictionary.
 # Check that all symbol / unit names are on the wiki page.

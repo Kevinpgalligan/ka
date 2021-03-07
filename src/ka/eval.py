@@ -1,7 +1,7 @@
 import math
 from .types import Quantity, number, is_number
 from .functions import dispatch, multiply, add
-from .units import lookup_unit, QSPACE
+from .units import lookup_unit, QSPACE, InvalidPrefixError
 
 CONSTANTS = {
     "e": number(math.e),
@@ -61,21 +61,24 @@ def eval_based_on_mode(node, env, child_values):
 
 def make_quantity(magnitude, unit_signature):
     if not is_number(magnitude):
-        raise EvalError(f"Tried to add units to '{type(magnitude)}', which isn't a magnitude.")
+        raise EvalError(f"Tried to add units to '{type(magnitude)}'. Units can only be added to a magnitude.")
     qv, multiple, offset = compose_units(unit_signature)
     return Quantity(add(
                         multiply(magnitude, number(multiple)),
                         number(offset)),
-                    quantity_vector)
+                    qv)
 
 def compose_units(unit_sig):
     offset = 0
     multiple = 1
     qv = QSPACE.get_zero()
-    unit_exp_inv_triplets = ([(name, exp, False) for name, exp in unit_sig.units]
+    unit_specs = ([(name, exp, False) for name, exp in unit_sig.units]
         + [(name, exp, True) for name, exp in unit_sig.inverted_units])
-    for name, exp, invert in unit_exp_pairs:
-        unit = lookup_unit(name)
+    for name, exp, invert in unit_specs:
+        try:
+            unit = lookup_unit(name)
+        except InvalidPrefixError:
+            raise EvalError(f"Can't apply a prefix to unit '{name}', as it has an offset!")
         if unit is None:
             raise EvalError(f"Unknown unit '{name}'. (Remember that it's case-sensitive).")
         if invert:
@@ -83,9 +86,9 @@ def compose_units(unit_sig):
         qv *= unit.quantity_vector ** exp
         multiple *= unit.multiple ** exp
         offset = unit.offset
-        if offset != 0 and len(unit_exp_pairs) > 1:
+        if offset != 0 and len(unit_specs) > 1:
             raise EvalError(f"Can't combine unit '{name}' with other units, since it has an offset.")
         if offset != 0 and exp != 1:
-            raise EvalError(f"Can't raise unit '{name}' to a power because it has an offset.")
+            raise EvalError(f"The only valid exponent for unit '{name}' is 1, but was {exp}.")
     return qv, multiple, offset
 

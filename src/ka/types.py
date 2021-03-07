@@ -6,6 +6,17 @@ class Quantity:
         self.mag = mag
         self.qv = qv
 
+    def __eq__(self, other):
+        return (isinstance(other, Quantity)
+                and self.mag == other.mag
+                and self.qv == other.qv)
+
+    def __str__(self):
+        return "Quantity(" + ", ".join([str(self.mag), str(self.qv)]) + ")"
+
+    def __repr__(self):
+        return str(self)
+
 def is_number(x):
     return isinstance(x, Number)
 
@@ -89,6 +100,9 @@ def divide(x, y):
 class Rational(Float):
     def __init__(self, x):
         self.x = x
+
+    def __neg__(self):
+        return Rational(-self.x)
 
     def can_move_down(self):
         return self.x.denominator == 1
