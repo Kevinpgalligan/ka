@@ -1,5 +1,5 @@
 from .tokens import Tokens
-from .types import number
+from .types import simplify_number
 from .eval import EvalModes
 
 class ParseNode:
@@ -171,7 +171,7 @@ def parse_unsigned_term_without_factorial(t):
 
 def parse_number(t):
     v = t.read(Tokens.NUM).meta('value')
-    return ParseNode(label=str(v), value=number(v))
+    return ParseNode(label=str(v), value=simplify_number(v))
 
 def parse_function(t):
     name = t.read(Tokens.VAR).meta('name')

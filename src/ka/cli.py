@@ -4,7 +4,7 @@ import sys
 from .tokens import tokenise, UnknownTokenError
 from .parse import parse_tokens, pretty_print_parse_tree, ParsingError
 from .eval import eval_parse_tree
-from .types import Number, Quantity
+from .types import Quantity
 
 ERROR_CONTEXT_SIZE = 5
 INDENT = 2
@@ -61,7 +61,7 @@ def error(msg, index, s):
     sys.exit(1)
 
 def display_result(r):
-    if isinstance(r, Number):
-        print(r.x)
     if isinstance(r, Quantity):
         print(r.mag.x, r.qv.prettified())
+    else:
+        print(r)

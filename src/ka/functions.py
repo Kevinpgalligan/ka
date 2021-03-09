@@ -2,7 +2,9 @@ import collections
 import operator
 import math
 
-from .types import Number, Float, Integer, divide, coerce, number
+from numbers import Number, Integral
+
+from .types import divide, simplify_number
 
 FUNCTIONS = collections.defaultdict(list)
 
@@ -13,45 +15,35 @@ def dispatch(name, args):
         raise Exception("Unknown function " + name)
     for f, types in FUNCTIONS[name]:
         if len(types) == len(args) and all(isinstance(arg, t) for arg, t in zip(args, types)):
-            return f(*args)
+            # Always return the simplest type of number
+            # possible. Assuming it's a number, that is.
+            return simplify_number(f(*args))
+
     # TODO list the signatures.
     raise Exception(f"Didn't match any signatures of '{name}'.")
-
-def multiply(x, y):
-    return dispatch("*", (x, y))
-
-def add(x, y):
-    return dispatch("+", (x, y))
 
 def register_function(f, name, arg_types):
     global FUNCTIONS
     FUNCTIONS[name].append((f, arg_types))
 
 def register_binary_op(name, op):
-    def new_op(n1, n2):
-        n1, n2 = coerce(n1, n2)
-        return number(op(n1.x, n2.x))
-    register_function(new_op, name, (Number, Number))
+    register_function(op, name, (Number, Number))
 
 def register_unary_op(name, op):
-    def new_op(n):
-        return number(op(n.x))
-    register_function(new_op, name, (Number,))
+    register_function(op, name, (Number,))
 
 def register_numeric_function(name, f, num_args=1):
-    def new_f(*ns):
-        return number(f(*[n.x for n in ns]))
-    register_function(new_f, name, num_args*(Number,))
+    register_function(f, name, num_args*(Number,))
 
 def choose(n, k):
     # Import inside the function since scipy is slow to load.
     # Will get rid of scipy dependency if possible.
     import scipy.special
-    return number(scipy.special.comb(n.x, k.x, exact=True))
+    return scipy.special.comb(n, k, exact=True)
 
 def factorial(n):
     import scipy.special
-    return number(scipy.special.factorial(n.x, exact=True))
+    return scipy.special.factorial(n, exact=True)
 
 BINARY_OPS = [
     ("+", operator.add),
@@ -84,5 +76,5 @@ NUMERIC_FUNCTIONS = [
 for name, f in NUMERIC_FUNCTIONS:
     register_numeric_function(name, f)
 register_numeric_function("log", lambda base, x: math.log(x, base), num_args=2)
-register_function(choose, "C", (Integer, Integer))
-register_function(factorial, "!", (Integer,))
+register_function(choose, "C", (Integral, Integral))
+register_function(factorial, "!", (Integral,))

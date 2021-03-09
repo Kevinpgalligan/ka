@@ -1,5 +1,3 @@
-from .functions import multiply
-
 import collections
 from fractions import Fraction as frac
 

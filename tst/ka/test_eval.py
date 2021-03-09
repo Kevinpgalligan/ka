@@ -1,12 +1,12 @@
 import math
+from fractions import Fraction as frac
 
 import pytest
 
 from ka.tokens import tokenise
 from ka.parse import parse_tokens
 from ka.eval import eval_parse_tree, EvalError
-from ka.types import Quantity, Number, number, rational
-from ka.functions import multiply
+from ka.types import Quantity
 from ka.units import M, S, K
 
 def validate_result(s, expected):
@@ -38,25 +38,24 @@ def test_overriding_constants():
     validate_result("pi=3.14;pi", 3.14)
 
 def test_rational():
-    validate_result("3/4", rational(3, 4))
+    validate_result("3/4", frac(3, 4))
 
 def test_simplification():
     validate_result("1.0", 1)
     validate_result("4/2", 2)
 
-def test_coercion():
+def test_fraction_by_float():
     # Hmmm, might result in shitty floating
     # point shit.
-    validate_result("(3/2)*1.2",
-                    multiply(rational(3, 2), number(1.2)))
+    validate_result("(3/2)*1.2", frac(3, 2) * 1.2)
 
 def test_equations_and_functions():
     validate_results([
         ("r=2.5;pi*r^2", math.pi * 2.5**2),
         ("x=3;x^2+2*x+1", 16),
         ("n=5;n*(n+1)/2", 15),
-        ("(3/2)%1", rational(1, 2)),
-        ("(3/2)^2", rational(9, 4)),
+        ("(3/2)%1", frac(1, 2)),
+        ("(3/2)^2", frac(9, 4)),
         ("-1+2", 1),
         ("+1+2", 3),
         ("sin(0)", 0),
@@ -66,7 +65,7 @@ def test_equations_and_functions():
         ("ln(e)", 1),
         ("log10(10)", 1),
         ("log2(2)", 1),
-        ("abs(-3/2)", rational(3, 2)),
+        ("abs(-3/2)", frac(3, 2)),
         ("floor(1.7)", 1),
         ("ceil(1.7)", 2),
         ("round(1.4)", 1),
@@ -81,7 +80,7 @@ def test_quantities():
     validate_results([
         ("5 m | s", Quantity(5, M / S)),
         ("3m^2 s^-1", Quantity(3, M**2 * S**-1)),
-        ("100 degC", Quantity(-rational(3463, 20), K)),
+        ("100 degC", Quantity(-frac(3463, 20), K)),
         ("5 feet seconds", Quantity(0.3048*5, M * S))])
 
 def test_quantity_of_quantity():

@@ -1,11 +1,11 @@
 import math
-from .types import Quantity, number, is_number
-from .functions import dispatch, multiply, add
+from .types import Quantity, is_number
+from .functions import dispatch
 from .units import lookup_unit, QSPACE, InvalidPrefixError
 
 CONSTANTS = {
-    "e": number(math.e),
-    "pi": number(math.pi)
+    "e": math.e,
+    "pi": math.pi
 }
 
 class EvalModes:
@@ -63,10 +63,7 @@ def make_quantity(magnitude, unit_signature):
     if not is_number(magnitude):
         raise EvalError(f"Tried to add units to '{type(magnitude)}'. Units can only be added to a magnitude.")
     qv, multiple, offset = compose_units(unit_signature)
-    return Quantity(add(
-                        multiply(magnitude, number(multiple)),
-                        number(offset)),
-                    qv)
+    return Quantity(multiple*magnitude + offset, qv)
 
 def compose_units(unit_sig):
     offset = 0
