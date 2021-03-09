@@ -4,23 +4,20 @@ from .eval import EvalModes
 
 class ParseNode:
     def __init__(self,
+                 value=None,
                  label="",
                  children=None,
-                 eval_mode=EvalModes.LABEL_IS_VALUE,
-                 value=None):
+                 eval_mode=EvalModes.LEAF):
+        self.value = value
         self.label = label
         self.children = children if children else []
         self.eval_mode = eval_mode
-        # I added value later, was hackily using the
-        # label to store the value of the node. But
-        # these should really be 2 separate things.
-        self.value = value
 
     def __repr__(self):
         return str(self)
 
     def __str__(self):
-        return "".join(["ParseNode[", str(self.label), "]"])
+        return "ParseNode(" + ",".join([str(self.label)] + list(map(str, self.children))) + ")"
 
 def pretty_print_parse_tree(root):
     # This is the only place we use treelib, and the
@@ -43,7 +40,7 @@ def pretty_print_parse_tree(root):
     tree.show(key=lambda node: node.data)
 
 def funcall_node(name, children):
-    return ParseNode(label=name, children=children, eval_mode=EvalModes.FUNCALL)
+    return ParseNode(label=name, value=name, children=children, eval_mode=EvalModes.FUNCALL)
 
 def quantity_node(term, unit_sig):
     return ParseNode(label=str(unit_sig),
@@ -110,7 +107,9 @@ def parse_statement(t):
 def parse_assignment(t):
     var_token = t.read(Tokens.VAR)
     t.read(Tokens.ASSIGNMENT_OP)
-    return ParseNode(label=var_token.meta('name'),
+    name = var_token.meta('name')
+    return ParseNode(label=name,
+                     value=name,
                      children=[parse_expression(t)],
                      eval_mode=EvalModes.ASSIGNMENT)
 
@@ -171,8 +170,8 @@ def parse_unsigned_term_without_factorial(t):
         raise ParsingError("Unexpected token.", t.ptr)
 
 def parse_number(t):
-    return ParseNode(label=number(t.read(Tokens.NUM).meta('value')),
-                     eval_mode=EvalModes.LABEL_IS_VALUE)
+    v = t.read(Tokens.NUM).meta('value')
+    return ParseNode(label=str(v), value=number(v))
 
 def parse_function(t):
     name = t.read(Tokens.VAR).meta('name')
@@ -190,8 +189,8 @@ def parse_args(t):
     return args
 
 def parse_variable(t):
-    return ParseNode(label=t.read(Tokens.VAR).meta('name'),
-                     eval_mode=EvalModes.VARIABLE)
+    name = t.read(Tokens.VAR).meta('name')
+    return ParseNode(label=name, value=name, eval_mode=EvalModes.VARIABLE)
 
 def parse_unit_signature(t):
     units = parse_units(t)
@@ -212,6 +211,11 @@ class UnitSignature:
             s += " | "
             s += " ".join(f"{name}^{exp}" for name, exp in self.inverted_units) 
         return s
+
+    def __eq__(self, other):
+        return (isinstance(other, UnitSignature)
+                and self.units == other.units
+                and self.inverted_units == other.inverted_units)
 
 def parse_units(t):
     units = []

@@ -9,7 +9,7 @@ CONSTANTS = {
 }
 
 class EvalModes:
-    LABEL_IS_VALUE = "label-is-value"
+    LEAF = "leaf"
     VARIABLE = "variable"
     FUNCALL = "funcall"
     ASSIGNMENT = "assignment"
@@ -45,14 +45,14 @@ def eval_node(node, env):
 
 def eval_based_on_mode(node, env, child_values):
     mode = node.eval_mode
-    if mode == EvalModes.LABEL_IS_VALUE:
-        return node.label
+    if mode == EvalModes.LEAF:
+        return node.value
     if mode == EvalModes.VARIABLE:
-        return env.get_variable(node.label)
+        return env.get_variable(node.value)
     if mode == EvalModes.FUNCALL:
-        return dispatch(node.label, child_values)
+        return dispatch(node.value, child_values)
     if mode == EvalModes.ASSIGNMENT:
-        return env.set_variable(node.label, child_values[0])
+        return env.set_variable(node.value, child_values[0])
     if mode == EvalModes.STATEMENTS:
         return child_values[-1] if child_values else None
     if mode == EvalModes.QUANTITY:
