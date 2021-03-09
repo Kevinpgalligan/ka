@@ -1,10 +1,10 @@
 import collections
 import operator
 import math
-
 from numbers import Number, Integral
+from fractions import Fraction as frac
 
-from .types import divide, simplify_number
+from .types import simplify_number
 
 FUNCTIONS = collections.defaultdict(list)
 
@@ -13,15 +13,44 @@ def dispatch(name, args):
     if name not in FUNCTIONS:
         # TODO "did you mean...?" based on string distance.
         raise Exception("Unknown function " + name)
-    for f, types in FUNCTIONS[name]:
-        if len(types) == len(args) and all(isinstance(arg, t) for arg, t in zip(args, types)):
-            # Always return the simplest type of number
-            # possible. Assuming it's a number, that is.
-            return simplify_number(f(*args))
+    matching_signatures = lookup_function(name, args)
 
-    # TODO list the signatures.
-    raise Exception(f"Didn't match any signatures of '{name}'.")
+    if not matching_signatures:
+        # TODO list the signatures.
+        raise Exception(f"Didn't match any signatures of '{name}'.")
+    f = get_closest_match(matching_signatures)
+    return simplify_number(f(*args))   
 
+def lookup_function(name, args):
+    return [(f, types) for (f, types) in FUNCTIONS[name]
+            if (len(types) == len(args)
+                and all(isinstance(arg, t) for arg, t in zip(args, types)))]
+
+def get_closest_match(matching_signatures):
+    # Order the signatures in terms of their place within
+    # the type hierarchy. (Integral, Integral) should come
+    # before (Rational, Rational), for example. Unclear what
+    # to do in case there's (Integral, Rational) and
+    # (Rational, Integral).
+    closest_f, closest_types = matching_signatures[0]
+    for f, types in matching_signatures[1:]:
+        if types_below(types, closest_types):
+            closest_f, closest_types = f, types
+    return closest_f
+
+def types_below(types_A, types_B):
+    # Returns whether types_A is clearly below types_B in
+    # the type hierarchy.
+    return all(type_below(tA, tB) for tA, tB in zip(types_A, types_B))
+
+def type_below(tA, tB):
+    # This is kinda a hack, since Python's numbers package
+    # doesn't allow you to say isinstance(Integral, Rational).
+    # It obviously won't work at all if the types aren't in
+    # this list.
+    ts = [Integral, Number]
+    return ts.index(tA) <= ts.index(tB)
+    
 def register_function(f, name, arg_types):
     global FUNCTIONS
     FUNCTIONS[name].append((f, arg_types))
@@ -45,16 +74,22 @@ def factorial(n):
     import scipy.special
     return scipy.special.factorial(n, exact=True)
 
+def fraction_divide(n1, n2):
+    return frac(n1, n2)
+
 BINARY_OPS = [
     ("+", operator.add),
     ("-", operator.sub),
     ("*", operator.mul),
-    ("/", divide),
+    ("/", operator.truediv),
     ("%", operator.mod),
     ("^", operator.pow)
 ]
 for name, op in BINARY_OPS:
     register_binary_op(name, op)
+# Override division for integers so that
+# it returns a fraction.
+register_function(fraction_divide, "/", (Integral, Integral))
 register_unary_op("+", operator.pos)
 register_unary_op("-", operator.neg)
 

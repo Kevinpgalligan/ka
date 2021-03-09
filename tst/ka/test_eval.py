@@ -10,9 +10,12 @@ from ka.types import Quantity
 from ka.units import M, S, K
 
 def validate_result(s, expected):
+    assert expected == get_result(s)
+
+def get_result(s):
     tokens = tokenise(s)
     tree = parse_tokens(tokens)
-    assert expected == eval_parse_tree(tree)
+    return eval_parse_tree(tree)
 
 def validate_results(cases):
     for s, expected in cases:
@@ -48,6 +51,10 @@ def test_fraction_by_float():
     # Hmmm, might result in shitty floating
     # point shit.
     validate_result("(3/2)*1.2", frac(3, 2) * 1.2)
+
+def test_integer_division_gives_fraction():
+    r = get_result("1/2")
+    assert isinstance(r, frac)
 
 def test_equations_and_functions():
     validate_results([

@@ -62,6 +62,6 @@ def error(msg, index, s):
 
 def display_result(r):
     if isinstance(r, Quantity):
-        print(r.mag.x, r.qv.prettified())
+        print(r.mag, r.qv.prettified())
     else:
         print(r)

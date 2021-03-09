@@ -2,8 +2,8 @@
 A calculator language.
 
 ### TODO
-* Refactor ugly divide(), leverage dispatch.
 * Integrate quantities into type system, quantity arithmetic / functions.
+* Add more units.
 * Unit conversion.
 * Bug: can't use symbol name of degrees Celcius, probably a unicode issue.
 * Fix CLI so it doesn't interpret leading negative unary operator as a flag: <https://docs.python.org/3/library/argparse.html#arguments-containing>
