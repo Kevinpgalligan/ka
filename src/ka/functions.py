@@ -27,9 +27,8 @@ def lookup_function(name, args):
                 and all(isinstance(arg, t) for arg, t in zip(args, types)))]
 
 def get_closest_match(matching_signatures):
-    # Order the signatures in terms of their place within
-    # the type hierarchy. (Integral, Integral) should come
-    # before (Rational, Rational), for example. Unclear what
+    # (Integral, Integral) should come before
+    # (Rational, Rational), for example. Unclear what
     # to do in case there's (Integral, Rational) and
     # (Rational, Integral).
     closest_f, closest_types = matching_signatures[0]
@@ -41,16 +40,8 @@ def get_closest_match(matching_signatures):
 def types_below(types_A, types_B):
     # Returns whether types_A is clearly below types_B in
     # the type hierarchy.
-    return all(type_below(tA, tB) for tA, tB in zip(types_A, types_B))
+    return all(issubclass(tA, tB) for tA, tB in zip(types_A, types_B))
 
-def type_below(tA, tB):
-    # This is kinda a hack, since Python's numbers package
-    # doesn't allow you to say isinstance(Integral, Rational).
-    # It obviously won't work at all if the types aren't in
-    # this list.
-    ts = [Integral, Number]
-    return ts.index(tA) <= ts.index(tB)
-    
 def register_function(f, name, arg_types):
     global FUNCTIONS
     FUNCTIONS[name].append((f, arg_types))
