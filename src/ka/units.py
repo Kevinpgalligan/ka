@@ -1,5 +1,6 @@
 import collections
 from fractions import Fraction as frac
+import math
 
 QUANTITY_TO_QV = {} # <-- this is used only to check for mistakes
 QV_TO_QUANTITY = collections.defaultdict(list)
@@ -214,6 +215,7 @@ MOL = QSPACE.get_basis_vector("mol")
 CD = QSPACE.get_basis_vector("cd")
 
 ## SI base units.
+# Useful references:
 register_unit("s", "second", "time", S)
 register_unit("m", "metre", "length", M)
 # Nice edge case, Obama.
@@ -225,11 +227,14 @@ register_unit("mol", "mole", "amount of substance", MOL)
 register_unit("cd", "candela", "luminous intensity", CD)
 
 ## Named units, derived from SI base units.
-## https://en.wikipedia.org/wiki/SI_derived_unit
+##   https://en.wikipedia.org/wiki/SI_derived_unit
+## And other useful lists:
+##   https://en.wikipedia.org/wiki/International_System_of_Units
+##   https://en.wikipedia.org/wiki/Non-SI_units_mentioned_in_the_SI
 ## If I don't make a mistake here somewhere, it'll be a miracle.
 ## I should really write a script to parse the wiki.
 register_unit("Hz", "hertz", "frequency", S**-1, plural_name=Unit.NO_PLURAL)
-register_unit("rad", "radian", "angle", M / M)
+RAD = register_unit("rad", "radian", "angle", M / M)
 register_unit("sr", "steradian", "solid angle", M**2 / M**2)
 register_unit("N", "newton", ["force", "weight"], KG * M * S**-2)
 register_unit("Pa", "pascal", ["pressure", "stress"], KG * M**-1 * S**-2)
@@ -253,12 +258,31 @@ register_unit("Sv", "sievert", "equivalent dose", J / KG)
 register_unit("kat", "katal", "catalytic activity", MOL * S**-1)
 
 ### Fucked up units.
-register_unit("ft", "foot", "length", M, multiple=0.3048, plural_name="feet")
+register_unit("min", "minute", "time", S, multiple=60)
+register_unit("h", "hour", "time", S, multiple=3600)
+register_unit("d", "day", "time", S, multiple=86400)
+register_unit("au", "astronomicalunit", "length", M, multiple=149597870700)
+register_unit("°", "degree", "plane and phase angle", RAD, multiple=math.pi/180)
+register_unit("ha", "hectare", "length", M**2, multiple=10**4)
+register_unit("acre", "acre", "area", M**2, multiple=4046.873)
+register_unit("l", "litre", "volume", M**3, multiple=10**-3)
+register_unit("t", "tonne", "mass", KG, multiple=1000)
+register_unit("Da", "dalton", "mass", KG, multiple=1.660539040e-27)
+register_unit("eV", "electronvolt", "energy", J, multiple=1.602176634e-19)
+register_unit("lj", "lightyear", "length", M, multiple=9.4607e15)
+register_unit("pc", "parsec", "length", M, multiple=3.0857e16)
+INCH = register_unit("in", "inch", "length", M, multiple=0.0254, plural_name="inches")
+FEET = register_unit("ft", "foot", "length", INCH, multiple=12, plural_name="feet")
+YARD = register_unit("yd", "yard", "length", FEET, multiple=3)
+register_unit("mi", "mile", "length", YARD, multiple=1760)
+register_unit("sm", "nauticalmile", "length", M, multiple=1852)
+# Using UK / Imperial measures.
+# TODO
+# https://www.adducation.info/how-to-improve-your-knowledge/units-of-measurement/
+#register_unit("tsp", "teaspoon", "volume", M**3, multiple=5.91939)
+#register_unit("tbsp", "tablespoon", "volume", M**3, multiple=5.91939)
 
 # TODO
-# Add all these units:
-#   https://en.wikipedia.org/wiki/International_System_of_Units
-#   https://en.wikipedia.org/wiki/Non-SI_units_mentioned_in_the_SI
 # And: million / billion / other quantities. Bytes. What else...
 # Then run some tests to validate the units.
 # Check if that all words used in quantities are in the dictionary.
