@@ -8,35 +8,35 @@ NAME_TO_UNIT = {}
 SYMBOL_TO_UNIT = {}
 
 class Prefix:
-    def __init__(self, symbol_prefix, name_prefix, multiplier):
+    def __init__(self, symbol_prefix, name_prefix, exp):
         self.symbol_prefix = symbol_prefix
         self.name_prefix = name_prefix
-        self.multiplier = multiplier
+        self.multiplier = 10**exp if exp>0 else frac(1, 10**-exp)
 
-PREFIX_DATA = [
-    ("yotta", "Y", 24),
-    ("zetta", "Z", 21),
-    ("exa", "E", 18),
-    ("peta", "P", 15),
-    ("tera", "T", 12),
-    ("giga", "G", 9),
-    ("mega", "M", 6),
-    ("kilo", "k", 3),
-    ("hecto", "h", 2),
-    ("deca", "da", 1),
-    ("deci", "d", -1),
-    ("centi", "c", -2),
-    ("milli", "m", -3),
-    ("micro", "μ", -6),
-    ("nano", "n", -9),
-    ("pico", "p", -12),
-    ("femto", "f", -15),
-    ("atto", "a", -18),
-    ("zepto", "z", -21),
-    ("yocto", "y", -24)
+MILLI_PREFIX = Prefix("milli", "m", -3)
+
+PREFIXES = [
+    Prefix("yotta", "Y", 24),
+    Prefix("zetta", "Z", 21),
+    Prefix("exa", "E", 18),
+    Prefix("peta", "P", 15),
+    Prefix("tera", "T", 12),
+    Prefix("giga", "G", 9),
+    Prefix("mega", "M", 6),
+    Prefix("kilo", "k", 3),
+    Prefix("hecto", "h", 2),
+    Prefix("deca", "da", 1),
+    Prefix("deci", "d", -1),
+    Prefix("centi", "c", -2),
+    MILLI_PREFIX,
+    Prefix("micro", "μ", -6),
+    Prefix("nano", "n", -9),
+    Prefix("pico", "p", -12),
+    Prefix("femto", "f", -15),
+    Prefix("atto", "a", -18),
+    Prefix("zepto", "z", -21),
+    Prefix("yocto", "y", -24)
 ]
-PREFIXES = [Prefix(symbol_prefix, name_prefix, 10**exp if exp>0 else frac(1, 10**-exp))
-            for name_prefix, symbol_prefix, exp in PREFIX_DATA]
 
 class InvalidPrefixError(Exception):
     pass
@@ -219,7 +219,7 @@ CD = QSPACE.get_basis_vector("cd")
 register_unit("s", "second", "time", S)
 register_unit("m", "metre", "length", M)
 # Nice edge case, Obama.
-register_unit("g", "gram", "mass", KG, multiple=frac(1,1000))
+GRAM = register_unit("g", "gram", "mass", KG, multiple=frac(1,1000))
 register_unit("A", "ampere", "electric current", A)
 register_unit("K", "kelvin", "thermodynamic temperature", K)
 register_unit("mol", "mole", "amount of substance", MOL)
@@ -231,15 +231,16 @@ register_unit("cd", "candela", "luminous intensity", CD)
 ## And other useful lists:
 ##   https://en.wikipedia.org/wiki/International_System_of_Units
 ##   https://en.wikipedia.org/wiki/Non-SI_units_mentioned_in_the_SI
+##   https://www.adducation.info/how-to-improve-your-knowledge/units-of-measurement/
 ## If I don't make a mistake here somewhere, it'll be a miracle.
 ## I should really write a script to parse the wiki.
 register_unit("Hz", "hertz", "frequency", S**-1, plural_name=Unit.NO_PLURAL)
 RAD = register_unit("rad", "radian", "angle", M / M)
 register_unit("sr", "steradian", "solid angle", M**2 / M**2)
 register_unit("N", "newton", ["force", "weight"], KG * M * S**-2)
-register_unit("Pa", "pascal", ["pressure", "stress"], KG * M**-1 * S**-2)
+PASCAL = register_unit("Pa", "pascal", ["pressure", "stress"], KG * M**-1 * S**-2)
 J = register_unit("J", "joule", ["energy", "work", "heat"], KG * M**2 * S**-2)
-register_unit("W", "watt", ["power", "radiant flux"], KG * M**2 * S**-3)
+WATT = register_unit("W", "watt", ["power", "radiant flux"], KG * M**2 * S**-3)
 C = register_unit("C", "coulomb", ["electric charge", "quantity of electricity"], S * A)
 V = register_unit("V", "volt", ["voltage", "electrical potential difference", "electromotive force"], J / C)
 register_unit("F", "farad", "electrical capacitance", C / V)
@@ -265,7 +266,8 @@ register_unit("au", "astronomicalunit", "length", M, multiple=149597870700)
 register_unit("°", "degree", "plane and phase angle", RAD, multiple=math.pi/180)
 register_unit("ha", "hectare", "length", M**2, multiple=10**4)
 register_unit("acre", "acre", "area", M**2, multiple=4046.873)
-register_unit("l", "litre", "volume", M**3, multiple=10**-3)
+LITRE = register_unit("l", "litre", "volume", M**3, multiple=10**-3)
+MILLILITRE = apply_prefix(MILLI_PREFIX, LITRE)
 register_unit("t", "tonne", "mass", KG, multiple=1000)
 register_unit("Da", "dalton", "mass", KG, multiple=1.660539040e-27)
 register_unit("eV", "electronvolt", "energy", J, multiple=1.602176634e-19)
@@ -276,16 +278,20 @@ FEET = register_unit("ft", "foot", "length", INCH, multiple=12, plural_name="fee
 YARD = register_unit("yd", "yard", "length", FEET, multiple=3)
 register_unit("mi", "mile", "length", YARD, multiple=1760)
 register_unit("sm", "nauticalmile", "length", M, multiple=1852)
-# Using UK / Imperial measures.
-# TODO
-# https://www.adducation.info/how-to-improve-your-knowledge/units-of-measurement/
-#register_unit("tsp", "teaspoon", "volume", M**3, multiple=5.91939)
-#register_unit("tbsp", "tablespoon", "volume", M**3, multiple=5.91939)
-
-# TODO
-# And: million / billion / other quantities. Bytes. What else...
-# Then run some tests to validate the units.
-# Check if that all words used in quantities are in the dictionary.
-# Check that all symbol / unit names are on the wiki page.
-# Check that no quantities have a distance of <=2 (or sth) from each other.
-# And so on.
+# Using UK / Imperial measures for teaspoon and whatnot. As
+# opposed to US measures.
+register_unit("tsp", "teaspoon", "volume", MILLILITRE, multiple=5.91939)
+register_unit("tbsp", "tablespoon", "volume", MILLILITRE, multiple=17.7582)
+register_unit("floz", "fluidounce", "volume", MILLILITRE, multiple=28.4130625)
+register_unit("cup", "cup", "volume", MILLILITRE, multiple=284.13)
+register_unit("gill", "gill", "volume", MILLILITRE, multiple=142)
+register_unit("pt", "pint", "volume", MILLILITRE, multiple=586)
+register_unit("qt", "quart", "volume", LITRE, multiple=1.14)
+register_unit("gal", "gallon", "volume", LITRE, multiple=4.55)
+register_unit("gr", "grain", "mass", GRAM, multiple=0.0648)
+register_unit("dr", "dram" "mass", GRAM, multiple=1.77)
+register_unit("oz", "ounce" "mass", GRAM, multiple=28.35)
+register_unit("lb", "pound" "mass", KG, multiple=0.45)
+register_unit("hp", "horsepower", "power", WATT, multiple=735.5)
+register_unit("bar", "bar", "pressure", PASCAL, multiple=100000)
+register_unit("cal", "calorie", "energy", J, multiple=4.1868)

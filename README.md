@@ -3,7 +3,6 @@ A calculator language.
 
 ### TODO
 * Integrate quantities into type system, quantity arithmetic / functions.
-* Add more units.
 * Unit conversion.
 * Unit shittiness: can't use symbol name of degrees Celcius (probably a unicode issue); unit name can't have spaces (see: astronomicalunit); can't add minute / second (plane & phase angle quantities) because of name conflict; logarithmic ratio quantities (neper, bel, decibel).
 * Fix CLI so it doesn't interpret leading negative unary operator as a flag: <https://docs.python.org/3/library/argparse.html#arguments-containing>
