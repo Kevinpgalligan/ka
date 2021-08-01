@@ -4,7 +4,7 @@ import math
 from numbers import Number, Integral
 from fractions import Fraction as frac
 
-from .types import simplify_number
+from .types import simplify_number, Quantity
 
 FUNCTIONS = collections.defaultdict(list)
 
@@ -104,3 +104,27 @@ for name, f in NUMERIC_FUNCTIONS:
 register_numeric_function("log", lambda base, x: math.log(x, base), num_args=2)
 register_function(choose, "C", (Integral, Integral))
 register_function(factorial, "!", (Integral,))
+
+def quantity_add(q1, q2):
+    qv_check(q1, q2)
+    return Quantity(q1.mag+q2.mag, q1.qv)
+
+def quantity_subtract(q1, q2):
+    qv_check(q1, q2)
+    return Quantity(q1.mag+q2.mag, q1.qv)
+
+def qv_check(q1, q2):
+    if q1.qv != q2.qv:
+        # TODO
+        raise IncompatibleQuantities("Blah")
+
+def quantity_multiply(q1, q2):
+    return Quantity(q1.mag*q2.mag, q1.qv*q2.qv)
+
+def quantity_divide(q1, q2):
+    return Quantity(frac(q1.mag, q2.mag), q1.qv/q2.qv)
+
+register_function(quantity_add, "+", (Quantity, Quantity))
+register_function(quantity_subtract, "-", (Quantity, Quantity))
+register_function(quantity_multiply, "*", (Quantity, Quantity))
+register_function(quantity_divide, "/", (Quantity, Quantity))

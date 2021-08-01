@@ -8,9 +8,9 @@ NAME_TO_UNIT = {}
 SYMBOL_TO_UNIT = {}
 
 class Prefix:
-    def __init__(self, symbol_prefix, name_prefix, exp):
-        self.symbol_prefix = symbol_prefix
+    def __init__(self, name_prefix, symbol_prefix, exp):
         self.name_prefix = name_prefix
+        self.symbol_prefix = symbol_prefix
         self.multiplier = 10**exp if exp>0 else frac(1, 10**-exp)
 
 MILLI_PREFIX = Prefix("milli", "m", -3)
@@ -162,13 +162,9 @@ class Unit:
         self.multiple = multiple
         self.offset = offset
 
-def register_unit(symbol,
-                  singular_name,
-                  quantities,
-                  quantity_vector,
-                  plural_name=None,
-                  multiple=1,
-                  offset=0):
+def register_unit(symbol, singular_name, quantities, quantity_vector,
+        plural_name=None, multiple=1, offset=0):
+    assert isinstance(quantity_vector, QuantityVector)
     if plural_name is None:
         plural_name = singular_name + "s"
     if isinstance(quantities, str):
@@ -201,7 +197,14 @@ def register_unit(symbol,
 
     # return this so that it can be reused when
     # defining other units.
-    return quantity_vector
+    return unit
+
+def register_derived_unit(symbol, singular_name, base_unit, multiple=1, plural_name=None):
+    """Registers a unit based on another unit.
+    i.e. it should be a measure of the same quantity."""
+    return register_unit(symbol, singular_name, base_unit.quantities,
+                         base_unit.quantity_vector, multiple=base_unit.multiple*multiple,
+                         plural_name=plural_name)
 
 ## Here's the "space" based on the base units we wanna use.
 ## All quantities exist within this space.
@@ -234,15 +237,23 @@ register_unit("cd", "candela", "luminous intensity", CD)
 ##   https://www.adducation.info/how-to-improve-your-knowledge/units-of-measurement/
 ## If I don't make a mistake here somewhere, it'll be a miracle.
 ## I should really write a script to parse the wiki.
+# Also, it's rather confusing that I pass around both
+# QuantityVectors and Units.
 register_unit("Hz", "hertz", "frequency", S**-1, plural_name=Unit.NO_PLURAL)
-RAD = register_unit("rad", "radian", "angle", M / M)
+RAD = M/M
+register_unit("rad", "radian", "angle", RAD)
 register_unit("sr", "steradian", "solid angle", M**2 / M**2)
 register_unit("N", "newton", ["force", "weight"], KG * M * S**-2)
-PASCAL = register_unit("Pa", "pascal", ["pressure", "stress"], KG * M**-1 * S**-2)
-J = register_unit("J", "joule", ["energy", "work", "heat"], KG * M**2 * S**-2)
-WATT = register_unit("W", "watt", ["power", "radiant flux"], KG * M**2 * S**-3)
-C = register_unit("C", "coulomb", ["electric charge", "quantity of electricity"], S * A)
-V = register_unit("V", "volt", ["voltage", "electrical potential difference", "electromotive force"], J / C)
+PASCAL = KG * M**-1 * S**-2
+register_unit("Pa", "pascal", ["pressure", "stress"], PASCAL)
+J = KG * M**2 * S**-2
+register_unit("J", "joule", ["energy", "work", "heat"], J)
+WATT = KG * M**2 * S**-3
+register_unit("W", "watt", ["power", "radiant flux"], WATT)
+C = S * A
+register_unit("C", "coulomb", ["electric charge", "quantity of electricity"], C)
+V = J / C
+register_unit("V", "volt", ["voltage", "electrical potential difference", "electromotive force"], V)
 register_unit("F", "farad", "electrical capacitance", C / V)
 register_unit("Ω", "ohm", "electrical resistance", V / A)
 register_unit("S", "siemens", "electrical conductance", A / V, plural_name=Unit.NO_PLURAL)
@@ -263,8 +274,8 @@ register_unit("min", "minute", "time", S, multiple=60)
 register_unit("h", "hour", "time", S, multiple=3600)
 register_unit("d", "day", "time", S, multiple=86400)
 register_unit("au", "astronomicalunit", "length", M, multiple=149597870700)
-register_unit("°", "degree", "plane and phase angle", RAD, multiple=math.pi/180)
-register_unit("ha", "hectare", "length", M**2, multiple=10**4)
+register_unit("°", "degree", "angle", RAD, multiple=math.pi/180)
+register_unit("ha", "hectare", "area", M**2, multiple=10**4)
 register_unit("acre", "acre", "area", M**2, multiple=4046.873)
 LITRE = register_unit("l", "litre", "volume", M**3, multiple=10**-3)
 MILLILITRE = apply_prefix(MILLI_PREFIX, LITRE)
@@ -274,24 +285,24 @@ register_unit("eV", "electronvolt", "energy", J, multiple=1.602176634e-19)
 register_unit("lj", "lightyear", "length", M, multiple=9.4607e15)
 register_unit("pc", "parsec", "length", M, multiple=3.0857e16)
 INCH = register_unit("in", "inch", "length", M, multiple=0.0254, plural_name="inches")
-FEET = register_unit("ft", "foot", "length", INCH, multiple=12, plural_name="feet")
-YARD = register_unit("yd", "yard", "length", FEET, multiple=3)
-register_unit("mi", "mile", "length", YARD, multiple=1760)
+FEET = register_derived_unit("ft", "foot", INCH, multiple=12, plural_name="feet")
+YARD = register_derived_unit("yd", "yard", FEET, multiple=3)
+register_derived_unit("mi", "mile", YARD, multiple=1760)
 register_unit("sm", "nauticalmile", "length", M, multiple=1852)
 # Using UK / Imperial measures for teaspoon and whatnot. As
 # opposed to US measures.
-register_unit("tsp", "teaspoon", "volume", MILLILITRE, multiple=5.91939)
-register_unit("tbsp", "tablespoon", "volume", MILLILITRE, multiple=17.7582)
-register_unit("floz", "fluidounce", "volume", MILLILITRE, multiple=28.4130625)
-register_unit("cup", "cup", "volume", MILLILITRE, multiple=284.13)
-register_unit("gill", "gill", "volume", MILLILITRE, multiple=142)
-register_unit("pt", "pint", "volume", MILLILITRE, multiple=586)
-register_unit("qt", "quart", "volume", LITRE, multiple=1.14)
-register_unit("gal", "gallon", "volume", LITRE, multiple=4.55)
-register_unit("gr", "grain", "mass", GRAM, multiple=0.0648)
-register_unit("dr", "dram" "mass", GRAM, multiple=1.77)
-register_unit("oz", "ounce" "mass", GRAM, multiple=28.35)
-register_unit("lb", "pound" "mass", KG, multiple=0.45)
+register_derived_unit("tsp", "teaspoon", MILLILITRE, multiple=5.91939)
+register_derived_unit("tbsp", "tablespoon", MILLILITRE, multiple=17.7582)
+register_derived_unit("floz", "fluidounce", MILLILITRE, multiple=28.4130625)
+register_derived_unit("cup", "cup", MILLILITRE, multiple=284.13)
+register_derived_unit("gill", "gill", MILLILITRE, multiple=142)
+register_derived_unit("pt", "pint", MILLILITRE, multiple=586)
+register_derived_unit("qt", "quart", LITRE, multiple=1.14)
+register_derived_unit("gal", "gallon", LITRE, multiple=4.55)
+register_derived_unit("gr", "grain", GRAM, multiple=0.0648)
+register_derived_unit("dr", "dram", GRAM, multiple=1.77)
+register_derived_unit("oz", "ounce", GRAM, multiple=28.35)
+register_unit("lb", "pound", "mass", KG, multiple=0.45)
 register_unit("hp", "horsepower", "power", WATT, multiple=735.5)
 register_unit("bar", "bar", "pressure", PASCAL, multiple=100000)
 register_unit("cal", "calorie", "energy", J, multiple=4.1868)
