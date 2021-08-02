@@ -21,6 +21,13 @@ class Quantity:
 def is_number(x):
     return isinstance(x, numbers.Number)
 
+def simplify_type(x):
+    if isinstance(x, numbers.Number):
+        return simplify_number(x)
+    if isinstance(x, Quantity):
+        return Quantity(simplify_number(x.mag), x.qv)
+    return x
+
 def simplify_number(x):
     if isinstance(x, float):
         fraction, whole = math.modf(x)
