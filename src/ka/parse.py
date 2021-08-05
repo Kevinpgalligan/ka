@@ -48,6 +48,12 @@ def quantity_node(term, unit_sig):
                      eval_mode=EvalModes.QUANTITY,
                      value=unit_sig)
 
+def unit_convert_node(sum_node, unit_sig):
+    return ParseNode(label=Tokens.UNIT_CONVERT + " " + str(unit_sig),
+                     children=[sum_node],
+                     eval_mode=EvalModes.CONVERT_UNIT,
+                     value=unit_sig)
+
 def parse_tokens(tokens):
     return parse_statements(BagOfTokens(tokens))
 
@@ -104,6 +110,11 @@ def parse_statement(t):
         return parse_assignment(t)
     return parse_expression(t)
 
+def parse_unit_convert(t, sum_node):
+    t.read(Tokens.UNIT_CONVERT)
+    unit_signature = parse_unit_signature(t)
+    return unit_convert_node(sum_node, unit_signature)
+
 def parse_assignment(t):
     var_token = t.read(Tokens.VAR)
     t.read(Tokens.ASSIGNMENT_OP)
@@ -114,7 +125,10 @@ def parse_assignment(t):
                      eval_mode=EvalModes.ASSIGNMENT)
 
 def parse_expression(t):
-    return parse_sum(t)
+    sum_node = parse_sum(t)
+    if t.next_are(Tokens.UNIT_CONVERT):
+        return parse_unit_convert(t, sum_node)
+    return sum_node
 
 def parse_sum(t):
     return parse_binary_op(t, parse_product, [Tokens.PLUS, Tokens.MINUS])

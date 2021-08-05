@@ -260,8 +260,8 @@ register_unit("S", "siemens", "electrical conductance", A / V, plural_name=Unit.
 register_unit("Wb", "weber", "magnetix flux", V * S)
 register_unit("T", "tesla", ["magnetic induction", "magnetic flux density"], KG * S**-2 * A**-1)
 register_unit("H", "henry", "electrical inductance", V * S / A, plural_name="henries")
-# Degrees celcius is offset from 0 kelvin by -273.15 = -5463/20.
-register_unit("°C", "degC", "thermodynamic temperature", K, offset=-frac(5463, 20))
+# To go from degrees Celcius to Kelvin, add 273.15 = 5463/20.
+register_unit("°C", "degC", "thermodynamic temperature", K, offset=frac(5463, 20))
 register_unit("lm", "lumen", "luminous flux", CD)
 register_unit("lx", "lux", "illuminance", CD * M**-2, plural_name=Unit.NO_PLURAL)
 register_unit("Bq", "becquerel", "radioactivity", S**-1)

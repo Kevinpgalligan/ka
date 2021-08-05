@@ -15,7 +15,7 @@ class EvalModes:
     ASSIGNMENT = "assignment"
     STATEMENTS = "statements"
     QUANTITY = "quantity"
-    UNIT_SIGNATURE = "unit-signature"
+    CONVERT_UNIT = "convert-unit"
 
 class EvalError(Exception):
     def __init__(self, message):
@@ -57,6 +57,8 @@ def eval_based_on_mode(node, env, child_values):
         return child_values[-1] if child_values else None
     if mode == EvalModes.QUANTITY:
         return make_quantity(child_values[0], node.value)
+    if mode == EvalModes.CONVERT_UNIT:
+        return convert_quantity(child_values[0], node.value)
     raise EvalError(f"Unknown evaluation mode: '{mode}' (This is a bug!)")
 
 def make_quantity(magnitude, unit_signature):
@@ -64,6 +66,19 @@ def make_quantity(magnitude, unit_signature):
         raise EvalError(f"Tried to add units to '{type(magnitude)}'. Units can only be added to a magnitude.")
     qv, multiple, offset = compose_units(unit_signature)
     return Quantity(multiple*magnitude + offset, qv)
+
+def convert_quantity(quantity, unit_sig):
+    qv, multiple, offset = compose_units(unit_sig)
+    if not isinstance(quantity, Quantity):
+        raise EvalError(f"Tried to change unit type of a {type(quantity)}, should be a quantity.")
+    if qv != quantity.qv:
+        raise EvalError(
+            f"Tried to convert quantity {quantity.qv.prettified()} to unit of quantity {qv.prettified()}.")
+    # Basically, undo the conversion that you would do to initially go from
+    # this unit to the standard unit of this quantity.
+    return dispatch("/",
+                    (dispatch("-", (quantity.mag, offset)),
+                     multiple))
 
 def compose_units(unit_sig):
     offset = 0
