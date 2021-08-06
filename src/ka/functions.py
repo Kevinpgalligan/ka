@@ -96,8 +96,8 @@ NUMERIC_FUNCTIONS = [
     ("floor", math.floor),
     ("ceil", math.ceil),
     ("round", round),
-    ("i", int),
-    ("f", float),
+    ("int", int),
+    ("float", float),
     ("+", operator.pos),
     ("-", operator.neg)
 ]
