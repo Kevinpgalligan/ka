@@ -2,15 +2,14 @@
 A calculator language.
 
 ### TODO
-* Documentation (features / interesting things; usage; the grammar, example files + ability to execute files; list of units)
-* Handle runtime errors (e.g. incompatible units, division by 0, overflow, and the like; overflow can happen during parsing!).
+* Documentation: description & features; lots of usage examples (incl. tree to show grammar); list of units; documentation for functions; and a coherent kinda manual that can be printed in multiple formats (Markdown for GitHub readme, maybe HTML for website), should list the types, details of how unit arithmetic and whatnot works, FAQ.
+* Usability: print decimal even if fraction.
+* Handle runtime errors (e.g. incompatible units, division by 0, overflow, and the like; overflow can happen during parsing!), add tests.
 * Accept more number input formats. 
 * Investigate precision when values are large.
-* Put it on PyPI.
-* An interpreter! Including special commands for showing the environment, clearing the environment, etc.
+* Plan interfaces (interpreter, CLI for running scripts & one-off commands, GUI)
 * Lazy combinatorics type.
 * Set notation, and set functions: sum({C(n,k) : k in [0,4)}); prod([1,7]); and so on.
-* Fix CLI so it doesn't interpret leading negative unary operator as a flag: <https://docs.python.org/3/library/argparse.html#arguments-containing>
 
 ### Supported functions
 
