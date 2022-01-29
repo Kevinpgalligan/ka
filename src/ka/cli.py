@@ -5,6 +5,7 @@ from .tokens import tokenise, UnknownTokenError
 from .parse import parse_tokens, pretty_print_parse_tree, ParsingError
 from .eval import eval_parse_tree
 from .types import Quantity
+from fractions import Fraction as frac
 
 ERROR_CONTEXT_SIZE = 5
 INDENT = 2
@@ -62,6 +63,11 @@ def error(msg, index, s):
 
 def display_result(r):
     if isinstance(r, Quantity):
-        print(r.mag, r.qv.prettified())
+        print(r.mag, r.qv.prettified(), end="")
+        if isinstance(r.mag, frac):
+            print("    (" + str(float(r.mag)) + " " + r.qv.prettified() + ")", end="")
+        print()
+    elif isinstance(r, frac):
+        print(r, "    (" + str(float(r)) + ")")
     else:
         print(r)
