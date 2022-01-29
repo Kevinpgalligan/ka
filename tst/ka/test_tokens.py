@@ -21,13 +21,19 @@ def test_tokenise_valid_tokens():
         (Tokens.NUM, "22"),
         (Tokens.VAR, "x"),
         (Tokens.FACTORIAL, "!"),
-        (Tokens.UNIT_DIVIDE, "|")
+        (Tokens.UNIT_DIVIDE, "|"),
+        (Tokens.NUM, "1e-4")
     ]
-    s = "=;()+-*/%^123+abc1-22x!|"
+    s = "=;()+-*/%^123+abc1-22x!| 1e-4"
     tokens = tokenise(s)
     actual = [(token.tag, s[token.begin_index_incl:token.end_index_excl])
               for token in tokens]
     assert expected == actual
+
+def test_tokenise_scientific_notation():
+    for s, expected in [("100e-2", 1), ("1.2e-4", 1.2e-4)]:
+        token = tokenise(s)[0]
+        assert token.meta("value") == expected
 
 def test_tokenise_unknown():
     with pytest.raises(UnknownTokenError):

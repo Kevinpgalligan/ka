@@ -2,6 +2,14 @@ import math
 import numbers
 from fractions import Fraction as frac
 
+def get_external_type_name(x):
+    t = type(x)
+    if t is int:
+        t = numbers.Integral
+    elif t is float:
+        t = numbers.Real
+    return t.__name__
+
 class Quantity:
     def __init__(self, mag, qv):
         self.mag = mag

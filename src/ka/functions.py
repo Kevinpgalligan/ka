@@ -4,21 +4,39 @@ import math
 from numbers import Number, Integral
 from fractions import Fraction as frac
 
-from .types import simplify_type, Quantity
+from .types import simplify_type, Quantity, get_external_type_name
 from .units import QSPACE
 
 FUNCTIONS = collections.defaultdict(list)
 
+class UnknownFunctionError(Exception):
+    def __init__(self, name):
+        self.name = name
+
+class NoMatchingFunctionSignatureError(Exception):
+    def __init__(self, name, attempted_signature, actual_signatures):
+        self.name = name
+        self.attempted_signature = attempted_signature
+        self.actual_signatures = actual_signatures
+
+class IncompatibleQuantitiesError(Exception):
+    def __init__(self, qv1, qv2):
+        self.qv1 = qv1
+        self.qv2 = qv2
+
 def dispatch(name, args):
     global FUNCTIONS
     if name not in FUNCTIONS:
-        # TODO "did you mean...?" based on string distance.
-        raise Exception("Unknown function " + name)
+        raise UnknownFunctionError(name)
     matching_signatures = lookup_function(name, args)
-
     if not matching_signatures:
-        # TODO list the signatures.
-        raise Exception(f"Didn't match any signatures of '{name}'.")
+        all_signatures = list(map(lambda x: x[1], FUNCTIONS[name]))
+        all_sig_names = [tuple(map(lambda t: t.__name__, sig))
+                         for sig in all_signatures]
+        raise NoMatchingFunctionSignatureError(
+            name,
+            list(map(get_external_type_name, args)),
+            all_sig_names)
     f = get_closest_match(matching_signatures)
     return simplify_type(f(*args))
 
@@ -110,8 +128,7 @@ def register_quantities_op(name, quantity_vector_combiner=None):
     def f(q1, q2):
         if quantity_vector_combiner is None:
             if q1.qv != q2.qv:
-                # TODO
-                raise IncompatibleQuantities("Blah")
+                raise IncompatibleQuantitiesError(q1.qv, q2.qv)
             new_qv = q1.qv
         else:
             new_qv = quantity_vector_combiner(q1.qv, q2.qv)

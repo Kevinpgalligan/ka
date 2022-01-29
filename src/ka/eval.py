@@ -1,5 +1,5 @@
 import math
-from .types import Quantity, is_number
+from .types import Quantity, is_number, get_external_type_name
 from .functions import dispatch
 from .units import lookup_unit, QSPACE, InvalidPrefixError
 
@@ -35,7 +35,12 @@ class EvalEnvironment:
         return self._variables[name]
 
 def eval_parse_tree(root):
-    return eval_node(root, EvalEnvironment())
+    try:
+        return eval_node(root, EvalEnvironment())
+    except ZeroDivisionError:
+        raise EvalError("Attempted to divide by zero.")
+    except OverflowError:
+        raise EvalError("Overflow, numerical result out of range!")
 
 def eval_node(node, env):
     return eval_based_on_mode(
@@ -63,17 +68,17 @@ def eval_based_on_mode(node, env, child_values):
 
 def make_quantity(magnitude, unit_signature):
     if not is_number(magnitude):
-        raise EvalError(f"Tried to add units to '{type(magnitude)}'. Units can only be added to a magnitude.")
+        raise EvalError(f"Tried to add units on top of existing units. Units can only be added to a magnitude.")
     qv, multiple, offset = compose_units(unit_signature)
     return Quantity(multiple*magnitude + offset, qv)
 
 def convert_quantity(quantity, unit_sig):
     qv, multiple, offset = compose_units(unit_sig)
     if not isinstance(quantity, Quantity):
-        raise EvalError(f"Tried to change unit type of a {type(quantity)}, should be a quantity.")
+        raise EvalError(f"Tried to change unit of {get_external_type_name(quantity)}, which doesn't have a unit in the first place.")
     if qv != quantity.qv:
         raise EvalError(
-            f"Tried to convert quantity {quantity.qv.prettified()} to unit of quantity {qv.prettified()}.")
+            f"Tried to convert quantity of type {quantity.qv.prettified()} to unit of incompatible type {qv.prettified()}.")
     # Basically, undo the conversion that you would do to initially go from
     # this unit to the standard unit of this quantity.
     return dispatch("/",
@@ -101,6 +106,6 @@ def compose_units(unit_sig):
         if offset != 0 and len(unit_specs) > 1:
             raise EvalError(f"Can't combine unit '{name}' with other units, since it has an offset.")
         if offset != 0 and exp != 1:
-            raise EvalError(f"The only valid exponent for unit '{name}' is 1, but was {exp}.")
+            raise EvalError(f"The only valid exponent for unit '{name}' is 1, but it was given as {exp}.")
     return qv, multiple, offset
 

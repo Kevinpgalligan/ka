@@ -4,6 +4,7 @@ from fractions import Fraction as frac
 import pytest
 
 from ka.tokens import tokenise
+from ka.functions import UnknownFunctionError, NoMatchingFunctionSignatureError
 from ka.parse import parse_tokens
 from ka.eval import eval_parse_tree, EvalError
 from ka.types import Quantity
@@ -21,8 +22,8 @@ def validate_results(cases):
     for s, expected in cases:
         validate_result(s, expected)
 
-def validate_fail(s):
-    with pytest.raises(EvalError):
+def validate_fail(s, error_type=EvalError):
+    with pytest.raises(error_type):
         eval_parse_tree(parse_tokens(tokenise(s)))
 
 def test_empty():
@@ -76,8 +77,8 @@ def test_equations_and_functions():
         ("floor(1.7)", 1),
         ("ceil(1.7)", 2),
         ("round(1.4)", 1),
-        ("i(1.8+0.5)", 2),
-        ("f(3/2)", 1.5),
+        ("int(1.8+0.5)", 2),
+        ("float(3/2)", 1.5),
         ("log(2, 2)", 1),
         ("C(3,1)", 3),
         ("3!", 6),
@@ -87,8 +88,9 @@ def test_quantities():
     validate_results([
         ("5 m | s", Quantity(5, M / S)),
         ("3m^2 s^-1", Quantity(3, M**2 * S**-1)),
-        ("100 degC", Quantity(-frac(3463, 20), K)),
-        ("5 feet seconds", Quantity(0.3048*5, M * S))])
+        ("100 degC", Quantity(frac(7463, 20), K)),
+        ("5 feet seconds", Quantity(frac(0.0254)*12*5, M * S)),
+        ("5m > mm", 5000)])
 
 def test_quantity_of_quantity():
     validate_fail("(5m)s")
@@ -108,5 +110,26 @@ def test_unit_prefixes():
         ("1 kilometre", Quantity(1000, M)),
         ("3 m | millisecond", Quantity(3000, M / S))])
 
+def test_unassigned_variable():
+    validate_fail("x")
+
+def test_convert_non_quantity():
+    validate_fail("5 > m")
+
+def test_convert_incompatible_units():
+    validate_fail("5m > s")
+
 def test_prefix_for_offset_unit():
     validate_fail("1 kilodegC")
+
+def test_unknown_function():
+    validate_fail("f(1)", UnknownFunctionError)
+
+def test_no_matching_function_signature():
+    validate_fail("cos(1, 2)", NoMatchingFunctionSignatureError)
+
+def test_division_by_zero():
+    validate_fail("1/0")
+
+def test_overflow():
+    validate_fail("1.2^100000000000000000000000")

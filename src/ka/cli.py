@@ -3,8 +3,10 @@ import sys
 
 from .tokens import tokenise, UnknownTokenError
 from .parse import parse_tokens, pretty_print_parse_tree, ParsingError
-from .eval import eval_parse_tree
+from .eval import eval_parse_tree, EvalError
 from .types import Quantity
+from .functions import (FUNCTIONS, UnknownFunctionError,
+    NoMatchingFunctionSignatureError, IncompatibleQuantitiesError)
 from fractions import Fraction as frac
 
 ERROR_CONTEXT_SIZE = 5
@@ -40,11 +42,57 @@ def main():
     if args.tree:
         pretty_print_parse_tree(parse_tree)
     else:
-        result = eval_parse_tree(parse_tree)
-        if result is None:
-            print()
-        else:
-            display_result(result)
+        try:
+            result = eval_parse_tree(parse_tree)
+            if result is None:
+                print()
+            else:
+                display_result(result)
+        except EvalError as e:
+            print_err(e.message)
+            sys.exit(1)
+        except UnknownFunctionError as e:
+            print_err(f"Unknown function: '{e.name}'")
+            global FUNCTIONS
+            alternatives = find_close_matches(e.name, FUNCTIONS.keys())
+            if alternatives:
+                print_err("  You may have meant:", ", ".join(alternatives))
+            sys.exit(1)
+        except NoMatchingFunctionSignatureError as e:
+            print_err(f"Function '{e.name}' does not accept {printable_signature(e.attempted_signature)}.")
+            print_err("It does accept:")
+            for sig in e.actual_signatures:
+                print_err("   ", printable_signature(sig))
+            sys.exit(1)
+        except IncompatibleQuantitiesError as e:
+            print_err("Tried to combine two incompatible quantities.")
+            print_err("The first is a quantity of:")
+            print_err("   ", e.qv1.prettified())
+            print_err("The second is a quantity of:")
+            print_err("   ", e.qv2.prettified())
+            sys.exit(1)
+
+def printable_signature(sig):
+    return "(" + ", ".join(sig) + ")"
+
+def find_close_matches(s, ss):
+    return set(ss) & adjacent_strings([s])
+
+def adjacent_strings(xs):
+    alphabet = "abcdefghijklmnopqrstuvwxyz"
+    final = set()
+    for x in xs:
+        final |= set([x[:i] + x[i+1:] for i in range(len(x))])
+        final |= set([x[:i] + c + x[i:]
+                     for c in alphabet
+                     for i in range(len(x)+1)])
+        final |= set([x[:i] + c + x[i+1:]
+                      for c in alphabet
+                      for i in range(len(x))])
+    return final
+
+def print_err(*msgs):
+    print(*msgs, file=sys.stderr)
 
 def error(msg, index, s):
     error_lines = [msg]
