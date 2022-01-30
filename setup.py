@@ -21,7 +21,6 @@ setup(
         "License :: OSI Approved :: MIT License"
     ],
     install_requires=[
-        "treelib", # for visualisation
         "scipy"    # maths functions
     ]
 )

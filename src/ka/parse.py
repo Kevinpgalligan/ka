@@ -19,26 +19,6 @@ class ParseNode:
     def __str__(self):
         return "ParseNode(" + ",".join([str(self.label)] + list(map(str, self.children))) + ")"
 
-def pretty_print_parse_tree(root):
-    # This is the only place we use treelib, and the
-    # import adds noticeable delay. So only import when
-    # needed.
-    import treelib
-    tree = treelib.Tree()
-    stack = [(root, None, 0)]
-    i = 0
-    while stack:
-        node, parent, node_index = stack.pop()
-        # y u makin' me store the order of child nodes, treelib.
-        tree.create_node(str(node.label) + ("=" if node.eval_mode == EvalModes.ASSIGNMENT else ""),
-                         i,
-                         parent=parent,
-                         data=node_index)
-        for child_index, child in enumerate(node.children):
-            stack.append((child, i, child_index))
-        i += 1
-    tree.show(key=lambda node: node.data)
-
 def funcall_node(name, children):
     return ParseNode(label=name, value=name, children=children, eval_mode=EvalModes.FUNCALL)
 

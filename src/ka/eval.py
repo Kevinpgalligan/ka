@@ -34,9 +34,11 @@ class EvalEnvironment:
             raise EvalError(f"Unassigned variable: '{name}'")
         return self._variables[name]
 
-def eval_parse_tree(root):
+def eval_parse_tree(root, env=None):
+    if env is None:
+        env = EvalEnvironment()
     try:
-        return eval_node(root, EvalEnvironment())
+        return eval_node(root, env)
     except ZeroDivisionError:
         raise EvalError("Attempted to divide by zero.")
     except OverflowError:

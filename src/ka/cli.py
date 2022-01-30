@@ -2,8 +2,8 @@ import argparse
 import sys
 
 from .tokens import tokenise, UnknownTokenError
-from .parse import parse_tokens, pretty_print_parse_tree, ParsingError
-from .eval import eval_parse_tree, EvalError
+from .parse import parse_tokens, ParsingError
+from .eval import eval_parse_tree, EvalError, EvalEnvironment
 from .types import Quantity
 from .functions import (FUNCTIONS, UnknownFunctionError,
     NoMatchingFunctionSignatureError, IncompatibleQuantitiesError)
@@ -12,19 +12,55 @@ from fractions import Fraction as frac
 ERROR_CONTEXT_SIZE = 5
 INDENT = 2
 
+PROMPT = ">>> "
+KA_VERSION = "1.0"
+
 def main():
     parser = argparse.ArgumentParser(description="A calculator language.")
-    parser.add_argument("x", help="The statements to evaluate.")
-    parser.add_argument("--tree",
-                        "-t",
-                        action="store_true",
-                        help="Whether to print the parse tree instead of evaluating it.")
+    parser.add_argument("x", nargs="?", help="The statements to evaluate.")
+    parser.add_argument("--units", action="store_true", help="Print all available units.")
+    parser.add_argument("--functions", action="store_true", help="Print all available functions.")
+    parser.add_argument("--unit", help="Fuzzy search for a particular unit.")
+    parser.add_argument("--function", help="Fuzzy search for a particular function.")
     args = parser.parse_args()
-    s = args.x
+
+    if args.units:
+        print_units()
+    elif args.functions:
+        print_functions()
+    elif args.unit:
+        print_unit_info(args.unit)
+    elif args.function:
+        print_function_info(args.function)
+    elif args.x:
+        sys.exit(execute(s, EvalEnvironment()))
+    else:
+        run_interpreter()
+
+def print_units():
+    pass
+
+def print_unit_info(name):
+    pass
+
+def print_functions():
+    pass
+
+def print_function_info(name):
+    pass
+
+def run_interpreter():
+    env = EvalEnvironment()
+    print("ka version", KA_VERSION)
+    while True:
+        execute(input(PROMPT), env)
+
+def execute(s, env):
     try:
         tokens = tokenise(s)
     except UnknownTokenError as e:
         error("Unknown token!", e.index, s)
+        return 1
     try:
         parse_tree = parse_tokens(tokens)
     except ParsingError as e:
@@ -39,38 +75,36 @@ def main():
         else:
             index = tokens[e.token_index].begin_index_incl
         error(e.message, index, s)
-    if args.tree:
-        pretty_print_parse_tree(parse_tree)
-    else:
-        try:
-            result = eval_parse_tree(parse_tree)
-            if result is None:
-                print()
-            else:
-                display_result(result)
-        except EvalError as e:
-            print_err(e.message)
-            sys.exit(1)
-        except UnknownFunctionError as e:
-            print_err(f"Unknown function: '{e.name}'")
-            global FUNCTIONS
-            alternatives = find_close_matches(e.name, FUNCTIONS.keys())
-            if alternatives:
-                print_err("  You may have meant:", ", ".join(alternatives))
-            sys.exit(1)
-        except NoMatchingFunctionSignatureError as e:
-            print_err(f"Function '{e.name}' does not accept {printable_signature(e.attempted_signature)}.")
-            print_err("It does accept:")
-            for sig in e.actual_signatures:
-                print_err("   ", printable_signature(sig))
-            sys.exit(1)
-        except IncompatibleQuantitiesError as e:
-            print_err("Tried to combine two incompatible quantities.")
-            print_err("The first is a quantity of:")
-            print_err("   ", e.qv1.prettified())
-            print_err("The second is a quantity of:")
-            print_err("   ", e.qv2.prettified())
-            sys.exit(1)
+        return 1
+    try:
+        result = eval_parse_tree(parse_tree, env)
+        if result is None:
+            print()
+        else:
+            display_result(result)
+    except EvalError as e:
+        print_err(e.message)
+        return 1
+    except UnknownFunctionError as e:
+        print_err(f"Unknown function: '{e.name}'")
+        global FUNCTIONS
+        alternatives = find_close_matches(e.name, FUNCTIONS.keys())
+        if alternatives:
+            print_err("  You may have meant:", ", ".join(alternatives))
+        return 1
+    except NoMatchingFunctionSignatureError as e:
+        print_err(f"Function '{e.name}' does not accept {printable_signature(e.attempted_signature)}.")
+        print_err("It does accept:")
+        for sig in e.actual_signatures:
+            print_err("   ", printable_signature(sig))
+        return 1
+    except IncompatibleQuantitiesError as e:
+        print_err("Tried to combine two incompatible quantities.")
+        print_err("The first is a quantity of:")
+        print_err("   ", e.qv1.prettified())
+        print_err("The second is a quantity of:")
+        print_err("   ", e.qv2.prettified())
+        return 1
 
 def printable_signature(sig):
     return "(" + ", ".join(sig) + ")"
@@ -107,7 +141,6 @@ def error(msg, index, s):
         error_lines.append(
             " "*(INDENT+len(left_fade)+index-context_low_index) + "^")
     print("\n".join(error_lines), file=sys.stderr)
-    sys.exit(1)
 
 def display_result(r):
     if isinstance(r, Quantity):
