@@ -24,6 +24,9 @@ class IncompatibleQuantitiesError(Exception):
         self.qv1 = qv1
         self.qv2 = qv2
 
+def make_sig_printable(sig):
+    return tuple(map(lambda t: t.__name__, sig))
+
 def dispatch(name, args):
     global FUNCTIONS
     if name not in FUNCTIONS:
@@ -31,8 +34,7 @@ def dispatch(name, args):
     matching_signatures = lookup_function(name, args)
     if not matching_signatures:
         all_signatures = list(map(lambda x: x[1], FUNCTIONS[name]))
-        all_sig_names = [tuple(map(lambda t: t.__name__, sig))
-                         for sig in all_signatures]
+        all_sig_names = [make_sig_printable(sig) for sig in all_signatures]
         raise NoMatchingFunctionSignatureError(
             name,
             list(map(get_external_type_name, args)),

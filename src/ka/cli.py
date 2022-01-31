@@ -1,13 +1,15 @@
 import argparse
 import sys
+from fractions import Fraction as frac
 
 from .tokens import tokenise, UnknownTokenError
 from .parse import parse_tokens, ParsingError
 from .eval import eval_parse_tree, EvalError, EvalEnvironment
 from .types import Quantity
 from .functions import (FUNCTIONS, UnknownFunctionError,
-    NoMatchingFunctionSignatureError, IncompatibleQuantitiesError)
-from fractions import Fraction as frac
+    NoMatchingFunctionSignatureError, IncompatibleQuantitiesError,
+    make_sig_printable)
+from .units import UNITS, lookup_unit
 
 ERROR_CONTEXT_SIZE = 5
 INDENT = 2
@@ -20,8 +22,8 @@ def main():
     parser.add_argument("x", nargs="?", help="The statements to evaluate.")
     parser.add_argument("--units", action="store_true", help="Print all available units.")
     parser.add_argument("--functions", action="store_true", help="Print all available functions.")
-    parser.add_argument("--unit", help="Fuzzy search for a particular unit.")
-    parser.add_argument("--function", help="Fuzzy search for a particular function.")
+    parser.add_argument("--unit", help="See the details of a particular unit.")
+    parser.add_argument("--function", help="See the details of a particular function.")
     args = parser.parse_args()
 
     if args.units:
@@ -33,21 +35,43 @@ def main():
     elif args.function:
         print_function_info(args.function)
     elif args.x:
-        sys.exit(execute(s, EvalEnvironment()))
+        sys.exit(execute(args.x, EvalEnvironment()))
     else:
         run_interpreter()
 
 def print_units():
-    pass
+    print(", ".join(f"{unit.singular_name} ({unit.symbol})"
+                    for unit in UNITS))
 
 def print_unit_info(name):
-    pass
+    unit = lookup_unit(name)
+    if unit is None:
+        print("Unknown unit.")
+    else:
+        print("                     Name:", unit.singular_name)
+        print("              Plural name:", unit.plural_name)
+        print("                   Symbol:", unit.symbol)
+        print("               Quantities:", ", ".join(unit.quantities))
+        print("    Base units equivalent:", unit.quantity_vector.prettified())
+        print("  Magnitude in base units:", unit.multiple)
+        print("   Offset from base units:", unit.offset)
 
 def print_functions():
-    pass
+    print(", ".join(name for name in FUNCTIONS.keys()))
 
 def print_function_info(name):
-    pass
+    if name not in FUNCTIONS:
+        print("Unknown function.")
+    else:
+        signatures = list(map(lambda x: x[1], FUNCTIONS[name]))
+        print("                   Name:", name)
+        print("          Documentation:", "to-do")
+        types_prompt = "Accepted argument types: "
+        print(types_prompt, end="")
+        for i, sig in enumerate(signatures):
+            if i > 0:
+                print(" "*len(types_prompt), end="")
+            print("(" + ", ".join(make_sig_printable(sig)) + ")")
 
 def run_interpreter():
     env = EvalEnvironment()

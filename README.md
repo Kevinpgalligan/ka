@@ -2,7 +2,8 @@
 A calculator language.
 
 ### TODO
-* Add inspection stuff to the CLI (units, unit help, functions, function docs).
+* Change notation for unit conversion ('~', maybe?)
+* Function documentation.
 * Make interpreter handle interrupts smoothly (while a command is running, while a command is not running), and add simple functionality (introspection commands, quit command(s), mayyyybe a way to reference previous values; definitely a way to scroll back through previous commands; see how it handles errors)
 * Define layout of manual (description & features; installation; usage examples; units (list of units, unit behaviour, unit arithmetic); types; functions & operators; FAQ.
 * Write manual template (jinja), allow rendering to Markdown and HTML. `python3 generate-docs.py target`.

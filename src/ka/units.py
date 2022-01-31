@@ -6,6 +6,7 @@ QUANTITY_TO_QV = {} # <-- this is used only to check for mistakes
 QV_TO_QUANTITY = collections.defaultdict(list)
 NAME_TO_UNIT = {}
 SYMBOL_TO_UNIT = {}
+UNITS = []
 
 class Prefix:
     def __init__(self, name_prefix, symbol_prefix, exp):
@@ -173,7 +174,10 @@ def register_unit(symbol, singular_name, quantities, quantity_vector,
     unit = Unit(symbol, singular_name, plural_name, quantities,
                 quantity_vector, multiple, offset)
 
-    global QUANTITY_TO_QV, QV_TO_QUANTITY, NAME_TO_UNIT, SYMBOL_TO_UNIT
+    global QUANTITY_TO_QV, QV_TO_QUANTITY, NAME_TO_UNIT, SYMBOL_TO_UNIT, UNITS
+
+    UNITS.append(unit)
+
     for q in quantities:
         if q in QUANTITY_TO_QV:
             # Each quantity name can be associated with only
@@ -276,7 +280,7 @@ register_unit("d", "day", "time", S, multiple=86400)
 register_unit("au", "astronomicalunit", "length", M, multiple=149597870700)
 register_unit("deg", "degree", "angle", RAD, multiple=math.pi/180)
 register_unit("ha", "hectare", "area", M**2, multiple=10**4)
-register_unit("acre", "acre", "area", M**2, multiple=frac(4046.8564224))
+register_unit("acre", "acre", "area", M**2, multiple=4046.8564224)
 LITRE = register_unit("l", "litre", "volume", M**3, multiple=frac(1, 10**3))
 MILLILITRE = apply_prefix(MILLI_PREFIX, LITRE)
 register_unit("t", "tonne", "mass", KG, multiple=1000)
@@ -284,7 +288,7 @@ register_unit("Da", "dalton", "mass", KG, multiple=1.660539040e-27)
 register_unit("eV", "electronvolt", "energy", J, multiple=1.602176634e-19)
 register_unit("lj", "lightyear", "length", M, multiple=9.4607e15)
 register_unit("pc", "parsec", "length", M, multiple=3.0857e16)
-INCH = register_unit("in", "inch", "length", M, multiple=frac(0.0254), plural_name="inches")
+INCH = register_unit("in", "inch", "length", M, multiple=0.0254, plural_name="inches")
 FEET = register_derived_unit("ft", "foot", INCH, multiple=12, plural_name="feet")
 YARD = register_derived_unit("yd", "yard", FEET, multiple=3)
 register_derived_unit("mi", "mile", YARD, multiple=1760)
@@ -292,14 +296,14 @@ register_unit("sm", "nauticalmile", "length", M, multiple=1852)
 # Using UK / Imperial measures for teaspoon and whatnot. As
 # opposed to US measures.
 # https://en.wikipedia.org/wiki/Cooking_weights_and_measures
-register_derived_unit("tsp", "teaspoon", MILLILITRE, multiple=frac(5.91939))
-register_derived_unit("tbsp", "tablespoon", MILLILITRE, multiple=frac(17.7582))
-register_derived_unit("floz", "fluidounce", MILLILITRE, multiple=frac(28.4130625))
-register_derived_unit("cup", "cup", MILLILITRE, multiple=frac(284.13))
-register_derived_unit("gill", "gill", MILLILITRE, multiple=frac(142.0653125))
-register_derived_unit("pt", "pint", MILLILITRE, multiple=frac(586.26125))
-register_derived_unit("qt", "quart", MILLILITRE, multiple=frac(1136.5225))
-register_derived_unit("gal", "gallon", MILLILITRE, multiple=frac(4546.09))
+register_derived_unit("tsp", "teaspoon", MILLILITRE, multiple=5.91939)
+register_derived_unit("tbsp", "tablespoon", MILLILITRE, multiple=17.7582)
+register_derived_unit("floz", "fluidounce", MILLILITRE, multiple=28.4130625)
+register_derived_unit("cup", "cup", MILLILITRE, multiple=284.13)
+register_derived_unit("gill", "gill", MILLILITRE, multiple=142.0653125)
+register_derived_unit("pt", "pint", MILLILITRE, multiple=586.26125)
+register_derived_unit("qt", "quart", MILLILITRE, multiple=1136.5225)
+register_derived_unit("gal", "gallon", MILLILITRE, multiple=4546.09)
 register_derived_unit("gr", "grain", GRAM, multiple=0.0648)
 register_derived_unit("dr", "dram", GRAM, multiple=1.77)
 register_derived_unit("oz", "ounce", GRAM, multiple=28.35)
