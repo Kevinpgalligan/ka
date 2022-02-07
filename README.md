@@ -2,6 +2,7 @@
 A calculator language.
 
 ### TODO
+* '5/4 m' is parsed as '5/(4 m)', which was surprising to me.
 * Change notation for unit conversion ('~', maybe?)
 * Function documentation.
 * Make interpreter handle interrupts smoothly (while a command is running, while a command is not running), and add simple functionality (introspection commands, quit command(s), mayyyybe a way to reference previous values; definitely a way to scroll back through previous commands; see how it handles errors)

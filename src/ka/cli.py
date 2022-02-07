@@ -167,12 +167,24 @@ def error(msg, index, s):
     print("\n".join(error_lines), file=sys.stderr)
 
 def display_result(r):
+    # This is nightmare code. Oh well.
     if isinstance(r, Quantity):
-        print(r.mag, r.qv.prettified(), end="")
+        if isinstance(r.mag, frac):
+            print(prettify_frac(r.mag), r.qv.prettified(), end="")
+        else:
+            print(r.mag, r.qv.prettified(), end="")
         if isinstance(r.mag, frac):
             print("    (" + str(float(r.mag)) + " " + r.qv.prettified() + ")", end="")
         print()
     elif isinstance(r, frac):
-        print(r, "    (" + str(float(r)) + ")")
+        print(prettify_frac(r), "    (" + str(float(r)) + ")")
     else:
         print(r)
+
+def prettify_frac(f):
+    sign = 1 if f >= 0 else -1
+    whole_part = abs(f.numerator) // abs(f.denominator)
+    if whole_part > 0:
+        return f"{sign*whole_part} {abs(f) - whole_part}"
+    else:
+        return str(f)
