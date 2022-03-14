@@ -19,8 +19,5 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License"
-    ],
-    install_requires=[
-        "scipy"    # maths functions
     ]
 )

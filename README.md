@@ -2,12 +2,23 @@
 A calculator language.
 
 ### TODO
-* '5/4 m' is parsed as '5/(4 m)', which was surprising to me.
+* '5/4 m' is parsed as '5/(4 m)', which was surprising to me. I think factors should be bound together more tightly than units & factors. But then what would the parsing be like for '5m/3m'?
 * Change notation for unit conversion ('~', maybe?)
-* Function documentation.
-* Make interpreter handle interrupts smoothly (while a command is running, while a command is not running), and add simple functionality (introspection commands, quit command(s), mayyyybe a way to reference previous values; definitely a way to scroll back through previous commands; see how it handles errors)
-* Define layout of manual (description & features; installation; usage examples; units (list of units, unit behaviour, unit arithmetic); types; functions & operators; FAQ.
-* Write manual template (jinja), allow rendering to Markdown and HTML. `python3 generate-docs.py target`.
+* Improve interpreter:
+    - handle interrupts smoothly (while a command is running, while a command is not running)
+    - introspection commands
+    - quit command(s)
+    - readline history
+    - a way to reference previous values
+    - investigate error-handling behaviour
+* Write manual for GitHub:
+    - Description & features
+    - Installation
+    - Usage examples
+    - Units (list of units, unit behaviour, unit arithmetic)
+    - Types
+    - Functions & operators
+    - FAQ.
 * Simple GUI.
 
 ### Development

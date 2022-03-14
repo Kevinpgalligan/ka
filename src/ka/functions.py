@@ -78,14 +78,31 @@ def register_numeric_function(name, f, num_args=1):
         register_function(quantity_function, name, (Quantity,))
 
 def choose(n, k):
-    # Import inside the function since scipy is slow to load.
-    # Will get rid of scipy dependency if possible.
-    import scipy.special
-    return scipy.special.comb(n, k, exact=True)
+	# Yoinked this directly from the scipy source, since it
+	# slow to import scipy just for this.
+	# Credit:
+	# https://github.com/scipy/scipy/blob/main/scipy/special/_comb.pyx
+    if k > n or n < 0 or k < 0:
+        return 0
+
+    M = n + 1
+    nterms = min(k, n - k)
+
+    numerator = 1
+    denominator = 1
+    for j in range(1, nterms + 1):
+        numerator *= M - j
+        denominator *= j
+
+    return numerator // denominator
 
 def factorial(n):
-    import scipy.special
-    return scipy.special.factorial(n, exact=True)
+	result = 1
+	if n < 2:
+		return result
+	for k in range(2, n+1):
+		result *= k
+	return result
 
 def fraction_divide(n1, n2):
     return frac(n1, n2)
