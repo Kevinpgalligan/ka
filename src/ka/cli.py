@@ -1,6 +1,7 @@
 import argparse
 import sys
 from fractions import Fraction as frac
+import readline
 
 from .tokens import tokenise, UnknownTokenError
 from .parse import parse_tokens, ParsingError
@@ -8,36 +9,36 @@ from .eval import eval_parse_tree, EvalError, EvalEnvironment
 from .types import Quantity
 from .functions import (FUNCTIONS, UnknownFunctionError,
     NoMatchingFunctionSignatureError, IncompatibleQuantitiesError,
-    make_sig_printable)
+    make_sig_printable, ExitKaSignal)
 from .units import UNITS, lookup_unit
 
 ERROR_CONTEXT_SIZE = 5
 INDENT = 2
 
 PROMPT = ">>> "
+INTERPRETER_COMMAND_PREFIX = "%"
 KA_VERSION = "1.0"
 
-def main():
-    parser = argparse.ArgumentParser(description="A calculator language.")
-    parser.add_argument("x", nargs="?", help="The statements to evaluate.")
-    parser.add_argument("--units", action="store_true", help="Print all available units.")
-    parser.add_argument("--functions", action="store_true", help="Print all available functions.")
-    parser.add_argument("--unit", help="See the details of a particular unit.")
-    parser.add_argument("--function", help="See the details of a particular function.")
-    args = parser.parse_args()
+def interp_cmd(f, nargs, description):
+    return InterpreterCommand(f, nargs, description)
 
-    if args.units:
-        print_units()
-    elif args.functions:
-        print_functions()
-    elif args.unit:
-        print_unit_info(args.unit)
-    elif args.function:
-        print_function_info(args.function)
-    elif args.x:
-        sys.exit(execute(args.x, EvalEnvironment()))
-    else:
-        run_interpreter()
+class InterpreterCommand:
+    def __init__(self, f, nargs, desc):
+        self.f = f
+        self.nargs = nargs
+        self.desc = desc
+
+    def execute(self, args):
+        self.f(*args)
+
+def interp_quit():
+    raise ExitKaSignal()
+
+def interp_help():
+    for names, cmd in INTERPRETER_COMMANDS:
+        if not isinstance(names, tuple):
+            names = (names,)
+        print(" ", ",".join(names) + ":", cmd.desc)
 
 def print_units():
     print(", ".join(f"{unit.singular_name} ({unit.symbol})"
@@ -73,13 +74,72 @@ def print_function_info(name):
                 print(" "*len(types_prompt), end="")
             print("(" + ", ".join(make_sig_printable(sig)) + ")")
 
+INTERPRETER_COMMANDS = [
+    (("q", "quit"), interp_cmd(interp_quit, 0, "exit the interpreter")),
+    (("h", "help"), interp_cmd(interp_help, 0, "display help")),
+    (("u", "unit"), interp_cmd(print_unit_info, 1, "describe given unit")),
+    (("us", "units"), interp_cmd(print_units, 0, "list all units")),
+    (("f", "function"), interp_cmd(print_function_info, 1, "describe given function")),
+    (("fs", "functions"), interp_cmd(print_functions, 0, "list all functions")),
+]
+
+def main():
+    parser = argparse.ArgumentParser(description="A calculator language.")
+    parser.add_argument("x", nargs="?", help="The statements to evaluate.")
+    parser.add_argument("--units", action="store_true", help="List all available units.")
+    parser.add_argument("--functions", action="store_true", help="List all available functions.")
+    parser.add_argument("--unit", help="See the details of a particular unit.")
+    parser.add_argument("--function", help="See the details of a particular function.")
+    args = parser.parse_args()
+
+    if args.units:
+        print_units()
+    elif args.functions:
+        print_functions()
+    elif args.unit:
+        print_unit_info(args.unit)
+    elif args.function:
+        print_function_info(args.function)
+    elif args.x:
+        sys.exit(execute(args.x, EvalEnvironment()))
+    else:
+        run_interpreter()
+
 def run_interpreter():
     env = EvalEnvironment()
     print("ka version", KA_VERSION)
     while True:
-        execute(input(PROMPT), env)
+        try:
+            s = input(PROMPT)
+        except KeyboardInterrupt:
+            print()
+            break
+        try:
+            if s.startswith(INTERPRETER_COMMAND_PREFIX):
+                execute_interpreter_command(s)
+            else:
+                execute(s, env, reraise_signals=True)
+        except ExitKaSignal:
+            break
+        except KeyboardInterrupt:
+            print()
+            pass
 
-def execute(s, env):
+def execute_interpreter_command(s):
+    args = s[len(INTERPRETER_COMMAND_PREFIX):].split()
+    cmd_name = args[0]
+    args = args[1:]
+    for names, cmd in INTERPRETER_COMMANDS:
+        if (isinstance(names, tuple) and cmd_name in names) or (isinstance(names, str) and cmd_name == names):
+            if cmd.nargs != len(args):
+                print(f"Expected {cmd.nargs} arguments for command {names}, got {len(args)}.")
+            else:
+                cmd.execute(args)
+            return
+    print("Unknown interpreter command. You may have meant one of the following...")
+    interp_help()
+
+def execute(s, env, reraise_signals=False):
     try:
         tokens = tokenise(s)
     except UnknownTokenError as e:
@@ -106,6 +166,15 @@ def execute(s, env):
             print()
         else:
             display_result(result)
+    except ExitKaSignal as e:
+        if reraise_signals:
+            raise e
+        return 0
+    except KeyboardInterrupt as e:
+        if reraise_signals:
+            raise e
+        print()
+        return 0
     except EvalError as e:
         print_err(e.message)
         return 1

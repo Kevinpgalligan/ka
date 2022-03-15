@@ -24,6 +24,9 @@ class IncompatibleQuantitiesError(Exception):
         self.qv1 = qv1
         self.qv2 = qv2
 
+class ExitKaSignal(Exception):
+    pass
+
 def make_sig_printable(sig):
     return tuple(map(lambda t: t.__name__, sig))
 
@@ -167,3 +170,8 @@ register_quantities_op("+")
 register_quantities_op("-")
 register_quantities_op("*", lambda qv1, qv2: qv1*qv2)
 register_quantities_op("/", lambda qv1, qv2: qv1/qv2)
+
+def ka_quit():
+    raise ExitKaSignal()
+
+register_function(ka_quit, "quit", tuple())
