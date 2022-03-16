@@ -1,16 +1,14 @@
-# ka(lculator) 🖩
+# ka(lculator) 🔢
 ka is a small calculator language. It supports various useful features for day-to-day calculations, including common math functions, fractions, units, and unit conversion.
 
 There are three ways to interface with it: direct CLI commands (`ka '1+1'`), a CLI interpreter (`ka`), and a GUI (`ka --gui`).
 
 ## TODO
-* Write manual for GitHub:
-    - Description & features
-    - Installation
-    - Units (list of units, unit behaviour, unit arithmetic)
-    - Functions & operators
 * Fix once-off commands starting with '-'.
 * Simple GUI.
+* Documentation for units (list of units, unit behaviour, unit arithmetic).
+* Documentation for functions.
+* Upload to PyPI, add link to README.
 
 ## Contents
 * [Installation](#installation)
