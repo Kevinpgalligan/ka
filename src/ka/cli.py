@@ -83,13 +83,24 @@ INTERPRETER_COMMANDS = [
     (("fs", "functions"), interp_cmd(print_functions, 0, "list all functions")),
 ]
 
+def add_and_store_argument(parser, flaglist, name, **kwargs):
+    flaglist.append(name)
+    parser.add_argument(name, **kwargs)
+
 def main():
-    parser = argparse.ArgumentParser(description="A calculator language.")
+    parser = argparse.ArgumentParser(description="A calculator language. Run with no arguments to start the interpreter.")
     parser.add_argument("x", nargs="?", help="The statements to evaluate.")
-    parser.add_argument("--units", action="store_true", help="List all available units.")
-    parser.add_argument("--functions", action="store_true", help="List all available functions.")
-    parser.add_argument("--unit", help="See the details of a particular unit.")
-    parser.add_argument("--function", help="See the details of a particular function.")
+
+    flaglist = []
+    add_and_store_argument(parser, flaglist, "--units", action="store_true", help="List all available units.")
+    add_and_store_argument(parser, flaglist, "--functions", action="store_true", help="List all available functions.")
+    add_and_store_argument(parser, flaglist, "--unit", help="See the details of a particular unit.")
+    add_and_store_argument(parser, flaglist, "--function", help="See the details of a particular function.")
+
+    raw_args = sys.argv[1:]
+    if len(raw_args) == 1 and raw_args[0] not in flaglist:
+        sys.exit(execute(raw_args[0], EvalEnvironment())) 
+
     args = parser.parse_args()
 
     if args.units:
@@ -100,8 +111,6 @@ def main():
         print_unit_info(args.unit)
     elif args.function:
         print_function_info(args.function)
-    elif args.x:
-        sys.exit(execute(args.x, EvalEnvironment()))
     else:
         run_interpreter()
 
