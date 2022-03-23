@@ -70,7 +70,7 @@ def eval_based_on_mode(node, env, child_values):
 
 def make_quantity(magnitude, unit_signature):
     if not is_number(magnitude):
-        raise EvalError(f"Tried to add units on top of existing units. Units can only be added to a magnitude.")
+        raise EvalError(f"Tried to add units on top of existing units. Only a magnitude can be tagged with units.")
     qv, multiple, offset = compose_units(unit_signature)
     return Quantity(multiple*magnitude + offset, qv)
 
@@ -103,7 +103,11 @@ def compose_units(unit_sig):
         if invert:
             exp = -exp
         qv *= unit.quantity_vector ** exp
-        multiple *= unit.multiple ** exp
+        # Negative exponent turns the multiple into a float, even
+        # if the multiplier is just 1 anyway. So avoid this annoyance
+        # by only multiplying if the multiplier is NOT 1.
+        if unit.multiple != 1:
+            multiple *= unit.multiple ** exp
         offset = unit.offset
         if offset != 0 and len(unit_specs) > 1:
             raise EvalError(f"Can't combine unit '{name}' with other units, since it has an offset.")

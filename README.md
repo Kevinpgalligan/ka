@@ -24,7 +24,6 @@ There are 3 ways to interact with it: executing individual expressions through t
 ## Contents
 * [Installation](#installation)
 * [Usage](#usage)
-* [FAQ](#faq)
 * [Manual](#manual)
   - [Grammar](#grammar)
   - [Variables](#variables)
@@ -32,22 +31,23 @@ There are 3 ways to interact with it: executing individual expressions through t
   - [Types](#types)
   - [Functions and operators](#functions-and-operators)
   - [Units](#units)
+* [FAQ](#faq)
 * [Contributing](#contributing)
 
 ## Installation
 ka is currently distributed through PyPI (insert link here): `pip3 install ka-cli`.
 
-If a kind person could help me to package it for Linux, I would greatly appreciate it.
+I would greatly appreciate it if a kind person could help me to package it for Linux.
 
 ## Usage
-To execute a single expression through the CLI, pass it as an argument to ka. You may wish to surround the expression in single quotes so that it's not messed up by your terminal. 
+To execute a single expression, pass it as an argument to the CLI. You may wish to surround the expression in single quotes so that it's not messed up by your terminal. 
 
 ```
 $ ka '1+1'
 2
 ```
 
-The CLI offers introspection commands to show the available units, functions and whatnot (run: `ka -h` for help with this).
+The CLI offers introspection commands to show the available units, functions and whatnot (run `ka -h` for help with this).
 
 Start the interpreter by executing `ka` from your CLI with no arguments.
 
@@ -67,21 +67,6 @@ There are also interpreter-specific commands, prefixed by '%'. Run `%help` to se
 To start the GUI, run `ka --gui`.
 
 For more information on the language and the features it offers, see the manual below.
-
-## FAQ
-#### How do you exit the interpreter?
-Call the function `quit()`, use the interpreter command `%q` / `%quit`, or trigger an interrupt with CTRL+C.
-
-### Why is 1 metre per second written as `1m|s` instead of `1m/s`?
-I would love to use `1m/s`, but this would result in a parsing ambiguity: is it 1 metre divided by the variable called `s`, or 1 metre per second? So instead ka uses `|` to represent division in unit signatures.
-
-#### Why does `5/4 m` give units in `m^-1`?
-Units have higher precedence than division, so `5/4 m` is parsed the same as `5 / (4 m)`. The solution is to write `(5/4)m`.
-
-#### How does this compare to other calculator languages?
-[Frink](https://frinklang.org/) is Turing-complete, has configurable units, has many more features than ka, and has a cool grammar. On the other hand, it's closed-source, it has expanded way beyond the scope of a simple calculator, and it has a slow start-up time, which makes it unsuitable for my purposes. It's worth commenting a bit more on the grammar. Frink basically represents all units as variables. This means that the variable namespace is full of unit names, and it's possible for units to be overwritten accidentally. The good thing is that, coupled with the Frink grammar's support for implicit multiplication, you can write nice things like `1 m/s` and it's interpreted as you would expect (the number 1, multiplied by metres, divided by seconds; this gives 1 metre per second). But if you write `4m / 2m` you get `2m^2`. There are design trade-offs when incorporating units into the grammar of a computer language and I don't think there's a perfect solution.
-
-[Qalculate!](https://qalculate.github.io/) seems awesome and has bucketfuls of features! On the other hand, it's a massive project written in C++, while ka consists of 1000 lines of Python code. Units in Qalculate! behave similarly to variables, except you can't overwrite them because it doesn't support variable assignment. And it has implicit multiplication, so you can write `1m/s` without the drawbacks of Frink. It also handles the `4m / 2m` case sensibly, somehow. If I had known that Qalculate! existed, I probably wouldn't have bothered to create ka, but I only discovered Qalculate! when I went to check whether the name 'qalc' was already in use.
 
 ## Manual
 ### Grammar
@@ -162,6 +147,22 @@ Further reading for the interested:
 * <https://www.hillelwayne.com/post/frink/>
 * <https://gmpreussner.com/research/dimensional-analysis-in-programming-languages>
 
+## FAQ
+#### How do you exit the interpreter?
+Call the function `quit()`, use the interpreter command `%q` / `%quit`, or trigger an interrupt with CTRL+C.
+
+### Why is 1 metre per second written as `1m|s` instead of `1m/s`?
+I would love to be able to write `1m/s`, but this would result in a parsing ambiguity: is it 1 metre divided by the variable called `s`, or 1 metre per second? So ka instead uses `|` to represent division in unit signatures.
+
+#### Why does `5/4 m` give units in `m^-1`?
+Units have higher precedence than division, so `5/4 m` is parsed the same as `5 / (4 m)`. The solution is to write `(5/4)m`.
+
+#### How does this compare to other calculator languages?
+[Frink](https://frinklang.org/) is Turing-complete, has configurable units, has many more features than ka, and has a cool grammar. On the other hand, it's closed-source, it has expanded way beyond the scope of a simple calculator, and it has a slow start-up time, which makes it unsuitable for my purposes. It's worth commenting a bit more on the grammar. Frink basically represents all units as variables. This means that the variable namespace is full of unit names, and it's possible for units to be overwritten accidentally. The good thing is that, coupled with the Frink grammar's support for implicit multiplication, you can write nice things like `1 m/s` and it's interpreted as you would expect (the number 1, multiplied by metres, divided by seconds; this gives 1 metre per second). But if you write `4m / 2m` you get `2m^2`. There are design trade-offs when incorporating units into the grammar of a computer language and I don't think there's a perfect solution.
+
+[Qalculate!](https://qalculate.github.io/) seems awesome and has bucketfuls of features! On the other hand, it's a massive project written in C++, while ka consists of 1000 lines of Python code. Units in Qalculate! behave similarly to variables, except you can't overwrite them because it doesn't support variable assignment. And it has implicit multiplication, so you can write `1m/s` without the drawbacks of Frink. It also handles the `4m / 2m` case sensibly, somehow. If I had known that Qalculate! existed, I probably wouldn't have bothered to create ka, but I only discovered Qalculate! when I went to check whether the name 'qalc' was already in use.
+
+
 ## Contributing
 Contributions are welcome, whether they be bug fixes or documentation or anything at all! Note that I don't intend to make any major additions to the core language, since for the purposes of a calculator it's reasonably complete. That means I don't plan to make it Turing-complete.
 
@@ -171,5 +172,6 @@ To install ka locally, clone the repo and run `pip install .`. You may wish to t
 
 ## TODO
 * Why does `1 kg | m s^2` make the magnitude a float?
+* Implement documentation strings for functions.
 * Simple GUI.
 * Upload to PyPI, add PyPI link to README.
