@@ -97,6 +97,7 @@ def main():
     add_and_store_argument(parser, flaglist, "--functions", action="store_true", help="List all available functions.")
     add_and_store_argument(parser, flaglist, "--unit", help="See the details of a particular unit.")
     add_and_store_argument(parser, flaglist, "--function", help="See the details of a particular function.")
+    add_and_store_argument(parser, flaglist, "--gui", help="Start the Graphical User Interface.", action="store_true")
 
     raw_args = sys.argv[1:]
     if len(raw_args) == 1 and raw_args[0] not in flaglist:
@@ -112,6 +113,9 @@ def main():
         print_unit_info(args.unit)
     elif args.function:
         print_function_info(args.function)
+    elif args.gui:
+        from .gui import run_gui
+        run_gui()
     else:
         run_interpreter()
 
