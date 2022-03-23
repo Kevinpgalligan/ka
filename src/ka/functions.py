@@ -8,6 +8,7 @@ from .types import simplify_type, Quantity, get_external_type_name
 from .units import QSPACE
 
 FUNCTIONS = collections.defaultdict(list)
+FUNCTION_DOCUMENTATION = {}
 
 class UnknownFunctionError(Exception):
     def __init__(self, name):
@@ -66,22 +67,24 @@ def types_below(types_A, types_B):
     # the type hierarchy.
     return all(issubclass(tA, tB) for tA, tB in zip(types_A, types_B))
 
-def register_function(f, name, arg_types):
+def register_function(f, name, arg_types, docstring=None):
     global FUNCTIONS
     FUNCTIONS[name].append((f, arg_types))
+    if docstring is not None and name not in FUNCTION_DOCUMENTATION:
+        FUNCTION_DOCUMENTATION[name] = docstring
 
-def register_binary_op(name, op):
-    register_function(op, name, (Number, Number))
+def register_binary_op(name, op, docstring=None):
+    register_function(op, name, (Number, Number), docstring=None)
 
-def register_numeric_function(name, f, num_args=1):
-    register_function(f, name, num_args*(Number,))
+def register_numeric_function(name, f, num_args=1, docstring=None):
+    register_function(f, name, num_args*(Number,), docstring=docstring)
     if num_args == 1:
         def quantity_function(quantity):
             return Quantity(f(quantity.mag), quantity.qv)
         register_function(quantity_function, name, (Quantity,))
 
 def choose(n, k):
-	# Yoinked this directly from the scipy source, since it
+	# Yoinked this directly from the scipy source, since it is
 	# slow to import scipy just for this.
 	# Credit:
 	# https://github.com/scipy/scipy/blob/main/scipy/special/_comb.pyx
@@ -111,41 +114,41 @@ def fraction_divide(n1, n2):
     return frac(n1, n2)
 
 BINARY_OPS = [
-    ("+", operator.add),
-    ("-", operator.sub),
-    ("*", operator.mul),
-    ("/", operator.truediv),
-    ("%", operator.mod),
-    ("^", operator.pow)
+    ("+", operator.add, "Addition binary operator."),
+    ("-", operator.sub, "Subtraction binary operator."),
+    ("*", operator.mul, "Multiplication binary operator."),
+    ("/", operator.truediv, "Division binary operator. Passing 2 integers results in a fraction."),
+    ("%", operator.mod, "Modulo binary operator. 4%3=1."),
+    ("^", operator.pow, "Exponentiation binary operator. 2^3=8.")
 ]
-for name, op in BINARY_OPS:
-    register_binary_op(name, op)
+for name, op, docstring in BINARY_OPS:
+    register_binary_op(name, op, docstring=docstring)
 # Override division for integers so that
 # it returns a fraction.
 register_function(fraction_divide, "/", (Integral, Integral))
 
 NUMERIC_FUNCTIONS = [
-    ("sin", math.sin),
-    ("cos", math.cos),
-    ("tan", math.tan),
-    ("sqrt", math.sqrt),
-    ("ln", math.log),
-    ("log10", math.log10),
-    ("log2", math.log2),
-    ("abs", abs),
-    ("floor", math.floor),
-    ("ceil", math.ceil),
-    ("round", round),
-    ("int", int),
-    ("float", float),
-    ("+", operator.pos),
-    ("-", operator.neg)
+    ("sin", math.sin, "Trigonometric sine function."),
+    ("cos", math.cos, "Trigonometric cosine function."),
+    ("tan", math.tan, "Trigonometric tangent function."),
+    ("sqrt", math.sqrt, "Square root of a number."),
+    ("ln", math.log, "Natural log, base e."),
+    ("log10", math.log10, "Logarithm base 10."),
+    ("log2", math.log2, "Logarithm base 2."),
+    ("abs", abs, "Absolute value of a number."),
+    ("floor", math.floor, "Rounds a number down to the next smallest integer."),
+    ("ceil", math.ceil, "Rounds a number up to the next largest integer."),
+    ("round", round, "Rounds a number to the nearest integer."),
+    ("int", int, "Converts a number to the nearest integer between that number and zero."),
+    ("float", float, "Force a number (such as a fraction) to its (imprecise) floating point representation."),
+    ("+", operator.pos, "Positive sign; prefix operator."),
+    ("-", operator.neg, "Negate a number; prefix operator.")
 ]
-for name, f in NUMERIC_FUNCTIONS:
-    register_numeric_function(name, f)
-register_numeric_function("log", lambda base, x: math.log(x, base), num_args=2)
-register_function(choose, "C", (Integral, Integral))
-register_function(factorial, "!", (Integral,))
+for name, f, docstring in NUMERIC_FUNCTIONS:
+    register_numeric_function(name, f, docstring=docstring)
+register_numeric_function("log", lambda base, x: math.log(x, base), num_args=2, docstring="Logarithm function. The first argument determines the base.")
+register_function(choose, "C", (Integral, Integral), "Binomial coefficient function from combinatorics. It returns how many ways there are from a total of n items (first argument) to select k items (second argument).")
+register_function(factorial, "!", (Integral,), "Factorial function, postfix operator. 3!=6.")
 def register_quantities_op(name, quantity_vector_combiner=None):
     def f(q1, q2):
         if quantity_vector_combiner is None:
@@ -174,4 +177,4 @@ register_quantities_op("/", lambda qv1, qv2: qv1/qv2)
 def ka_quit():
     raise ExitKaSignal()
 
-register_function(ka_quit, "quit", tuple())
+register_function(ka_quit, "quit", tuple(), docstring="Exit the program.")

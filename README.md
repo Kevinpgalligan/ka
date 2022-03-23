@@ -171,7 +171,5 @@ To install ka locally, clone the repo and run `pip install .`. You may wish to t
 [tox](https://tox.wiki/en/latest/) is used for unit testing, execute `tox` from the base directory to run all unit tests.
 
 ## TODO
-* Why does `1 kg | m s^2` make the magnitude a float?
-* Implement documentation strings for functions.
 * Simple GUI.
 * Upload to PyPI, add PyPI link to README.

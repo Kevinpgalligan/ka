@@ -9,7 +9,7 @@ from .eval import eval_parse_tree, EvalError, EvalEnvironment
 from .types import Quantity
 from .functions import (FUNCTIONS, UnknownFunctionError,
     NoMatchingFunctionSignatureError, IncompatibleQuantitiesError,
-    make_sig_printable, ExitKaSignal)
+    make_sig_printable, ExitKaSignal, FUNCTION_DOCUMENTATION)
 from .units import UNITS, lookup_unit
 
 ERROR_CONTEXT_SIZE = 5
@@ -18,6 +18,7 @@ INDENT = 2
 PROMPT = ">>> "
 INTERPRETER_COMMAND_PREFIX = "%"
 KA_VERSION = "1.0"
+DEFAULT_DOCSTRING = "n/a"
 
 def interp_cmd(f, nargs, description):
     return InterpreterCommand(f, nargs, description)
@@ -66,7 +67,7 @@ def print_function_info(name):
     else:
         signatures = list(map(lambda x: x[1], FUNCTIONS[name]))
         print("                   Name:", name)
-        print("          Documentation:", "to-do")
+        print("          Documentation:", FUNCTION_DOCUMENTATION[name] if name in FUNCTION_DOCUMENTATION else DEFAULT_DOCSTRING)
         types_prompt = "Accepted argument types: "
         print(types_prompt, end="")
         for i, sig in enumerate(signatures):
