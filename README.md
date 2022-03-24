@@ -1,5 +1,5 @@
 # ka(lculator) 🔢
-ka is a small [Turing-incomplete](https://en.wikipedia.org/wiki/Turing_completeness) calculator language. It supports various useful features for day-to-day calculations, such as:
+ka is a small calculator language. It supports various useful features for day-to-day calculations, such as:
 
 * Common math functions and constants.
 * Fractions.
@@ -167,12 +167,12 @@ It's worth commenting a bit more on the grammar. Frink basically represents all 
 [F#](https://fsharpforfunandprofit.com/posts/units-of-measure/) is an example of a "real" programming language with cool unit features, but it's not suitable as a calculator.
 
 ## Contributing
-Contributions are welcome, whether they be bug fixes or documentation or anything at all! Note that I don't intend to make any major additions to the core language, since for the purposes of a calculator it's reasonably complete. That means I don't plan to make it Turing-complete.
+Contributions are welcome, whether they be bug fixes or documentation or anything at all! I don't intend to make any major additions to the core language, since for the purposes of a calculator it's reasonably complete. That means I don't plan to make it Turing-complete.
 
 To install ka locally, clone the repo and run `pip install .`. You may wish to test it within a virtual environment, however, if you have a copy of ka that you actually use and you don't want to break it.
 
 [tox](https://tox.wiki/en/latest/) is used for unit testing, execute `tox` from the base directory to run all unit tests.
 
 ## TODO
-* Simple GUI (https://zetcode.com/pyqt6/firstprograms/)
+* Simple GUI (https://zetcode.com/pyqt6/widgets2/)
 * Upload to PyPI, add PyPI link to README.

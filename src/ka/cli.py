@@ -92,7 +92,7 @@ def main():
     parser = argparse.ArgumentParser(description="A calculator language. Run with no arguments to start the interpreter.")
     parser.add_argument("x", nargs="?", help="The statements to evaluate.")
 
-    flaglist = []
+    flaglist = ["-h", "--help"]
     add_and_store_argument(parser, flaglist, "--units", action="store_true", help="List all available units.")
     add_and_store_argument(parser, flaglist, "--functions", action="store_true", help="List all available functions.")
     add_and_store_argument(parser, flaglist, "--unit", help="See the details of a particular unit.")

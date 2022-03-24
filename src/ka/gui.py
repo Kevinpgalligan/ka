@@ -8,7 +8,6 @@ def run_gui():
     app = QApplication([])
     w = QWidget()
     w.resize(250, 200)
-    w.move(300, 300)
     w.setWindowTitle("ka")
     w.show()
     sys.exit(app.exec())
