@@ -1,14 +1,9 @@
 from setuptools import setup
 from setuptools import find_packages
 
-with open("README.md", "r") as f:
-    long_description = f.read()
-
 setup(
-    name="ka",
-    description="A command-line calculator.",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
+    name="ka-cli",
+    description="A calculator language.",
     version="1.0.0",
     url="https://github.com/Kevinpgalligan/ka",
     author="Kevin Galligan",

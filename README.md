@@ -35,9 +35,14 @@ There are 3 ways to interact with it: executing individual expressions through t
 * [Contributing](#contributing)
 
 ## Installation
-ka is currently distributed through the Python Package Index (insert link here). It requires Python 3.6+. To install, run: `pip3 install ka-cli`.
+Requirements:
 
-I would greatly appreciate it if a kind person could help me to package it for Linux package managers.
+* Qt 5 GUI framework (try: `apt install qt5-default`).
+* Python 3.6+.
+
+To install, run: `pip3 install ka-cli`. ka is currently distributed through the [Python Package Index](https://pypi.org/project/ka-cli/1.0.0/).
+
+I would appreciate it if a kind person could help me to package it for Linux package managers.
 
 ## Usage
 To execute a single expression, pass it as an argument to the CLI. You may wish to surround the expression in single quotes so that it's not messed up by your terminal. 
@@ -162,7 +167,7 @@ Units have higher precedence than division, so `5/4 m` is parsed the same as `5 
 
 It's worth commenting a bit more on the grammar. Frink basically represents all units as variables. This means that the variable namespace is full of unit names, and it's possible for units to be overwritten accidentally. The good thing is that, coupled with the Frink grammar's support for implicit multiplication, you can write nice things like `1 m/s` and it's interpreted as you would expect (the number 1, multiplied by metres, divided by seconds; this gives 1 metre per second). But if you write `4m / 2m` you get `2m^2`. There are design trade-offs when incorporating units into the grammar of a computer language and I don't think there's a perfect solution.
 
-[Qalculate!](https://qalculate.github.io/) seems awesome and has bucketfuls of features! On the other hand, it's a massive project written in C++, while ka consists of 1000 lines of Python code. Units in Qalculate! behave similarly to variables, except you can't overwrite them because it doesn't support variable assignment. And it has implicit multiplication, so you can write `1m/s` without the drawbacks of Frink. It also handles the `4m / 2m` case sensibly, somehow.
+[Qalculate!](https://qalculate.github.io/) seems awesome and has bucketfuls of features! On the other hand, it's a massive project written in C++, while ka consists of 1000 lines of Python code. Units in Qalculate! behave similarly to variables, except you can't overwrite them because it doesn't support variable assignment. It sensibly handles both `1m/s` and `4m / 2m`, somehow.
 
 [F#](https://fsharpforfunandprofit.com/posts/units-of-measure/) is an example of a "real" programming language with cool unit features, but it's not suitable as a calculator.
 
@@ -172,7 +177,3 @@ Contributions are welcome, whether they be bug fixes or documentation or anythin
 To install ka locally, clone the repo and run `pip install .`. You may wish to test it within a virtual environment, however, if you have a copy of ka that you actually use and you don't want to break it.
 
 [tox](https://tox.wiki/en/latest/) is used for unit testing, execute `tox` from the base directory to run all unit tests.
-
-## TODO
-* Simple GUI (https://zetcode.com/pyqt6/widgets2/)
-* Upload to PyPI, add PyPI link to README.

@@ -89,7 +89,7 @@ def test_quantities():
         ("5 m | s", Quantity(5, M / S)),
         ("3m^2 s^-1", Quantity(3, M**2 * S**-1)),
         ("100 degC", Quantity(frac(7463, 20), K)),
-        ("5 feet seconds", Quantity(frac(0.0254)*12*5, M * S)),
+        ("5 feet seconds", Quantity(0.0254*12*5, M * S)),
         ("5m > mm", 5000)])
 
 def test_quantity_of_quantity():
