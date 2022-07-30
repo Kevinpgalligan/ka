@@ -157,7 +157,7 @@ Further reading for the interested:
 #### How do you exit the interpreter?
 Call the function `quit()`, use the interpreter command `%q` / `%quit`, or trigger an interrupt with CTRL+C.
 
-### Why is 1 metre per second written as `1m|s` instead of `1m/s`?
+#### Why is 1 metre per second written as `1m|s` instead of `1m/s`?
 I would love to be able to write `1m/s`, but this would result in a parsing ambiguity: is it 1 metre divided by the variable called `s`, or 1 metre per second? So ka instead uses `|` to represent division in unit signatures.
 
 #### Why does `5/4 m` give units in `m^-1`?
