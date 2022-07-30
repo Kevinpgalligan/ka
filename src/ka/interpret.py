@@ -13,7 +13,7 @@ from .units import UNITS, lookup_unit
 
 PROMPT = ">>> "
 INTERPRETER_COMMAND_PREFIX = "%"
-KA_VERSION = "1.0"
+KA_VERSION = "1.1"
 
 ERROR_CONTEXT_SIZE = 5
 INDENT = 2

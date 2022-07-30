@@ -4,7 +4,7 @@ from setuptools import find_packages
 setup(
     name="ka-cli",
     description="A calculator language.",
-    version="1.0.0",
+    version="1.1.0",
     url="https://github.com/Kevinpgalligan/ka",
     author="Kevin Galligan",
     author_email="galligankevinp@gmail.com",

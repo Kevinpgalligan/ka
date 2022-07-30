@@ -33,6 +33,7 @@ There are 3 ways to interact with it: executing individual expressions through t
   - [Units](#units)
 * [FAQ](#faq)
 * [Contributing](#contributing)
+* [Development](#development)
 
 ## Installation
 Requirements:
@@ -174,6 +175,9 @@ It's worth commenting a bit more on the grammar. Frink basically represents all 
 ## Contributing
 Contributions are welcome, whether they be bug fixes or documentation or anything at all! I don't intend to make any major additions to the core language, since for the purposes of a calculator it's reasonably complete. That means I don't plan to make it Turing-complete.
 
+## Development
 To install ka locally, clone the repo and run `pip install .`. You may wish to test it within a virtual environment, however, if you have a copy of ka that you actually use and you don't want to break it.
 
 [tox](https://tox.wiki/en/latest/) is used for unit testing, execute `tox` from the base directory to run all unit tests.
+
+To run an individual script, such as `gui.py`, change to the `src/` directory and run `python3 -m ka.gui`. See [here](https://stackoverflow.com/questions/45446418/modulenotfounderror-no-module-named-main-xxxx-main-is-not-a-packag) for why.
