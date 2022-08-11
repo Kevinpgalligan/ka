@@ -41,7 +41,7 @@ Requirements:
 * Qt 5 GUI framework (try: `apt install qt5-default`).
 * Python 3.6+.
 
-To install, run: `pip3 install ka-cli`. ka is currently distributed through the [Python Package Index](https://pypi.org/project/ka-cli/1.0.0/).
+To install, run: `pip3 install ka-cli`. ka is currently distributed through the [Python Package Index](https://pypi.org/project/ka-cli/).
 
 I would appreciate it if a kind person could help me to package it for Linux package managers.
 
