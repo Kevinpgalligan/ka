@@ -118,8 +118,17 @@ def execute_interpreter_command(s):
     print("Unknown interpreter command. You may have meant one of the following...")
     interp_help()
 
+class ResultBox:
+    def __init__(self):
+        self.value = None
+
 def execute(s, env=None, out=sys.stdout,
-            errout=sys.stderr, reraise_signals=False):
+            errout=sys.stderr, reraise_signals=False,
+            # This is a hacky, C-like way of passing
+            # back the actual result of the computation, since
+            # normally the function returns an integer status
+            # code.
+            result_box=None):
     if env is None:
         env = EvalEnvironment()
     try:
@@ -148,6 +157,8 @@ def execute(s, env=None, out=sys.stdout,
             print(file=out)
         else:
             display_result(result, out)
+            if result_box is not None:
+                result_box.value = result
         return 0
     except ExitKaSignal as e:
         if reraise_signals:
@@ -232,6 +243,15 @@ def display_result(r, out):
         print(prettify_frac(r), "    (" + str(float(r)) + ")", file=out)
     else:
         print(r, file=out)
+
+def stringify_result(r):
+    """Stringify result so that it's syntactically valid, not just
+    for display."""
+    if isinstance(r, Quantity):
+        return stringify_result(r.mag) + " " + r.qv.prettified()
+    elif isinstance(r, frac):
+        return str(r)
+    return str(r)
 
 def prettify_frac(f):
     sign = 1 if f >= 0 else -1

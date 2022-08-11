@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (QApplication, QWidget, QLineEdit, QLabel,
     QScrollArea, QVBoxLayout, QMainWindow, QAction, QSizePolicy,
     QShortcut)
 
-from .interpret import KA_VERSION, execute
+from .interpret import KA_VERSION, execute, ResultBox, stringify_result
 from .eval import EvalEnvironment
 
 REPO_URL = "https://github.com/Kevinpgalligan/ka"
@@ -141,7 +141,8 @@ def run_gui():
             txt = w.ka_widget.input_widget.text()
             command_history.append(txt)
             command_index = len(command_history)
-            result = execute(txt, out=out, errout=out, env=env)
+            result_box = ResultBox()
+            status = execute(txt, out=out, errout=out, env=env, result_box=result_box)
             displayed_stuff.extend([
                 '<font color="grey">',
                 txt,
@@ -149,15 +150,19 @@ def run_gui():
                 '<br>'
             ])
             output_str = out.getvalue().replace("\n", "<br>").replace(" ", "&nbsp;")
-            if result != 0:
+            if status != 0:
                 displayed_stuff.append('<font color="red">')
             displayed_stuff.append(output_str)
-            if result != 0:
+            if status != 0:
                 displayed_stuff.append('</font>')
             displayed_stuff.append("<br>")
             displayed_str = "".join(displayed_stuff)
             w.ka_widget.output_box.setText(displayed_str)
-            w.ka_widget.input_widget.clear()
+            if result_box.value is not None:
+                w.ka_widget.input_widget.setText(stringify_result(result_box.value))
+            else:
+                w.ka_widget.input_widget.clear()
+
     def previous_command():
         nonlocal command_index, command_history
         if command_index > 0:
