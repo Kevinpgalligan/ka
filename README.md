@@ -102,7 +102,7 @@ The type system consists of (1) a hierarchy of numerical types, and (2) quantiti
 
 The hierarchy of numerical types goes: Number > Real > Rational/Fraction > Integral/Integer. 'Real' numbers are represented as floating point numbers. If a fraction can be simplified to an integer, such as 2/2, then this will happen automatically. In the other direction, a type that is lower down the hierarchy, such as an integer, can be cast into a type that's further up the hierarchy in order to match a function signature.
 
-Quantities consist of two components: a magnitude and a unit (see: the section on units). Any quantities can be multiplied together or divided into each other, but only quantities of the same unit type can be added or subtracted. For example, you can add `1 metre` and `1 foot`, but not `1 metre` and `1 second`. This is enforced by the binary operators themselves (addition and subtraction)..
+Quantities consist of two components: a magnitude and a unit (see: the section on units). Any quantities can be multiplied together or divided into each other, but only quantities of the same unit type can be added or subtracted. For example, you can add `1 metre` and `1 foot`, but not `1 metre` and `1 second`. This is enforced by the binary operators themselves (addition and subtraction).
 
 Most functions can be applied to both Numbers and Quantities.
 
@@ -143,7 +143,7 @@ Notes on units:
 * A unit can be a multiple of base units (a pound is 0.45 kilograms), but it can also have an offset, as in the case of the degree Celcius, which is offset from the kelvin by -273.15. This makes degC tricky to work with and as a result you can't generally combine it with other units.
 * UK / Imperial measures are used for the teaspoon and other ambiguous (mostly cooking-related) units, see: <https://en.wikipedia.org/wiki/Cooking_weights_and_measures>
 
-As for how the unit system works, it's based on the [International System of Units (SI)](https://en.wikipedia.org/wiki/International_System_of_Units). All units are represented in terms of the 7 SI base units: second, metre, gram, ampere, kelvin, mole and candela. Pounds are a multiple of the metre, and their "signature" in base units is `m^1`. Frequency, measured in hertz, is `s^-1`. Area is `m^2`. Velocity is `m s^-1`. Internally, the "unit signature" of a quantity is a 7-dimensional vector of integers, with each dimension corresponding to one of the SI base units. For example, 1 metre may have a unit signature of (1, 0, 0, 0, 0, 0, 0). 1 metre per second may have a unit signature of (1, -1, 0, 0, 0, 0, 0, 0). When you multiply two quantities together, their unit signatures are added together. When you divide, the unit signature of the divisor is subtracted.
+As for how the unit system works, it's based on the [International System of Units (SI)](https://en.wikipedia.org/wiki/International_System_of_Units). All units are represented in terms of the 7 SI base units: second, metre, gram, ampere, kelvin, mole and candela. Feet are a multiple of the metre, and their "signature" in base units is `m^1`. Frequency, measured in hertz, is `s^-1`. Area is `m^2`. Velocity is `m s^-1`. Internally, the "unit signature" of a quantity is a 7-dimensional vector of integers, with each dimension corresponding to one of the SI base units. For example, 1 metre may have a unit signature of (1, 0, 0, 0, 0, 0, 0). 1 metre per second may have a unit signature of (1, -1, 0, 0, 0, 0, 0, 0). When you multiply two quantities together, their unit signatures are added together. When you divide, the unit signature of the divisor is subtracted.
 
 Further reading for the interested:
 
@@ -168,7 +168,7 @@ Units have higher precedence than division, so `5/4 m` is parsed the same as `5 
 
 It's worth commenting a bit more on the grammar. Frink basically represents all units as variables. This means that the variable namespace is full of unit names, and it's possible for units to be overwritten accidentally. The good thing is that, coupled with the Frink grammar's support for implicit multiplication, you can write nice things like `1 m/s` and it's interpreted as you would expect (the number 1, multiplied by metres, divided by seconds; this gives 1 metre per second). But if you write `4m / 2m` you get `2m^2`. There are design trade-offs when incorporating units into the grammar of a computer language and I don't think there's a perfect solution.
 
-[Qalculate!](https://qalculate.github.io/) seems awesome and has bucketfuls of features! On the other hand, it's a massive project written in C++, while ka consists of 1000 lines of Python code. Units in Qalculate! behave similarly to variables, except you can't overwrite them because it doesn't support variable assignment. It sensibly handles both `1m/s` and `4m / 2m`, somehow.
+[Qalculate!](https://qalculate.github.io/) seems awesome and has bucketfuls of features! On the other hand, it's a massive project written in C++, while ka consists of 1000 lines of Python code. It sensibly handles both `1m/s` and `4m / 2m`, somehow.
 
 [F#](https://fsharpforfunandprofit.com/posts/units-of-measure/) is an example of a "real" programming language with cool unit features, but it's not suitable as a calculator.
 
