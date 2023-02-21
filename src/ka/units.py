@@ -244,8 +244,8 @@ register_unit("cd", "candela", "luminous intensity", CD)
 # Also, it's rather confusing that I pass around both
 # QuantityVectors and Units.
 register_unit("Hz", "hertz", "frequency", S**-1, plural_name=Unit.NO_PLURAL)
-RAD = M/M
-register_unit("rad", "radian", "angle", RAD)
+UNITLESS = M/M
+register_unit("rad", "radian", "angle", UNITLESS)
 register_unit("sr", "steradian", "solid angle", M**2 / M**2)
 register_unit("N", "newton", ["force", "weight"], KG * M * S**-2)
 PASCAL = KG * M**-1 * S**-2
@@ -279,7 +279,7 @@ register_unit("h", "hour", "time", S, multiple=3600)
 register_unit("d", "day", "time", S, multiple=86400)
 register_unit("year", "year", "time", S, multiple=31536000)
 register_unit("au", "astronomicalunit", "length", M, multiple=149597870700)
-register_unit("deg", "degree", "angle", RAD, multiple=math.pi/180)
+register_unit("deg", "degree", "angle", UNITLESS, multiple=math.pi/180)
 register_unit("ha", "hectare", "area", M**2, multiple=10**4)
 register_unit("acre", "acre", "area", M**2, multiple=4046.8564224)
 LITRE = register_unit("l", "litre", "volume", M**3, multiple=frac(1, 10**3))
@@ -312,3 +312,6 @@ register_unit("lb", "pound", "mass", KG, multiple=0.45)
 register_unit("hp", "horsepower", "power", WATT, multiple=735.5)
 register_unit("bar", "bar", "pressure", PASCAL, multiple=100000)
 register_unit("cal", "calorie", "energy", J, multiple=4.1868)
+
+register_unit("b", "bit", "information", UNITLESS)
+register_unit("B", "byte", "information", UNITLESS, multiple=8)
