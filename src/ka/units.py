@@ -266,6 +266,7 @@ register_unit("T", "tesla", ["magnetic induction", "magnetic flux density"], KG 
 register_unit("H", "henry", "electrical inductance", V * S / A, plural_name="henries")
 # To go from degrees Celcius to Kelvin, add 273.15 = 5463/20.
 register_unit("degC", "degC", "thermodynamic temperature", K, offset=frac(5463, 20))
+register_unit("degF", "degF",  "thermodynamic temperature", K, offset=frac(40433000795183515, 158329674399744), multiple=frac(5,9))
 register_unit("lm", "lumen", "luminous flux", CD)
 register_unit("lx", "lux", "illuminance", CD * M**-2, plural_name=Unit.NO_PLURAL)
 register_unit("Bq", "becquerel", "radioactivity", S**-1)
