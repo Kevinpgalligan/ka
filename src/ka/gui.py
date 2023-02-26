@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (QApplication, QWidget, QLineEdit, QLabel,
     QScrollArea, QVBoxLayout, QMainWindow, QAction, QSizePolicy,
     QShortcut)
 
-from .interpret import KA_VERSION, execute, ResultBox, stringify_result
+from .interpret import KA_VERSION, execute, ResultBox, stringify_result, get_functions_string, get_units_string
 from .eval import EvalEnvironment
 
 REPO_URL = "https://github.com/Kevinpgalligan/ka"
@@ -73,9 +73,9 @@ class DocWindow(QWidget):
         self.label.setText(f"""The full documentation for ka is available at <a href='{REPO_URL}'>{REPO_URL}</a>.<br><br>
 Press Ctrl+W to quit the application.<br>
 Press CTRL+Up or CTRL+Down to scroll through your command history.<br><br>
-Functions: +, -, *, /, %, ^, sin, cos, tan, sqrt, ln, log10, log2, abs, floor, ceil, round, int, float, log, C, !, quit
+Functions: {get_functions_string()}
 <br><br>
-Units: second (s), metre (m), gram (g), ampere (A), kelvin (K), mole (mol), candela (cd), hertz (Hz), radian (rad), steradian (sr), newton (N), pascal (Pa), joule (J), watt (W), coulomb (C), volt (V), farad (F), ohm (ohm), siemens (S), weber (Wb), tesla (T), henry (H), degC (degC), lumen (lm), lux (lx), becquerel (Bq), gray (Gy), sievert (Sv), katal (kat), minute (min), hour (h), day (d), astronomicalunit (au), degree (deg), hectare (ha), acre (acre), litre (l), tonne (t), dalton (Da), electronvolt (eV), lightyear (lj), parsec (pc), inch (in), foot (ft), yard (yd), mile (mi), nauticalmile (sm), teaspoon (tsp), tablespoon (tbsp), fluidounce (floz), cup (cup), gill (gill), pint (pt), quart (qt), gallon (gal), grain (gr), dram (dr), ounce (oz), pound (lb), horsepower (hp), bar (bar), calorie (cal)""")
+Units: {get_units_string()}""")
         add_exit_shortcut(self)
 
 class KaWidget(QWidget):

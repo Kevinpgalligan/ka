@@ -42,9 +42,12 @@ def interp_help():
         print(" ", ",".join(names) + ":", cmd.desc)
 
 def print_units():
-    print(", ".join(f"{unit.singular_name} ({unit.symbol})"
-                    for unit in UNITS))
+    print(get_units_string())
 
+def get_units_string():
+    return ", ".join(f"{unit.singular_name} ({unit.symbol})"
+                     for unit in UNITS)
+    
 def print_unit_info(name):
     unit = lookup_unit(name)
     if unit is None:
@@ -59,7 +62,10 @@ def print_unit_info(name):
         print("   Offset from base units:", unit.offset)
 
 def print_functions():
-    print(", ".join(name for name in FUNCTIONS.keys()))
+    print(get_functions_string())
+
+def get_functions_string():
+    return ", ".join(name for name in FUNCTIONS.keys())
 
 def print_function_info(name):
     if name not in FUNCTIONS:
