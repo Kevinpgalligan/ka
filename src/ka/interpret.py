@@ -9,7 +9,7 @@ from .types import Quantity
 from .functions import (FUNCTIONS, UnknownFunctionError,
     NoMatchingFunctionSignatureError, IncompatibleQuantitiesError,
     make_sig_printable, ExitKaSignal, FUNCTION_DOCUMENTATION)
-from .units import UNITS, lookup_unit
+from .units import UNITS, PREFIXES, lookup_unit
 
 PROMPT = ">>> "
 INTERPRETER_COMMAND_PREFIX = "%"
@@ -43,6 +43,10 @@ def interp_help():
 
 def print_units():
     print(get_units_string())
+
+def print_prefixes():
+    for prefix in PREFIXES:
+        print("  ", prefix.name_prefix + ",", prefix.symbol_prefix + ",", prefix.exponent)
 
 def get_units_string():
     return ", ".join(f"{unit.singular_name} ({unit.symbol})"

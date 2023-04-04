@@ -13,6 +13,7 @@ class Prefix:
         self.name_prefix = name_prefix
         self.symbol_prefix = symbol_prefix
         self.multiplier = 10**exp if exp>0 else frac(1, 10**-exp)
+        self.exponent = exp
 
 MILLI_PREFIX = Prefix("milli", "m", -3)
 
