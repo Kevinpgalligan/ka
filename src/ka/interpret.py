@@ -52,8 +52,7 @@ def format_unit(u):
     return f"{u.singular_name} ({u.symbol})"
 
 def get_units_string():
-    return ", ".join(format_unit(u)
-                     for unit in UNITS)
+    return ", ".join(format_unit(unit) for unit in UNITS)
     
 def print_unit_info(name):
     unit = lookup_unit(name)
