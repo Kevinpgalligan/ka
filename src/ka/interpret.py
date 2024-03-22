@@ -42,14 +42,17 @@ def interp_help():
         print(" ", ",".join(names) + ":", cmd.desc)
 
 def print_units():
-    print(get_units_string())
+    print("\n".join(sorted(["  " + format_unit(unit) for unit in UNITS])))
 
 def print_prefixes():
     for prefix in PREFIXES:
-        print("  ", prefix.name_prefix + ",", prefix.symbol_prefix + ",", prefix.exponent)
+        print("  ", prefix.name_prefix + ",", prefix.symbol_prefix + ",", str(prefix.exponent) + ", base", prefix.base)
+
+def format_unit(u):
+    return f"{u.singular_name} ({u.symbol})"
 
 def get_units_string():
-    return ", ".join(f"{unit.singular_name} ({unit.symbol})"
+    return ", ".join(format_unit(u)
                      for unit in UNITS)
     
 def print_unit_info(name):
@@ -138,7 +141,8 @@ def execute(s, env=None, out=sys.stdout,
             # back the actual result of the computation, since
             # normally the function returns an integer status
             # code.
-            result_box=None):
+            result_box=None,
+            brackets_for_frac=False):
     if env is None:
         env = EvalEnvironment()
     try:
@@ -166,7 +170,7 @@ def execute(s, env=None, out=sys.stdout,
         if result is None:
             print(file=out)
         else:
-            display_result(result, out)
+            display_result(result, out, brackets_for_frac=brackets_for_frac)
             if result_box is not None:
                 result_box.value = result
         return 0
@@ -239,11 +243,14 @@ def error(msg, index, s, errout):
             " "*(INDENT+len(left_fade)+index-context_low_index) + "^")
     print("\n".join(error_lines), file=errout)
 
-def display_result(r, out):
+def display_result(r, out, brackets_for_frac=False):
     # This is nightmare code. Oh well.
     if isinstance(r, Quantity):
         if isinstance(r.mag, frac):
-            print(prettify_frac(r.mag), r.qv.prettified(), end="", file=out)
+            print(prettify_frac(r.mag, brackets=brackets_for_frac),
+                  r.qv.prettified(),
+                  end="",
+                  file=out)
         else:
             print(r.mag, r.qv.prettified(), end="", file=out)
         if isinstance(r.mag, frac):
@@ -254,20 +261,26 @@ def display_result(r, out):
     else:
         print(r, file=out)
 
-def stringify_result(r):
+def stringify_result(r, brackets_for_frac=False):
     """Stringify result so that it's syntactically valid, not just
     for display."""
     if isinstance(r, Quantity):
-        return stringify_result(r.mag) + " " + r.qv.prettified()
+        return (stringify_result(r.mag, brackets_for_frac=brackets_for_frac)
+                + " " + r.qv.prettified())
     elif isinstance(r, frac):
-        return str(r)
+        s = str(r)
+        if brackets_for_frac:
+            s = "(" + s + ")"
+        return s
     return str(r)
 
-def prettify_frac(f):
+def prettify_frac(f, brackets=False):
     sign = 1 if f >= 0 else -1
     whole_part = abs(f.numerator) // abs(f.denominator)
-    if whole_part > 0:
-        return f"{sign*whole_part} {abs(f) - whole_part}"
-    else:
-        return str(f)
+    s = (f"{sign*whole_part} {abs(f) - whole_part}"
+         if whole_part > 0
+         else str(f))
+    if brackets:
+        s = "(" + s + ")"
+    return s
 

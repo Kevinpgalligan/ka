@@ -9,11 +9,12 @@ SYMBOL_TO_UNIT = {}
 UNITS = []
 
 class Prefix:
-    def __init__(self, name_prefix, symbol_prefix, exp):
+    def __init__(self, name_prefix, symbol_prefix, exp, base=10):
         self.name_prefix = name_prefix
         self.symbol_prefix = symbol_prefix
-        self.multiplier = 10**exp if exp>0 else frac(1, 10**-exp)
+        self.multiplier = base**exp if exp>0 else frac(1, base**-exp)
         self.exponent = exp
+        self.base = base
 
 MILLI_PREFIX = Prefix("milli", "m", -3)
 
@@ -26,6 +27,7 @@ PREFIXES = [
     Prefix("giga", "G", 9),
     Prefix("mega", "M", 6),
     Prefix("kilo", "k", 3),
+    Prefix("kilo", "K", 3),
     Prefix("hecto", "h", 2),
     Prefix("deca", "da", 1),
     Prefix("deci", "d", -1),
@@ -37,7 +39,11 @@ PREFIXES = [
     Prefix("femto", "f", -15),
     Prefix("atto", "a", -18),
     Prefix("zepto", "z", -21),
-    Prefix("yocto", "y", -24)
+    Prefix("yocto", "y", -24),
+    Prefix("kibi", "Ki", 10, base=2),
+    Prefix("mebi", "Mi", 20, base=2),
+    Prefix("gibi", "Gi", 30, base=2),
+    Prefix("tebi", "Ti", 40, base=2),
 ]
 
 class InvalidPrefixError(Exception):
@@ -323,3 +329,9 @@ register_unit("cal", "calorie", "energy", J, multiple=4.1868)
 
 register_unit("b", "bit", "information", UNITLESS)
 register_unit("B", "byte", "information", UNITLESS, multiple=8)
+
+register_unit("dozen", "dozen", "quantity", UNITLESS, multiple=12)
+register_unit("hundred", "hundred", "quantity", UNITLESS, multiple=100)
+register_unit("thousand", "thousand", "quantity",UNITLESS, multiple=1000)
+register_unit("million", "million", "quantity", UNITLESS, multiple=1000000)
+register_unit("billion", "billion", "quantity", UNITLESS, multiple=1000000000)

@@ -19,7 +19,7 @@ def main():
     add_and_store_argument(parser, flaglist, "--unit", help="See the details of a particular unit.")
     add_and_store_argument(parser, flaglist, "--function", help="See the details of a particular function.")
     add_and_store_argument(parser, flaglist, "--gui", help="Start the Graphical User Interface.", action="store_true")
-    add_and_store_argument(parser, flaglist, "--prefixes", action="store_true", help="List all available unit prefixes, their symbols and their powers of 10.")
+    add_and_store_argument(parser, flaglist, "--prefixes", action="store_true", help="List all available unit prefixes, their symbols and multipliers.")
 
     raw_args = sys.argv[1:]
     if len(raw_args) == 1 and raw_args[0] not in flaglist:

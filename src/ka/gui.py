@@ -142,7 +142,8 @@ def run_gui():
             command_history.append(txt)
             command_index = len(command_history)
             result_box = ResultBox()
-            status = execute(txt, out=out, errout=out, env=env, result_box=result_box)
+            status = execute(txt, out=out, errout=out, env=env,
+                             result_box=result_box, brackets_for_frac=True)
             displayed_stuff.extend([
                 '<font color="grey">',
                 txt,
@@ -159,7 +160,8 @@ def run_gui():
             displayed_str = "".join(displayed_stuff)
             w.ka_widget.output_box.setText(displayed_str)
             if result_box.value is not None:
-                w.ka_widget.input_widget.setText(stringify_result(result_box.value))
+                w.ka_widget.input_widget.setText(
+                    stringify_result(result_box.value, brackets_for_frac=True))
             else:
                 w.ka_widget.input_widget.clear()
 
