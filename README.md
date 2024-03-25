@@ -155,7 +155,7 @@ Further reading for the interested:
 * <https://gmpreussner.com/research/dimensional-analysis-in-programming-languages>
 
 ### Configuration
-ka can be configured through a config file at `${YOUR_HOME_DIR}/config/ka/config`. Currently, the only configurable property is the floating-point precision, which can be set by including the following line in the config file:
+ka can be configured through a config file at `${YOUR_HOME_DIR}/.config/ka/config`. Currently, the only configurable property is the floating-point precision, which can be set by including the following line in the config file:
 
 ```
 precision=4
