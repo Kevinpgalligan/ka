@@ -32,18 +32,12 @@ class MainWindow(QMainWindow):
 
         menu = self.menuBar()
 
+        self.help_window = HelpWindow()
         help_menu = menu.addMenu("&Help")
         about_action = QAction("&About", self)
-        doc_action = QAction("&Documentation", self)
-
-        self.help_window = HelpWindow()
-        self.doc_window = DocWindow()
-
         about_action.triggered.connect(self.help_window.show)
-        doc_action.triggered.connect(self.doc_window.show)
 
         help_menu.addAction(about_action)
-        help_menu.addAction(doc_action)
 
 class HelpWindow(QWidget):
     def __init__(self):
@@ -56,26 +50,8 @@ class HelpWindow(QWidget):
         self.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.label.setOpenExternalLinks(True)
         self.label.setText(f"""{get_version_string()}.<br>
-ka is a calculator language. For more information, see <a href='{REPO_URL}'>{REPO_URL}</a>.<br>""")
+ka is a calculator language. For documentation, see <a href='{REPO_URL}'>{REPO_URL}</a>.<br>""")
 
-        add_exit_shortcut(self)
-
-class DocWindow(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.resize(*DOC_SIZE)
-        self.setWindowTitle("Documentation")
-        self.label = QLabel(self)
-        self.label.resize(self.size())
-        self.label.setWordWrap(True)
-        self.label.setOpenExternalLinks(True)
-        self.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.label.setText(f"""The full documentation for ka is available at <a href='{REPO_URL}'>{REPO_URL}</a>.<br><br>
-Press Ctrl+W to quit the application.<br>
-Press CTRL+Up or CTRL+Down to scroll through your command history.<br><br>
-Functions: {get_functions_string()}
-<br><br>
-Units: {get_units_string()}""")
         add_exit_shortcut(self)
 
 class KaWidget(QWidget):
@@ -142,8 +118,10 @@ def run_gui():
             command_history.append(txt)
             command_index = len(command_history)
             result_box = ResultBox()
+            assigned_box = ResultBox()
             status = execute(txt, out=out, errout=out, env=env,
-                             result_box=result_box, brackets_for_frac=True)
+                             result_box=result_box, brackets_for_frac=True,
+                             assigned_box=assigned_box)
             displayed_stuff.extend([
                 '<font color="grey">',
                 txt,
@@ -159,7 +137,9 @@ def run_gui():
             displayed_stuff.append("<br>")
             displayed_str = "".join(displayed_stuff)
             w.ka_widget.output_box.setText(displayed_str)
-            if result_box.value is not None:
+            if assigned_box.value is not None:
+                w.ka_widget.input_widget.setText(assigned_box.value)
+            elif result_box.value is not None:
                 w.ka_widget.input_widget.setText(
                     stringify_result(result_box.value, brackets_for_frac=True))
             else:

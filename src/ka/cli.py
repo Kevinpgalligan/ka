@@ -4,12 +4,14 @@ import sys
 from .interpret import (run_interpreter, execute,
     print_units, print_functions, print_unit_info,
     print_function_info, print_prefixes)
+import ka.config
 
 def add_and_store_argument(parser, flaglist, name, **kwargs):
     flaglist.append(name)
     parser.add_argument(name, **kwargs)
 
 def main():
+    ka.config.read_config(ka.config.CONFIG_PATH)
     parser = argparse.ArgumentParser(description="A calculator language. Run with no arguments to start the interpreter.")
     parser.add_argument("x", nargs="?", help="The statements to evaluate.")
 

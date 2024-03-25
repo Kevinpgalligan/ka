@@ -4,12 +4,13 @@ import sys
 
 from .tokens import tokenise, UnknownTokenError
 from .parse import parse_tokens, ParsingError
-from .eval import eval_parse_tree, EvalError, EvalEnvironment
+from .eval import eval_parse_tree, EvalError, EvalEnvironment, EvalModes
 from .types import Quantity
 from .functions import (FUNCTIONS, UnknownFunctionError,
     NoMatchingFunctionSignatureError, IncompatibleQuantitiesError,
     make_sig_printable, ExitKaSignal, FUNCTION_DOCUMENTATION)
 from .units import UNITS, PREFIXES, lookup_unit
+import ka.config
 
 PROMPT = ">>> "
 INTERPRETER_COMMAND_PREFIX = "%"
@@ -49,7 +50,7 @@ def print_prefixes():
         print("  ", prefix.name_prefix + ",", prefix.symbol_prefix + ",", str(prefix.exponent) + ", base", prefix.base)
 
 def format_unit(u):
-    return f"{u.singular_name} ({u.symbol})"
+    return f"{u.singular_name} ({u.symbol}) [{', '.join(u.quantities)}]"
 
 def get_units_string():
     return ", ".join(format_unit(unit) for unit in UNITS)
@@ -141,7 +142,8 @@ def execute(s, env=None, out=sys.stdout,
             # normally the function returns an integer status
             # code.
             result_box=None,
-            brackets_for_frac=False):
+            brackets_for_frac=False,
+            assigned_box=None):
     if env is None:
         env = EvalEnvironment()
     try:
@@ -164,6 +166,11 @@ def execute(s, env=None, out=sys.stdout,
             index = tokens[e.token_index].begin_index_incl
         error(e.message, index, s, errout)
         return 1
+    statements = parse_tree.children
+    if len(statements)>0:
+        last_one = statements[-1]
+        if last_one.eval_mode == EvalModes.ASSIGNMENT and assigned_box is not None:
+            assigned_box.value = last_one.value
     try:
         result = eval_parse_tree(parse_tree, env)
         if result is None:
@@ -256,7 +263,11 @@ def display_result(r, out, brackets_for_frac=False):
             print("    (" + str(float(r.mag)) + " " + r.qv.prettified() + ")", end="", file=out)
         print(file=out)
     elif isinstance(r, frac):
-        print(prettify_frac(r), "    (" + str(float(r)) + ")", file=out)
+        print(prettify_frac(r),
+              "    (" + str(precisionify_float(float(r))) + ")",
+              file=out)
+    elif isinstance(r, float):
+        print(precisionify_float(r), file=out)
     else:
         print(r, file=out)
 
@@ -271,7 +282,13 @@ def stringify_result(r, brackets_for_frac=False):
         if brackets_for_frac:
             s = "(" + s + ")"
         return s
+    elif isinstance(r, float):
+        return precisionify_float(r)
     return str(r)
+
+def precisionify_float(f):
+    fstring = "{:." + str(ka.config.PRECISION) + "g}"
+    return fstring.format(f)
 
 def prettify_frac(f, brackets=False):
     sign = 1 if f >= 0 else -1

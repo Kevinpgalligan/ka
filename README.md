@@ -31,6 +31,7 @@ There are 3 ways to interact with it: executing individual expressions through t
   - [Types](#types)
   - [Functions and operators](#functions-and-operators)
   - [Units](#units)
+  - [Configuration](#configuration)
 * [FAQ](#faq)
 * [Contributing](#contributing)
 * [Development](#development)
@@ -152,6 +153,13 @@ Further reading for the interested:
 * <https://en.wikipedia.org/wiki/Dimensional_analysis>
 * <https://www.hillelwayne.com/post/frink/>
 * <https://gmpreussner.com/research/dimensional-analysis-in-programming-languages>
+
+### Configuration
+ka can be configured through a config file at `${YOUR_HOME_DIR}/config/ka/config`. Currently, the only configurable property is the floating-point precision, which can be set by including the following line in the config file:
+
+```
+precision=4
+```
 
 ## FAQ
 #### How do you exit the interpreter?
