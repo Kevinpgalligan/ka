@@ -6,6 +6,10 @@ from fractions import Fraction as frac
 
 from .types import simplify_type, Quantity, get_external_type_name
 from .units import QSPACE
+from .probability import (Binomial, Poisson, Geometric, Bernoulli,
+                          UniformInt, Exponential, Uniform, Gaussian,
+                          RandomVariable)
+from .utils import choose
 
 FUNCTIONS = collections.defaultdict(list)
 FUNCTION_DOCUMENTATION = {}
@@ -83,25 +87,6 @@ def register_numeric_function(name, f, num_args=1, docstring=None):
             return Quantity(f(quantity.mag), quantity.qv)
         register_function(quantity_function, name, (Quantity,))
 
-def choose(n, k):
-	# Yoinked this directly from the scipy source, since it is
-	# slow to import scipy just for this.
-	# Credit:
-	# https://github.com/scipy/scipy/blob/main/scipy/special/_comb.pyx
-    if k > n or n < 0 or k < 0:
-        return 0
-
-    M = n + 1
-    nterms = min(k, n - k)
-
-    numerator = 1
-    denominator = 1
-    for j in range(1, nterms + 1):
-        numerator *= M - j
-        denominator *= j
-
-    return numerator // denominator
-
 def factorial(n):
 	result = 1
 	if n < 2:
@@ -178,3 +163,22 @@ def ka_quit():
     raise ExitKaSignal()
 
 register_function(ka_quit, "quit", tuple(), docstring="Exit the program.")
+
+RVS = (
+    (Binomial, (Integral, Number), 
+     "Binomial random variable with n samples and probability p."),
+    (Poisson, (Integral,), "Poisson random variable with shape mu."), 
+    (Geometric, (Number,), "Geometric random variable with parameter p."),
+    (Bernoulli, (Number,), "Bernoulli random variable with parameter p."),
+    (UniformInt, (Integral, Integral),
+     "Uniform random variable with integer values between lower bound and upper bound (inclusive)."),
+    (Exponential, (Number,),
+     "Exponential random variable with shape parameter."),
+    (Uniform, (Number, Number), "Uniform random variable with values between lower and upper bound."),
+    (Gaussian, (Number, Number),
+     "Gaussian/normal random variable parameterised by mean and standard deviation.")
+)
+for rvname, args, doc in RVS:
+    register_function(rvname, rvname.__name__, args, docstring=doc)
+
+register_function(lambda rv: rv.mean(), "mean", (RandomVariable,), "Get the mean of a random variable.")

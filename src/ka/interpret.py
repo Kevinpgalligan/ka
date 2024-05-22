@@ -10,6 +10,7 @@ from .functions import (FUNCTIONS, UnknownFunctionError,
     NoMatchingFunctionSignatureError, IncompatibleQuantitiesError,
     make_sig_printable, ExitKaSignal, FUNCTION_DOCUMENTATION)
 from .units import UNITS, PREFIXES, lookup_unit
+from .probability import InvalidParameterException
 import ka.config
 
 PROMPT = ">>> "
@@ -198,6 +199,9 @@ def execute(s, env=None, out=sys.stdout,
         alternatives = find_close_matches(e.name, FUNCTIONS.keys())
         if alternatives:
             print_err(errout, "  You may have meant:", ", ".join(alternatives))
+        return 1
+    except InvalidParameterException as e:
+        print_err(errout, e.msg)
         return 1
     except NoMatchingFunctionSignatureError as e:
         print_err(errout, f"Function '{e.name}' does not accept {printable_signature(e.attempted_signature)}.")
