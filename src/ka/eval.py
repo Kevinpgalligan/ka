@@ -2,6 +2,7 @@ import math
 from .types import Quantity, is_number, get_external_type_name
 from .functions import dispatch
 from .units import lookup_unit, QSPACE, InvalidPrefixError
+from .probability import ComparisonOp
 
 CONSTANTS = {
     "e": math.e,
@@ -16,6 +17,7 @@ class EvalModes:
     STATEMENTS = "statements"
     QUANTITY = "quantity"
     CONVERT_UNIT = "convert-unit"
+    COMPARE = "compare"
 
 class EvalError(Exception):
     def __init__(self, message):
@@ -66,6 +68,8 @@ def eval_based_on_mode(node, env, child_values):
         return make_quantity(child_values[0], node.value)
     if mode == EvalModes.CONVERT_UNIT:
         return convert_quantity(child_values[0], node.value)
+    if mode == EvalModes.COMPARE:
+        return compare(child_values, node.meta["ops"])
     raise EvalError(f"Unknown evaluation mode: '{mode}' (This is a bug!)")
 
 def make_quantity(magnitude, unit_signature):
@@ -115,3 +119,35 @@ def compose_units(unit_sig):
             raise EvalError(f"The only valid exponent for unit '{name}' is 1, but it was given as {exp}.")
     return qv, multiple, offset
 
+FORWARD_OPS = [ComparisonOp.LT, ComparisonOp.LEQ]
+BACKWARD_OPS = [ComparisonOp.GT, ComparisonOp.GEQ]
+
+def compare(operands, ops):
+    if len(ops) > 1 and ComparisonOp.EQ in ops:
+        raise EvalError(
+            "Equality comparison operator can't be chained with other comparison operators.")
+    back = any(op in BACKWARD_OPS for op in ops)
+    if back:
+        if any(op in FORWARD_OPS for op in ops):
+            raise EvalError("Conflicting comparison operators.")
+        # Flip the operators to reduce function duplication. We only
+        # implement the forward-facing comparison operators.
+        i = 0
+        while i < len(ops):
+            op_index = BACKWARD_OPS.index(ops[i])
+            ops[i] = FORWARD_OPS[op_index]
+            i += 1
+        ops.reverse()
+        operands.reverse()
+    return dispatch(get_comparison_fun(ops), operands)
+
+def get_comparison_fun(ops):
+    names = []
+    for op in ops:
+        if op == ComparisonOp.LEQ:
+            names.append("<=")
+        elif op == ComparisonOp.LT:
+            names.append("<")
+        else:
+            names.append("=")
+    return "_".join(names)

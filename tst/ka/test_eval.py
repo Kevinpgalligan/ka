@@ -5,7 +5,7 @@ import pytest
 
 from ka.tokens import tokenise
 from ka.functions import UnknownFunctionError, NoMatchingFunctionSignatureError
-from ka.parse import parse_tokens
+from ka.parse import parse_tokens, ParsingError
 from ka.eval import eval_parse_tree, EvalError
 from ka.types import Quantity
 from ka.units import M, S, K
@@ -90,7 +90,7 @@ def test_quantities():
         ("3m^2 s^-1", Quantity(3, M**2 * S**-1)),
         ("100 degC", Quantity(frac(7463, 20), K)),
         ("5 feet seconds", Quantity(0.0254*12*5, M * S)),
-        ("5m > mm", 5000)])
+        ("5m to mm", 5000)])
 
 def test_quantity_of_quantity():
     validate_fail("(5m)s")
@@ -114,10 +114,10 @@ def test_unassigned_variable():
     validate_fail("x")
 
 def test_convert_non_quantity():
-    validate_fail("5 > m")
+    validate_fail("5 to m")
 
 def test_convert_incompatible_units():
-    validate_fail("5m > s")
+    validate_fail("5m to s")
 
 def test_prefix_for_offset_unit():
     validate_fail("1 kilodegC")
@@ -133,3 +133,39 @@ def test_division_by_zero():
 
 def test_overflow():
     validate_fail("1.2^100000000000000000000000")
+
+def test_probability():
+    for s, r in [
+            # Equality/inequality for continuous/discrete.
+            ("P(Uniform(0, 10) < 5)", .5),
+            ("P(Uniform(0, 10) <= 5)", .5),
+            ("P(UniformInt(1, 10) <= 5)", .5),
+            ("P(UniformInt(1, 10) < 5)", .4),
+            ("P(UniformInt(1, 10) = 5)", .1),
+            # Same thing but reversed.
+            ("P(5 > Uniform(0, 10))", .5),
+            ("P(5 >= UniformInt(1, 10))", .5),
+            ("P(5 > UniformInt(1, 10))", .4),
+            # Expectation.
+            ("E(Gaussian(2, 1))", 2),
+            # Double comparisons.
+            ("P(1 <= Uniform(0, 10) <= 3)", .2),
+            ("P(1 < UniformInt(1, 10) < 2)", 0),
+            ("P(1 < UniformInt(1, 10) <= 2)", .1),
+            ("P(1 <= UniformInt(1, 10) < 2)", .1),
+            ("P(3 >= Uniform(0, 10) >= 1)", .2),
+            ("P(2 > UniformInt(1, 10) > 1)", 0),
+            ("P(2 >= UniformInt(1, 10) > 1)", .1),
+            ("P(2 > UniformInt(1, 10) >= 1)", .1),
+            ]:
+        print("====", s)
+        actual_result = get_result(s) 
+        assert math.isclose(r, actual_result)
+
+def test_probability_fails():
+    for s, err in [("P(5 = UniformInt(1, 10))", NoMatchingFunctionSignatureError),
+              ("P(1 < 2)", NoMatchingFunctionSignatureError),
+              ("P(1 < Binomial(5, .2) < Poisson(5) < 10)", ParsingError),
+              ("P(1 < Binomial(5, .2) = 4)", EvalError),
+              ]:
+        validate_fail(s, **(dict() if err is None else dict(error_type=err)))

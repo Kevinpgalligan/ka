@@ -22,9 +22,14 @@ def test_tokenise_valid_tokens():
         (Tokens.VAR, "x"),
         (Tokens.FACTORIAL, "!"),
         (Tokens.UNIT_DIVIDE, "|"),
-        (Tokens.NUM, "1e-4")
+        (Tokens.NUM, "1e-4"),
+        (Tokens.UNIT_CONVERT, "to"),
+        (Tokens.LEQ, "<="),
+        (Tokens.LT, "<"),
+        (Tokens.GT, ">"),
+        (Tokens.GEQ, ">="),
     ]
-    s = "=;()+-*/%^123+abc1-22x!| 1e-4"
+    s = "=;()+-*/%^123+abc1-22x!| 1e-4 to <=<>>="
     tokens = tokenise(s)
     actual = [(token.tag, s[token.begin_index_incl:token.end_index_excl])
               for token in tokens]

@@ -187,3 +187,57 @@ class Gaussian(RandomVariable):
 
     def __str__(self):
         return f"Gaussian(mean={self.mu}, stddev={self.stddev})"
+
+class ComparisonOp:
+    LEQ = "<="
+    LT = "<"
+    GT = ">"
+    GEQ = ">="
+    EQ = "="
+
+class Event:
+    def __init__(self, op, x, y):
+        self.op = op
+        self.x = x
+        self.y = y
+
+    def probability(self):
+        return eval_probability(self.op, self.x, self.y)
+
+class DoubleEvent:
+    def __init__(self, op1, op2, x, y, z):
+        self.op1 = op1
+        self.op2 = op2
+        self.x = x
+        self.y = y
+        self.z = z
+
+    def probability(self):
+        x_adjusted = self.x
+        if (isinstance(self.y, DiscreteRandomVariable)
+                and self.op1 == ComparisonOp.LEQ):
+            x_adjusted -= 1
+        p1 = eval_probability(ComparisonOp.LEQ, self.y, x_adjusted)
+        p2 = eval_probability(self.op2, self.y, self.z)
+        return max(p2 - p1, 0)
+
+def eval_probability(op, left, right):
+    # Japers, this is ugly. And there's bound to be
+    # an off-by-1 error somewhere.
+    if op == ComparisonOp.EQ:
+        return left.pmf(right)
+    if op == ComparisonOp.LEQ:
+        if isinstance(left, RandomVariable):
+            return left.cdf(right)
+        if isinstance(right, DiscreteRandomVariable):
+            return 1 - right.cdf(left-1)
+        if isinstance(right, RandomVariable):
+            return 1 - right.cdf(left)
+    if op == ComparisonOp.LT:
+        if isinstance(left, DiscreteRandomVariable):
+            return left.cdf(right-1)
+        if isinstance(left, RandomVariable):
+            return left.cdf(right)
+        if isinstance(right, RandomVariable):
+            return 1 - right.cdf(left)
+    raise Exception("Dunno how to evaluate the probability of this event! (This is a bug).")

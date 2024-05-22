@@ -11,7 +11,7 @@ There are 3 ways to interact with it: executing individual expressions through t
 ```
 >>> 2 * (1/2)
 1
->>> 1 metre + 1 foot > feet
+>>> 1 metre + 1 foot to feet
 4.2808398950131235
 >>> p = 0.7; C(10,3) * p^3 * (1-p)^7
 0.009001692000000007
@@ -88,7 +88,7 @@ An individual statement can be either an assignment (`a = 3`) or an expression (
 
 An assignment consists of a variable name (such as `a`), followed by `=`, followed by an expression (such as `3` or `1+1` or `sin(90 deg)`). Assignments are not expressions, so you can't nest assignments like `a=(b=3)`. You can, however, assign the value of one variable to another: `a=3; b=a;`.
 
-An expression is a sequence of math operations that returns a value. Addition, subtraction, function calls, and so on. If the value of an expression is a quantity (a number with a unit attached), then the unit can be converted to something else using the symbol `>`. For example, this assigns `a` the magnitude of 3 metres when it's converted to feet: `a = 3m > ft`.
+An expression is a sequence of math operations that returns a value. Addition, subtraction, function calls, and so on. If the value of an expression is a quantity (a number with a unit attached), then the unit can be converted to something else using the operator `to`. For example, this assigns `a` the magnitude of 3 metres when it's converted to feet: `a = 3m to ft`.
 
 ### Variables
 ka has basic support for variables: `blah=9^3; blah`.
@@ -139,7 +139,7 @@ Notes on units:
 * Division in the unit signature is represented by the symbol `|`, so 1 metre per second is written `1 m|s`. This avoids parsing ambiguities. A more complex unit signature is `1 kg | m s^2`, which is the same as `1 pascal`.
 * To find out more about a specific unit, run `ka --unit {name}`, or execute `%u {name}` or `%unit {name}` in the interpreter.
 * Units are case sensitive.
-* You can convert from one unit to another using the `>` symbol: `1m > feet`.
+* You can convert from one unit to another using the `to` operator: `1m to feet`.
 * Units are part of what makes up a quantity, together with a magnitude. It only makes sense to add or subtract quantities with the same unit type. You can add two areas, for example, but it doesn't make sense to add an area and a velocity. You can multiply and divide any quantities, however.
 * A unit can be a multiple of base units (a pound is 0.45 kilograms), but it can also have an offset, as in the case of the degree Celcius, which is offset from the kelvin by -273.15. This makes degC tricky to work with and as a result you can't generally combine it with other units.
 * UK / Imperial measures are used for the teaspoon and other ambiguous (mostly cooking-related) units, see: <https://en.wikipedia.org/wiki/Cooking_weights_and_measures>

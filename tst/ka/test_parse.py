@@ -123,3 +123,27 @@ def test_parse_units_when_missing_units_after_divide():
         t(Tokens.EXP),
         t(Tokens.NUM, value=2),
         t(Tokens.UNIT_DIVIDE)])
+
+def test_parse_comparison():
+    validate_parse(
+        [t(Tokens.NUM, value=1), t(Tokens.LT), t(Tokens.VAR, name="X")],
+        pn("<", [pn(1), pn("X")]))
+
+def test_parse_double_comparison():
+    validate_parse(
+        [t(Tokens.NUM, value=1),
+         t(Tokens.LT),
+         t(Tokens.VAR, name="X"),
+         t(Tokens.LEQ),
+         t(Tokens.NUM, value=3)],
+        pn("< <=", [pn(1), pn("X"), pn(3)]))
+
+def test_fails_more_than_two_compares():
+    validate_parsing_error(
+        [t(Tokens.NUM, value=1),
+         t(Tokens.LT),
+         t(Tokens.VAR, name="X"),
+         t(Tokens.LEQ),
+         t(Tokens.NUM, value=3),
+         t(Tokens.LEQ),
+         t(Tokens.NUM, value=5)])

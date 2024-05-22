@@ -18,7 +18,9 @@ def choose(n, k):
     return numerator // denominator
 
 def factorial(n):
-    result = 1
-    for k in range(2, n+1):
-        result *= k
-    return result
+	result = 1
+	if n < 2:
+		return result
+	for k in range(2, n+1):
+		result *= k
+	return result

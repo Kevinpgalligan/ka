@@ -43,9 +43,19 @@ class Tokens:
     FUNCTION_ARG_SEPARATOR = ','
     FACTORIAL = '!'
     UNIT_DIVIDE = '|'
-    UNIT_CONVERT = '>'
+    UNIT_CONVERT = 'to'
+    LT = '<'
+    LEQ = '<='
+    GT = '>'
+    GEQ = '>='
 
 CONST_TOKENS = [
+    # Need to make sure that if token A is a prefix of token B, then it
+    # comes after token B in the list.
+    Tokens.LEQ,
+    Tokens.GEQ,
+    Tokens.LT,
+    Tokens.GT,
     Tokens.ASSIGNMENT_OP,
     Tokens.STATEMENT_SEPARATOR,
     Tokens.LBRACKET,
@@ -87,14 +97,14 @@ def skip_whitespace(i, s):
     return i
 
 def read_token(i, s):
-    if s[i].isalpha():
-        m = VAR_REGEX.match(s, i)
-        return Token(Tokens.VAR, m.start(), m.end(), name=m.group(0))
     if s[i].isnumeric() or s[i] == '.':
         return read_num_token(i, s)
     for t in CONST_TOKENS:
         if s.startswith(t, i):
             return Token(t, i, i+len(t))
+    if s[i].isalpha():
+        m = VAR_REGEX.match(s, i)
+        return Token(Tokens.VAR, m.start(), m.end(), name=m.group(0))
     return None
 
 def read_num_token(i, s):

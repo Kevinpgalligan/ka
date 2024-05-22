@@ -8,8 +8,9 @@ from .types import simplify_type, Quantity, get_external_type_name
 from .units import QSPACE
 from .probability import (Binomial, Poisson, Geometric, Bernoulli,
                           UniformInt, Exponential, Uniform, Gaussian,
-                          RandomVariable)
-from .utils import choose
+                          RandomVariable, Event, DoubleEvent, ComparisonOp,
+                          DiscreteRandomVariable)
+from .utils import choose, factorial
 
 FUNCTIONS = collections.defaultdict(list)
 FUNCTION_DOCUMENTATION = {}
@@ -86,14 +87,6 @@ def register_numeric_function(name, f, num_args=1, docstring=None):
         def quantity_function(quantity):
             return Quantity(f(quantity.mag), quantity.qv)
         register_function(quantity_function, name, (Quantity,))
-
-def factorial(n):
-	result = 1
-	if n < 2:
-		return result
-	for k in range(2, n+1):
-		result *= k
-	return result
 
 def fraction_divide(n1, n2):
     return frac(n1, n2)
@@ -182,3 +175,36 @@ for rvname, args, doc in RVS:
     register_function(rvname, rvname.__name__, args, docstring=doc)
 
 register_function(lambda rv: rv.mean(), "mean", (RandomVariable,), "Get the mean of a random variable.")
+register_function(lambda rv: rv.mean(), "E", (RandomVariable,), "Expectation of a random variable.")
+
+register_function(lambda x, y: Event(ComparisonOp.EQ, x, y),
+                  ComparisonOp.EQ,
+                  (DiscreteRandomVariable, Integral),
+                  "Comparison operator.")
+
+def make_event_fun(op):
+    def event_fun(x, y):
+        return Event(op, x, y)
+    return event_fun
+
+def make_double_event_fun(op1, op2):
+    def event_fun(x, y, z):
+        return DoubleEvent(op1, op2, x, y, z)
+    return event_fun
+
+for op1 in [ComparisonOp.LEQ, ComparisonOp.LT]:
+    for args in [(Number, RandomVariable), (RandomVariable, Number)]:
+        # Can't use a lambda here because it doesn't have
+        # proper lexical closure. Annoying Python.
+        register_function(make_event_fun(op1),
+                          op1,
+                          args,
+                          "Comparison operator.")
+    for op2 in [ComparisonOp.LEQ, ComparisonOp.LT]:
+        register_function(make_double_event_fun(op1, op2),
+                          "_".join([op1, op2]),
+                          (Number, RandomVariable, Number),
+                          "Double comparison.")
+
+for etype in [Event, DoubleEvent]:
+    register_function(lambda event: event.probability(), "P", (etype,), "Evaluate the probability of an event.")

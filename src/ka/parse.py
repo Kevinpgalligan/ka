@@ -7,11 +7,13 @@ class ParseNode:
                  value=None,
                  label="",
                  children=None,
-                 eval_mode=EvalModes.LEAF):
+                 eval_mode=EvalModes.LEAF,
+                 meta=None):
         self.value = value
         self.label = label
         self.children = children if children else []
         self.eval_mode = eval_mode
+        self.meta = meta
 
     def __repr__(self):
         return str(self)
@@ -33,6 +35,19 @@ def unit_convert_node(sum_node, unit_sig):
                      children=[sum_node],
                      eval_mode=EvalModes.CONVERT_UNIT,
                      value=unit_sig)
+
+def make_comparison_node(terms, ops):
+    label = " ".join(map(lambda op: op.tag, ops))
+    return ParseNode(label=label,
+                     children=terms,
+                     eval_mode=EvalModes.COMPARE,
+                     value=label,
+                     meta=dict(ops=list(map(to_comparison_op, ops))))
+
+def to_comparison_op(token):
+    # We happen to know that the same strings are used to represent
+    # the tokens and comparison ops.
+    return token.tag
 
 def parse_tokens(tokens):
     return parse_statements(BagOfTokens(tokens))
@@ -105,10 +120,24 @@ def parse_assignment(t):
                      eval_mode=EvalModes.ASSIGNMENT)
 
 def parse_expression(t):
-    sum_node = parse_sum(t)
+    comparison_node = parse_comparison(t)
     if t.next_are(Tokens.UNIT_CONVERT):
-        return parse_unit_convert(t, sum_node)
-    return sum_node
+        return parse_unit_convert(t, comparison_node)
+    return comparison_node
+
+def parse_comparison(t):
+    terms = [parse_sum(t)]
+    comparison_ops = []
+    for _ in range(2):
+        if not t.next_is_one_of(Tokens.LT, Tokens.GT, Tokens.LEQ, Tokens.GEQ, Tokens.ASSIGNMENT_OP):
+            break
+        comparison_ops.append(t.read_any())
+        terms.append(parse_sum(t))
+    if not comparison_ops:
+        return terms[0]
+    # Leave it up to the evaluation step to determine if
+    # invalid comparison operations have been mixed together.
+    return make_comparison_node(terms, comparison_ops)
 
 def parse_sum(t):
     return parse_binary_op(t, parse_product, [Tokens.PLUS, Tokens.MINUS])
