@@ -19,6 +19,8 @@ There are 3 ways to interact with it: executing individual expressions through t
 1 
 >>> e^pi
 23.140692632779263
+>>> X = Binomial(10, 0.3); P(3 <= X < 7)
+0.606625
 ```
 
 ## Contents
@@ -31,6 +33,7 @@ There are 3 ways to interact with it: executing individual expressions through t
   - [Types](#types)
   - [Functions and operators](#functions-and-operators)
   - [Units](#units)
+  - [Probability](#probability)
   - [Configuration](#configuration)
 * [FAQ](#faq)
 * [Contributing](#contributing)
@@ -153,6 +156,29 @@ Further reading for the interested:
 * <https://en.wikipedia.org/wiki/Dimensional_analysis>
 * <https://www.hillelwayne.com/post/frink/>
 * <https://gmpreussner.com/research/dimensional-analysis-in-programming-languages>
+
+### Probability
+A number of discrete and continuous probability distributions / random variables are provided. Various properties of these distributions can be calculated, and they can be sampled from. A full list of distributions is shown below. For now, let's say we've already entered `X = Binomial(10, .5)`. Then:
+
+* `E(X)` or `mean(X)` gives the expectation, a.k.a. the mean.
+* `P(X=3)` gives the probability of the value 3 (discrete random variables only).
+* `P(X<3)`, `P(1 < X <= 3)`, `P(X > 5)` calculate the probability of a range.
+* `sample(X)` returns a random value from the distribution.
+
+These are the discrete probability distributions and their parameters:
+
+* `Binomial(n, p)`: `n` trials and success probability `p`.
+* `Poisson(lambda)`: rate `lambda`.
+* `Geometric(p)`: success probability `p`.
+* `Bernoulli(p)`: success probability `p`.
+* `UniformInt(lo, hi)`: uniform distribution over the integers `lo`, `lo+1`, ..., `hi-1`, `hi`.
+
+And these are the continuous ones:
+
+* `Exponential(lambda)`: rate `lambda` .
+* `Uniform(lo, hi)`: uniform distribution over real numbers between `lo` and `hi`.
+* `Gaussian(mu, stddev)`: normal distribution with mean `mu` and standard deviation `stddev`.
+
 
 ### Configuration
 ka can be configured through a config file at `${YOUR_HOME_DIR}/.config/ka/config`. Currently, the only configurable property is the floating-point precision, which can be set by including the following line in the config file:

@@ -15,7 +15,7 @@ import ka.config
 
 PROMPT = ">>> "
 INTERPRETER_COMMAND_PREFIX = "%"
-KA_VERSION = "1.1"
+KA_VERSION = "1.2"
 
 ERROR_CONTEXT_SIZE = 5
 INDENT = 2

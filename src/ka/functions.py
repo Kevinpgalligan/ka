@@ -176,6 +176,7 @@ for rvname, args, doc in RVS:
 
 register_function(lambda rv: rv.mean(), "mean", (RandomVariable,), "Get the mean of a random variable.")
 register_function(lambda rv: rv.mean(), "E", (RandomVariable,), "Expectation of a random variable.")
+register_function(lambda rv: rv.sample(), "sample", (RandomVariable,), "Sample a value from a random distribution.")
 
 register_function(lambda x, y: Event(ComparisonOp.EQ, x, y),
                   ComparisonOp.EQ,

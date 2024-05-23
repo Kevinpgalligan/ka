@@ -1,8 +1,12 @@
 from abc import ABC, abstractmethod
 from numbers import Integral
 import math
+import random
 
-from .utils import choose, factorial
+from .utils import choose, factorial, erfinv
+
+def unit():
+	return random.random()
 
 class InvalidParameterException(Exception):
     def __init__(self, msg):
@@ -15,6 +19,10 @@ class RandomVariable:
 
     @abstractmethod
     def mean(self):
+        pass
+
+    @abstractmethod
+    def sample(self):
         pass
 
 class DiscreteRandomVariable(RandomVariable):
@@ -42,6 +50,15 @@ class Binomial(DiscreteRandomVariable):
     def mean(self):
         return self.n * self.p
 
+    def sample(self):
+        # Alternative approach: treat as a normal distribution
+        # and round.
+        c = 0
+        for _ in range(self.n):
+            if unit() < self.p:
+                c += 1
+        return c
+
     def __str__(self):
         return f"Binomial(n={self.n}, p={self.p})"
 
@@ -59,6 +76,17 @@ class Poisson(DiscreteRandomVariable):
 
     def mean(self):
         return self.mu
+
+    def sample(self):
+        u = unit()
+        k = 0
+        p = 0
+        while True:
+            p += self.pmf(k)
+            if p > u:
+                break
+            k += 1
+        return k
 
     def __str__(self):
         return f"Poisson(rate={self.mu})"
@@ -82,6 +110,9 @@ class Geometric(DiscreteRandomVariable):
     def mean(self):
         return 1/self.p
 
+    def sample(self):
+        return math.ceil(math.log(1-unit())/math.log(1-self.p))
+
     def __str__(self):
         return f"Geometric(p={self.p})"
 
@@ -103,6 +134,9 @@ class Bernoulli(DiscreteRandomVariable):
 
     def mean(self):
         return self.p
+
+    def sample(self):
+        return 1 if unit() < self.p else 0
 
     def __str__(self):
         return f"Bernoulli(p={self.p})"
@@ -131,6 +165,9 @@ class UniformInt(DiscreteRandomVariable):
     def mean(self):
         return self.lo + (self.hi - self.lo)/2
 
+    def sample(self):
+        return math.floor(self.lo + unit()*(self.hi-self.lo+1))
+
     def __str__(self):
         return f"UniformInt(lo={self.lo}, hi={self.hi})"
 
@@ -148,6 +185,9 @@ class Exponential(RandomVariable):
 
     def mean(self):
         return 1/self.lam
+
+    def sample(self):
+        return -math.log(1-unit())/self.lam
 
     def __str__(self):
         return f"Exponential(rate={self.lam})"
@@ -168,6 +208,9 @@ class Uniform(RandomVariable):
     def mean(self):
         return self.lo + (self.hi-self.lo)/2
 
+    def sample(self):
+        return self.lo + unit()*(self.hi - self.lo)
+
     def __str__(self):
         return f"Uniform(lo={self.lo}, hi={self.hi})"
 
@@ -184,6 +227,9 @@ class Gaussian(RandomVariable):
 
     def mean(self):
         return self.mu
+
+    def sample(self):
+        return self.stddev*math.sqrt(2)*erfinv(2*unit()-1) + self.mu
 
     def __str__(self):
         return f"Gaussian(mean={self.mu}, stddev={self.stddev})"
