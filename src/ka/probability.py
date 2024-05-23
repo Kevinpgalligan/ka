@@ -250,6 +250,9 @@ class Event:
     def probability(self):
         return eval_probability(self.op, self.x, self.y)
 
+    def __str__(self):
+        return f"Event({self.x} {self.op} {self.y})"
+
 class DoubleEvent:
     def __init__(self, op1, op2, x, y, z):
         self.op1 = op1
@@ -266,6 +269,9 @@ class DoubleEvent:
         p1 = eval_probability(ComparisonOp.LEQ, self.y, x_adjusted)
         p2 = eval_probability(self.op2, self.y, self.z)
         return max(p2 - p1, 0)
+
+    def __str__(self):
+        return f"Event({self.x} {self.op1} {self.y} {self.op2} {self.z})"
 
 def eval_probability(op, left, right):
     # Japers, this is ugly. And there's bound to be
