@@ -54,3 +54,7 @@ def divide(x, y):
     if isinstance(x, int):
         return frac(x, y)
     return x/y
+
+class Array:
+    def __init__(self, contents):
+        self.contents = contents

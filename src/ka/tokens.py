@@ -48,6 +48,14 @@ class Tokens:
     LEQ = '<='
     GT = '>'
     GEQ = '>='
+    ARRAY_OPEN = '{'
+    ARRAY_CLOSE = '}'
+    ARRAY_SEPARATOR = ','
+    ARRAY_CONDITION_SEP = ':'
+    ELEMENT_OF = "in"
+    INTERVAL_OPEN = "["
+    INTERVAL_CLOSE = "]"
+    INTERVAL_SEPARATOR = ","
 
 CONST_TOKENS = [
     # Need to make sure that if token A is a prefix of token B, then it
@@ -69,7 +77,15 @@ CONST_TOKENS = [
     Tokens.FUNCTION_ARG_SEPARATOR,
     Tokens.FACTORIAL,
     Tokens.UNIT_DIVIDE,
-    Tokens.UNIT_CONVERT
+    Tokens.UNIT_CONVERT,
+    Tokens.ARRAY_OPEN,
+    Tokens.ARRAY_CLOSE,
+    Tokens.ARRAY_SEPARATOR,
+    Tokens.ARRAY_CONDITION_SEP,
+    Tokens.ELEMENT_OF,
+    Tokens.INTERVAL_OPEN,
+    Tokens.INTERVAL_CLOSE,
+    Tokens.INTERVAL_SEPARATOR,
 ]
 
 class UnknownTokenError(Exception):

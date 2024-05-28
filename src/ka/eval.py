@@ -1,5 +1,5 @@
 import math
-from .types import Quantity, is_number, get_external_type_name
+from .types import Quantity, is_number, get_external_type_name, Array
 from .functions import dispatch
 from .units import lookup_unit, QSPACE, InvalidPrefixError
 from .probability import ComparisonOp
@@ -18,6 +18,8 @@ class EvalModes:
     QUANTITY = "quantity"
     CONVERT_UNIT = "convert-unit"
     COMPARE = "compare"
+    ARRAY = "array"
+    ARRAY_COMPREHENSION = "array-comprehension"
 
 class EvalError(Exception):
     def __init__(self, message):
@@ -50,7 +52,8 @@ def eval_node(node, env):
     return eval_based_on_mode(
         node,
         env,
-        [eval_node(child, env) for child in node.children])
+        [eval_node(child, env) if node.eval_children else None
+         for child in node.children])
 
 def eval_based_on_mode(node, env, child_values):
     mode = node.eval_mode
@@ -70,6 +73,10 @@ def eval_based_on_mode(node, env, child_values):
         return convert_quantity(child_values[0], node.value)
     if mode == EvalModes.COMPARE:
         return compare(child_values, node.meta["ops"])
+    if mode == EvalModes.ARRAY:
+        return Array(child_values)
+    if mode == EvalModes.ARRAY_COMPREHENSION:
+        return eval_comprehension(node, env)
     raise EvalError(f"Unknown evaluation mode: '{mode}' (This is a bug!)")
 
 def make_quantity(magnitude, unit_signature):
@@ -151,3 +158,43 @@ def get_comparison_fun(ops):
         else:
             names.append("=")
     return "_".join(names)
+
+def eval_comprehension(node, env):
+    num_assignments = node.meta["num_assignments"]
+    num_conditions = len(node.children)-num_assignments-1
+    if len(num_assignments) == 0:
+        raise EvalError("Complex array expression must introduce at least 1 variable.")
+    body_node = node.children[0]
+    assignment_nodes = [node.children[i] for i in range(1, 1+len(num_assignments))]
+    assign_names = [child.meta["name"] for child in assignment_nodes]
+    subarrays = [eval_node(assign_node, env)  for assign_node in assignment_nodes]
+    if any(not isinstance(subarray, Array) for subarray in subarrays):
+        raise EvalError("Expected an array for variable assignment in complex array subclause.")
+    condition_nodes = [node.children[i] for i in range(1+len(num_assignments), len(node.children))]
+    subarray_index = 0
+    output = Array([])
+    print("assignment nodes:", assignment_nodes)
+    print("assignment names:", assignment_names)
+    print("subarrays:", subarrays)
+    print("condition_nodes:", condition_nodes)
+    while True:
+        for name, subarray in zip(assign_names, subarrays):
+            if subarray_index >= len(subarray):
+                break
+            env.set_variable(name, subarray[subarray_index])
+        condition_failed = False
+        for condition in condition_nodes:
+            result = eval_node(condition_node, env)
+            if not bool_like(result):
+                raise EvalError("Expected boolean-interpretable result in array condition.")
+            if result == 0:
+                condition_failed = True
+        if condition_failed:
+            break
+        output.contents.append(eval_node(body_node, env))
+        subarray_index += 1
+    return output
+
+def bool_like(x):
+    return x == 1 or x == 0
+

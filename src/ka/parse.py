@@ -8,12 +8,14 @@ class ParseNode:
                  label="",
                  children=None,
                  eval_mode=EvalModes.LEAF,
-                 meta=None):
+                 meta=None,
+                 eval_children=True):
         self.value = value
         self.label = label
         self.children = children if children else []
         self.eval_mode = eval_mode
-        self.meta = meta
+        self.meta = meta if meta else dict()
+        self.eval_children = eval_children
 
     def __repr__(self):
         return str(self)
@@ -22,7 +24,10 @@ class ParseNode:
         return "ParseNode(" + ",".join([str(self.label)] + list(map(str, self.children))) + ")"
 
 def funcall_node(name, children):
-    return ParseNode(label=name, value=name, children=children, eval_mode=EvalModes.FUNCALL)
+    return ParseNode(label=name,
+                     value=name,
+                     children=children,
+                     eval_mode=EvalModes.FUNCALL)
 
 def quantity_node(term, unit_sig):
     return ParseNode(label=str(unit_sig),
@@ -48,6 +53,36 @@ def to_comparison_op(token):
     # We happen to know that the same strings are used to represent
     # the tokens and comparison ops.
     return token.tag
+
+def make_array_node(elements):
+    label = "{...}"
+    return ParseNode(label=label,
+                     value=label,
+                     children=elements,
+                     eval_mode=EvalModes.ARRAY)
+
+def make_array_comprehension_node(body, clauses):
+    assignments = []
+    conditions = []
+    for clause in clauses:
+        if "generator" in clause.meta:
+            assignments.append(clause)
+        else:
+            conditions.append(clause)
+    label = "{...}"
+    # This is getting ridiculously hacky. Should just have different
+    # implementations of ParseNode and they each have their own
+    # version of eval().
+    return ParseNode(label=label,
+                     value=label,
+                     children=[body]+assignments+conditions,
+                     eval_mode=EvalModes.ARRAY_COMPREHENSION,
+                     meta=dict(num_assignments=len(assignments)))
+
+def make_generator_node(name, array_expr):
+    array_expr.meta["generator"] = True
+    array_expr.meta["name"] = name
+    return array_expr
 
 def parse_tokens(tokens):
     return parse_statements(BagOfTokens(tokens))
@@ -157,6 +192,51 @@ def parse_factor(t):
     return parse_binary_op(t, parse_term, [Tokens.EXP])
 
 def parse_term(t):
+    if t.next_are(Tokens.ARRAY_OPEN):
+        return parse_array(t)
+    if t.next_are(Tokens.INTERVAL_OPEN):
+        return parse_interval(t)
+    return parse_maybe_quantity(t)
+
+def parse_array(t):
+    t.read(Tokens.ARRAY_OPEN)
+    xs = []
+    if not t.next_are(Tokens.ARRAY_CLOSE):
+        xs.append(parse_expression(t))
+        if t.next_are(Tokens.ARRAY_CONDITION_SEP):
+            t.read_any()
+            body = xs[0]
+            clauses = [parse_clause(t)]
+            while t.next_are(Tokens.ARRAY_SEPARATOR):
+                t.read_any()
+                clauses.append(parse_clause(t))
+            t.read(Tokens.ARRAY_CLOSE)
+            return make_array_comprehension_node(body, clauses)
+        else:
+            while t.next_are(Tokens.ARRAY_SEPARATOR):
+                t.read_any()
+                xs.append(parse_expression(t))
+            t.read(Tokens.ARRAY_CLOSE)
+            return make_array_node(xs)
+
+def parse_clause(t):
+    if t.next_are(Tokens.VAR, Tokens.ELEMENT_OF):
+        var_token = t.read_any()
+        t.read_any()
+        name = var_token.meta('name')
+        array_expr = parse_expression(t)
+        return make_generator_node(name, array_expr)
+    return parse_expression(t)
+
+def parse_interval(t):
+    t.read(Tokens.INTERVAL_OPEN)
+    lo = parse_expression(t)
+    t.read(Tokens.INTERVAL_SEPARATOR)
+    hi = parse_expression(t)
+    t.read(Tokens.INTERVAL_CLOSE)
+    return funcall_node("range", (lo, hi))
+
+def parse_maybe_quantity(t):
     term = parse_unitless_term(t)
     if t.next_is_one_of(Tokens.VAR):
         # It's a quantity! Which has a magnitude and

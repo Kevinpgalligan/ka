@@ -4,13 +4,14 @@ import math
 from numbers import Number, Integral
 from fractions import Fraction as frac
 
-from .types import simplify_type, Quantity, get_external_type_name
+from .types import simplify_type, Quantity, get_external_type_name, Array
 from .units import QSPACE
 from .probability import (Binomial, Poisson, Geometric, Bernoulli,
                           UniformInt, Exponential, Uniform, Gaussian,
                           RandomVariable, Event, DoubleEvent, ComparisonOp,
                           DiscreteRandomVariable)
 from .utils import choose, factorial
+from functools import cmp_to_key
 
 FUNCTIONS = collections.defaultdict(list)
 FUNCTION_DOCUMENTATION = {}
@@ -32,6 +33,10 @@ class IncompatibleQuantitiesError(Exception):
 
 class ExitKaSignal(Exception):
     pass
+
+class FunctionArgError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
 
 def make_sig_printable(sig):
     return tuple(map(lambda t: t.__name__, sig))
@@ -91,13 +96,24 @@ def register_numeric_function(name, f, num_args=1, docstring=None):
 def fraction_divide(n1, n2):
     return frac(n1, n2)
 
+def intify(f):
+    def f_new(x, y):
+        return 1 if f(x, y) else 0
+    return f_new
+
 BINARY_OPS = [
     ("+", operator.add, "Addition binary operator."),
     ("-", operator.sub, "Subtraction binary operator."),
     ("*", operator.mul, "Multiplication binary operator."),
     ("/", operator.truediv, "Division binary operator. Passing 2 integers results in a fraction."),
     ("%", operator.mod, "Modulo binary operator. 4%3=1."),
-    ("^", operator.pow, "Exponentiation binary operator. 2^3=8.")
+    ("^", operator.pow, "Exponentiation binary operator. 2^3=8."),
+    ("<", intify(operator.lt), "Less than."),
+    ("<=", intify(operator.le), "Less than or equal to."),
+    ("==", intify(operator.eq), "Equals."),
+    ("!=", intify(operator.ne), "Not equals."),
+    (">", intify(operator.gt), "Greater than."),
+    (">=", intify(operator.ge), "Greater than or equal to."),
 ]
 for name, op, docstring in BINARY_OPS:
     register_binary_op(name, op, docstring=docstring)
@@ -120,14 +136,16 @@ NUMERIC_FUNCTIONS = [
     ("int", int, "Converts a number to the nearest integer between that number and zero."),
     ("float", float, "Force a number (such as a fraction) to its (imprecise) floating point representation."),
     ("+", operator.pos, "Positive sign; prefix operator."),
-    ("-", operator.neg, "Negate a number; prefix operator.")
+    ("-", operator.neg, "Negate a number; prefix operator."),
 ]
 for name, f, docstring in NUMERIC_FUNCTIONS:
     register_numeric_function(name, f, docstring=docstring)
 register_numeric_function("log", lambda base, x: math.log(x, base), num_args=2, docstring="Logarithm function. The first argument determines the base.")
 register_function(choose, "C", (Integral, Integral), "Binomial coefficient function from combinatorics. It returns how many ways there are from a total of n items (first argument) to select k items (second argument).")
 register_function(factorial, "!", (Integral,), "Factorial function, postfix operator. 3!=6.")
-def register_quantities_op(name, quantity_vector_combiner=None):
+def register_quantities_op(name,
+                           quantity_vector_combiner=None,
+                           wrap_in_quantity=True):
     def f(q1, q2):
         if quantity_vector_combiner is None:
             if q1.qv != q2.qv:
@@ -137,7 +155,8 @@ def register_quantities_op(name, quantity_vector_combiner=None):
             new_qv = quantity_vector_combiner(q1.qv, q2.qv)
         # Use function dispatch to determine how to combine
         # the magnitudes.
-        return Quantity(dispatch(name, (q1.mag, q2.mag)), new_qv)
+        new_mag = dispatch(name, (q1.mag, q2.mag))
+        return Quantity(new_mag, new_qv) if wrap_in_quantity else new_mag
     register_function(f, name, (Quantity, Quantity))
     # Now handle operations on numbers & quantities.
     def left_is_number(n, q):
@@ -147,8 +166,10 @@ def register_quantities_op(name, quantity_vector_combiner=None):
     register_function(left_is_number, name, (Number, Quantity))
     register_function(right_is_number, name, (Quantity, Number))
 
-register_quantities_op("+")
-register_quantities_op("-")
+for op in ["+", "-"]:
+    register_quantities_op(op)
+for op in ["<", "<=", "!=", "==", ">", ">="]:
+    register_quantities_op(op, wrap_in_quantity=False)
 register_quantities_op("*", lambda qv1, qv2: qv1*qv2)
 register_quantities_op("/", lambda qv1, qv2: qv1/qv2)
 
@@ -177,6 +198,13 @@ for rvname, args, doc in RVS:
 register_function(lambda rv: rv.mean(), "mean", (RandomVariable,), "Get the mean of a random variable.")
 register_function(lambda rv: rv.mean(), "E", (RandomVariable,), "Expectation of a random variable.")
 register_function(lambda rv: rv.sample(), "sample", (RandomVariable,), "Sample a value from a random distribution.")
+
+def sample_multiple(rv, n):
+    return Array([rv.sample() for _ in range(n)])
+register_function(sample_multiple,
+                  "sample",
+                  (RandomVariable, Integral),
+                  "Sample multiple values from a random distribution.")
 
 register_function(lambda x, y: Event(ComparisonOp.EQ, x, y),
                   ComparisonOp.EQ,
@@ -209,3 +237,91 @@ for op1 in [ComparisonOp.LEQ, ComparisonOp.LT]:
 
 for etype in [Event, DoubleEvent]:
     register_function(lambda event: event.probability(), "P", (etype,), "Evaluate the probability of an event.")
+
+def array_prod(arr):
+    result = 1
+    for e in arr.contents:
+        result = dispatch("*", (e, result))
+    return result
+
+def array_min(arr):
+    if len(arr.contents) == 0:
+        raise FunctionArgError("Tried to get minimum of empty array.")
+    result = arr.contents[0]
+    for e in arr.contents:
+        if dispatch("<", (e, result)):
+            result = e
+    return result
+
+# Lovely duplication here.
+def array_max(arr):
+    if len(arr.contents) == 0:
+        raise FunctionArgError("Tried to get maximum of empty array.")
+    result = arr.contents[0]
+    for e in arr.contents:
+        if dispatch("<", (result, e)):
+            result = e
+    return result
+
+# Should really have some sorta "reduce"-like abstraction. But the
+# error-handling behaviour is different between them.
+def array_sum(arr):
+    if len(arr.contents) == 0:
+        return 0
+    result = arr.contents[0]
+    for i in range(1, len(arr.contents)):
+        result = dispatch("+", (result, arr.contents[i]))
+    return result
+
+def array_size(arr):
+    return len(arr.contents)
+
+def array_mean(arr):
+    if len(arr.contents) == 0:
+        raise FunctionArgError("Tried to take mean of empty array.")
+    return dispatch("/", (dispatch("sum", (arr,)), len(arr.contents)))
+
+def ka_cmp(x, y):
+    if dispatch("<", (x, y)):
+        return -1
+    if dispatch("==", (x, y)):
+        return 0
+    return 1
+
+def array_median(arr):
+    if len(arr.contents) == 0:
+        raise FunctionArgError("Tried to take median of empty array.")
+    arr_sorted = list(sorted(arr.contents, key=cmp_to_key(ka_cmp)))
+    print(arr_sorted)
+    if len(arr_sorted)%2 == 0:
+        mid_i = len(arr_sorted) // 2
+        return dispatch("/", (dispatch("+",
+                                       (arr_sorted[mid_i-1],
+                                        arr_sorted[mid_i])),
+                              2))
+    return arr_sorted[len(arr_sorted)//2]
+    
+register_function(array_prod, "prod", (Array,), "Product of the elements of an array.")
+register_function(array_sum, "sum", (Array,), "Sum of the elements of an array.")
+register_function(array_mean, "mean", (Array,), "Mean of the elements of an array.")
+register_function(array_median, "median", (Array,), "Median of the elements of an array.")
+register_function(array_size, "size", (Array,), "Number of elements in an array.")
+register_function(array_max, "max", (Array,), "Maximum element of an array.")
+register_function(array_min, "min", (Array,), "Minimum element of an array.")
+
+register_function(lambda lo, hi: Array(list(range(lo, hi+1))),
+                  "range",
+                  (Integral, Integral),
+                  "Returns an array of the integers lo, lo+1, ..., hi.")
+def ka_range(lo, hi, step):
+    if not dispatch("<=", (lo, hi)):
+        raise FunctionArgError(f"Lower bound of range (was {lo}) must be less than or equal to upper bound (was {hi}).")
+    result = []
+    curr = lo
+    while dispatch("<=", (curr, hi)):
+        result.append(curr)
+        curr = dispatch("+", (curr, step))
+    return Array(result)
+
+register_function(ka_range, "range", (Number, Number, Number),
+                  "Generates array of all numbers between lower bound and upper bound with given step size.")

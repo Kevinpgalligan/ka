@@ -5,10 +5,11 @@ import sys
 from .tokens import tokenise, UnknownTokenError
 from .parse import parse_tokens, ParsingError
 from .eval import eval_parse_tree, EvalError, EvalEnvironment, EvalModes
-from .types import Quantity
+from .types import Quantity, Array
 from .functions import (FUNCTIONS, UnknownFunctionError,
     NoMatchingFunctionSignatureError, IncompatibleQuantitiesError,
-    make_sig_printable, ExitKaSignal, FUNCTION_DOCUMENTATION)
+    make_sig_printable, ExitKaSignal, FUNCTION_DOCUMENTATION,
+    FunctionArgError)
 from .units import UNITS, PREFIXES, lookup_unit
 from .probability import InvalidParameterException
 import ka.config
@@ -216,6 +217,9 @@ def execute(s, env=None, out=sys.stdout,
         print_err(errout, "The second is a quantity of:")
         print_err(errout, "   ", e.qv2.prettified())
         return 1
+    except FunctionArgError as e:
+        print_err(errout, e.msg)
+        return 1
 
 def print_err(errout, *msgs):
     print(*msgs, file=errout)
@@ -253,8 +257,9 @@ def error(msg, index, s, errout):
             " "*(INDENT+len(left_fade)+index-context_low_index) + "^")
     print("\n".join(error_lines), file=errout)
 
-def display_result(r, out, brackets_for_frac=False):
+def display_result(r, out, brackets_for_frac=False, newline=True):
     # This is nightmare code. Oh well.
+    newline_args = dict() if newline else dict(end="")
     if isinstance(r, Quantity):
         if isinstance(r.mag, frac):
             print(prettify_frac(r.mag, brackets=brackets_for_frac),
@@ -265,15 +270,23 @@ def display_result(r, out, brackets_for_frac=False):
             print(r.mag, r.qv.prettified(), end="", file=out)
         if isinstance(r.mag, frac):
             print("    (" + str(float(r.mag)) + " " + r.qv.prettified() + ")", end="", file=out)
-        print(file=out)
+        print(file=out, **newline_args)
     elif isinstance(r, frac):
         print(prettify_frac(r),
               "    (" + str(precisionify_float(float(r))) + ")",
-              file=out)
+              file=out,
+              **newline_args)
     elif isinstance(r, float):
-        print(precisionify_float(r), file=out)
+        print(precisionify_float(r), file=out, **newline_args)
+    elif isinstance(r, Array):
+        print("{", file=out, end="")
+        for i, e in enumerate(r.contents):
+            display_result(e, out, brackets_for_frac=brackets_for_frac, newline=False)
+            if i < len(r.contents)-1:
+                print(", ", file=out, end="")
+        print("}", file=out, **newline_args)
     else:
-        print(r, file=out)
+        print(r, file=out, **newline_args)
 
 def stringify_result(r, brackets_for_frac=False):
     """Stringify result so that it's syntactically valid, not just
@@ -288,6 +301,12 @@ def stringify_result(r, brackets_for_frac=False):
         return s
     elif isinstance(r, float):
         return precisionify_float(r)
+    elif isinstance(r, Array):
+        return ("{"
+                + ", ".join(stringify_result(x,
+                                             brackets_for_frac=brackets_for_frac) 
+                            for x in r.contents)
+                + "}")
     return str(r)
 
 def precisionify_float(f):
