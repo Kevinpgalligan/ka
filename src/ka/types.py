@@ -58,3 +58,24 @@ def divide(x, y):
 class Array:
     def __init__(self, contents):
         self.contents = contents
+
+    def __eq__(self, other):
+        return self.contents == other.contents
+
+    def __str__(self):
+        return str(self.contents)
+
+    def __repr__(self):
+        return str(self)
+
+    def __len__(self):
+        return len(self.contents)
+
+    def __getitem__(self, i):
+        return self.contents[i]
+
+    def __contains__(self, x):
+        return x in self.contents
+
+    def append(self, x):
+        self.contents.append(x)

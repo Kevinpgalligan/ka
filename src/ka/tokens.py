@@ -88,6 +88,8 @@ CONST_TOKENS = [
     Tokens.INTERVAL_SEPARATOR,
 ]
 
+ALPHA_TOKENS = set(t for t in CONST_TOKENS if t.isalpha())
+
 class UnknownTokenError(Exception):
     def __init__(self, index):
         self.index = index
@@ -116,7 +118,15 @@ def read_token(i, s):
     if s[i].isnumeric() or s[i] == '.':
         return read_num_token(i, s)
     for t in CONST_TOKENS:
-        if s.startswith(t, i):
+        if s.startswith(t, i) and (
+                # Tokens that consist only of alphabetical
+                # characters can potentially clash with
+                # variable names, e.g. token 'in' with the
+                # function 'int'. So need to  check if the
+                # next character is alphabetical.
+                t not in ALPHA_TOKENS
+                or i+len(t)>=len(s)
+                or not s[i+len(t)].isalpha()):
             return Token(t, i, i+len(t))
     if s[i].isalpha():
         m = VAR_REGEX.match(s, i)

@@ -7,7 +7,7 @@ from ka.tokens import tokenise
 from ka.functions import UnknownFunctionError, NoMatchingFunctionSignatureError
 from ka.parse import parse_tokens, ParsingError
 from ka.eval import eval_parse_tree, EvalError
-from ka.types import Quantity
+from ka.types import Quantity, Array
 from ka.units import M, S, K
 
 def validate_result(s, expected):
@@ -158,7 +158,6 @@ def test_probability():
             ("P(2 >= UniformInt(1, 10) > 1)", .1),
             ("P(2 > UniformInt(1, 10) >= 1)", .1),
             ]:
-        print("====", s)
         actual_result = get_result(s) 
         assert math.isclose(r, actual_result)
 
@@ -169,3 +168,25 @@ def test_probability_fails():
               ("P(1 < Binomial(5, .2) = 4)", EvalError),
               ]:
         validate_fail(s, **(dict() if err is None else dict(error_type=err)))
+
+def test_interval():
+    validate_results([
+        ("[1,5]", Array([1,2,3,4,5])),
+        ("N=5; [-5,5]", Array(list(range(-5,6))))
+    ])
+
+def test_array():
+    validate_results([
+        ("{}", Array([])),
+        ("{1}", Array([1])),
+        ("{1+1,1 m, {}}",
+         Array([2,
+                Quantity(1, M),
+                Array([])]))
+    ])
+
+def test_array_with_conditions():
+    validate_results([
+        ("{x:x in [1,3]}", Array([1,2,3])),
+        ("{x:x in [1,3], x <= 2}", Array([1,2])),
+    ])

@@ -147,3 +147,46 @@ def test_fails_more_than_two_compares():
          t(Tokens.NUM, value=3),
          t(Tokens.LEQ),
          t(Tokens.NUM, value=5)])
+
+def test_parse_interval():
+    validate_parse(
+        [t(Tokens.INTERVAL_OPEN),
+         t(Tokens.NUM, value=1),
+         t(Tokens.INTERVAL_SEPARATOR),
+         t(Tokens.NUM, value=10),
+         t(Tokens.INTERVAL_CLOSE)],
+        pn("range", [pn(1), pn(10)]))
+
+def test_parse_array():
+    validate_parse(
+        [t(Tokens.ARRAY_OPEN),
+         t(Tokens.NUM, value=1),
+         t(Tokens.ARRAY_SEPARATOR),
+         t(Tokens.NUM, value=2),
+         t(Tokens.ARRAY_SEPARATOR),
+         t(Tokens.NUM, value=3),
+         t(Tokens.ARRAY_CLOSE)],
+        pn("{...}", [pn(1), pn(2), pn(3)]))
+
+def test_parse_array_with_conditions():
+    validate_parse(
+        [t(Tokens.ARRAY_OPEN),
+         t(Tokens.VAR, name="x"),
+         t(Tokens.ARRAY_CONDITION_SEP),
+         t(Tokens.VAR, name="x"),
+         t(Tokens.ELEMENT_OF),
+         t(Tokens.INTERVAL_OPEN),
+         t(Tokens.NUM, value=1),
+         t(Tokens.INTERVAL_SEPARATOR),
+         t(Tokens.NUM, value=3),
+         t(Tokens.INTERVAL_CLOSE),
+         t(Tokens.ARRAY_SEPARATOR),
+         t(Tokens.VAR, name="x"),
+         t(Tokens.LEQ),
+         t(Tokens.NUM, value=2),
+         t(Tokens.ARRAY_CLOSE)],
+        pn("{...}",
+            [pn("x"),
+             pn("range", [pn(1), pn(3)]),
+             pn("<=", [pn("x"), pn(2)])]))
+

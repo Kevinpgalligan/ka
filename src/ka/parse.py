@@ -61,7 +61,7 @@ def make_array_node(elements):
                      children=elements,
                      eval_mode=EvalModes.ARRAY)
 
-def make_array_comprehension_node(body, clauses):
+def make_array_with_condition_node(body, clauses):
     assignments = []
     conditions = []
     for clause in clauses:
@@ -76,8 +76,9 @@ def make_array_comprehension_node(body, clauses):
     return ParseNode(label=label,
                      value=label,
                      children=[body]+assignments+conditions,
-                     eval_mode=EvalModes.ARRAY_COMPREHENSION,
-                     meta=dict(num_assignments=len(assignments)))
+                     eval_mode=EvalModes.ARRAY_WITH_CONDITION,
+                     meta=dict(num_assignments=len(assignments)),
+                     eval_children=False)
 
 def make_generator_node(name, array_expr):
     array_expr.meta["generator"] = True
@@ -211,13 +212,13 @@ def parse_array(t):
                 t.read_any()
                 clauses.append(parse_clause(t))
             t.read(Tokens.ARRAY_CLOSE)
-            return make_array_comprehension_node(body, clauses)
+            return make_array_with_condition_node(body, clauses)
         else:
             while t.next_are(Tokens.ARRAY_SEPARATOR):
                 t.read_any()
                 xs.append(parse_expression(t))
-            t.read(Tokens.ARRAY_CLOSE)
-            return make_array_node(xs)
+    t.read(Tokens.ARRAY_CLOSE)
+    return make_array_node(xs)
 
 def parse_clause(t):
     if t.next_are(Tokens.VAR, Tokens.ELEMENT_OF):
@@ -343,4 +344,3 @@ def parse_integer(t):
     if not isinstance(i, int):
         raise ParsingError(f"Expected an integer literal, got a {type(i)}.", t.ptr-1)
     return i
-

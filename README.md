@@ -210,7 +210,7 @@ It's worth commenting a bit more on the grammar. Frink basically represents all 
 Contributions are welcome, whether they be bug fixes or documentation or anything at all! I don't intend to make any major additions to the core language, since for the purposes of a calculator it's reasonably complete. That means I don't plan to make it Turing-complete.
 
 ## Development
-To install ka locally, clone the repo and run `pip install .`. You may wish to test it within a virtual environment, however, if you have a copy of ka that you actually use and you don't want to break it.
+To install ka locally, clone the repo and run `pip3 install .`. You may wish to test it within a virtual environment, however, if you have a copy of ka that you actually use and you don't want to break it.
 
 [tox](https://tox.wiki/en/latest/) is used for unit testing, execute `tox` from the base directory to run all unit tests.
 
