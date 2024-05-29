@@ -1,5 +1,6 @@
 import sys
 import io
+import html
 
 from PyQt5.QtCore import QT_VERSION_STR, PYQT_VERSION_STR, Qt
 from PyQt5.QtGui import QKeySequence
@@ -124,11 +125,11 @@ def run_gui():
                              assigned_box=assigned_box)
             displayed_stuff.extend([
                 '<font color="grey">',
-                txt,
+                html.escape(txt),
                 '</font>',
                 '<br>'
             ])
-            output_str = out.getvalue().replace("\n", "<br>").replace(" ", "&nbsp;")
+            output_str = html.escape(out.getvalue())
             if status != 0:
                 displayed_stuff.append('<font color="red">')
             displayed_stuff.append(output_str)
