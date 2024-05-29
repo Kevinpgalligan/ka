@@ -165,7 +165,8 @@ def test_probability_fails():
     for s, err in [("P(5 = UniformInt(1, 10))", NoMatchingFunctionSignatureError),
               ("P(1 < 2)", NoMatchingFunctionSignatureError),
               ("P(1 < Binomial(5, .2) < Poisson(5) < 10)", ParsingError),
-              ("P(1 < Binomial(5, .2) = 4)", EvalError),
+              ("P(1 < Binomial(5, .2) = 4)", UnknownFunctionError),
+              ("P(1 < Binomial(5, .2) > 4)", UnknownFunctionError),
               ]:
         validate_fail(s, **(dict() if err is None else dict(error_type=err)))
 
@@ -189,4 +190,22 @@ def test_array_with_conditions():
     validate_results([
         ("{x:x in [1,3]}", Array([1,2,3])),
         ("{x:x in [1,3], x <= 2}", Array([1,2])),
+    ])
+
+def test_comparison():
+    validate_results([
+        ("1 == 1", 1),
+        ("1 == 2", 0),
+        ("2 == 1.5", 0),
+        ("1 m == 1 m", 1),
+        ("2 m == 1 m", 0),
+        ("1 < 2", 1),
+        ("1 <= 2", 1),
+        ("1 <= 1", 1),
+        ("1 <= 0", 0),
+        ("1 > 0", 1),
+        ("1 >= 0", 1),
+        ("-1 >= 0", 0),
+        ("-1 > 0", 0),
+        ("0 > 0", 0),
     ])

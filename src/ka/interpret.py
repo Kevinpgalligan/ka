@@ -281,8 +281,8 @@ def display_result(r, out, brackets_for_frac=False, newline=True):
     elif isinstance(r, Array):
         print("{", file=out, end="")
         for i, e in enumerate(r.contents):
-            display_result(e, out, brackets_for_frac=brackets_for_frac, newline=False)
-            if i < len(r.contents)-1:
+            print(stringify_result(e), file=out, end="")
+            if i < len(r)-1:
                 print(", ", file=out, end="")
         print("}", file=out, **newline_args)
     else:

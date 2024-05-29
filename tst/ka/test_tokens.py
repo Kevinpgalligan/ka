@@ -28,6 +28,7 @@ def test_tokenise_valid_tokens():
         (Tokens.LT, "<"),
         (Tokens.GT, ">"),
         (Tokens.GEQ, ">="),
+        (Tokens.EQ, "=="),
         (Tokens.ELEMENT_OF, "in"),
         (Tokens.INTERVAL_OPEN, "["),
         (Tokens.INTERVAL_CLOSE, "]"),
@@ -36,7 +37,7 @@ def test_tokenise_valid_tokens():
         (Tokens.ARRAY_CONDITION_SEP, ":"),
         (Tokens.ARRAY_SEPARATOR, ","),
     ]
-    s = "=;()+-*/%^123+abc1-22x!| 1e-4 to <=<>>= in[]{}:,"
+    s = "=;()+-*/%^123+abc1-22x!| 1e-4 to <=<>>= == in[]{}:,"
     tokens = tokenise(s)
     actual = [(token.tag, s[token.begin_index_incl:token.end_index_excl])
               for token in tokens]

@@ -41,18 +41,27 @@ def unit_convert_node(sum_node, unit_sig):
                      eval_mode=EvalModes.CONVERT_UNIT,
                      value=unit_sig)
 
-def make_comparison_node(terms, ops):
-    label = " ".join(map(lambda op: op.tag, ops))
-    return ParseNode(label=label,
-                     children=terms,
-                     eval_mode=EvalModes.COMPARE,
-                     value=label,
-                     meta=dict(ops=list(map(to_comparison_op, ops))))
+FORWARD_OPS = [Tokens.LT, Tokens.LEQ]
+BACKWARD_OPS = [Tokens.GT, Tokens.GEQ]
 
-def to_comparison_op(token):
-    # We happen to know that the same strings are used to represent
-    # the tokens and comparison ops.
-    return token.tag
+def make_comparison_node(terms, ops):
+    back = any(op in BACKWARD_OPS for op in ops)
+    if back and not any(op in FORWARD_OPS for op in ops):
+        # Flip the operators to reduce function duplication. We only
+        # implement the forward-facing comparison operators.
+        i = 0
+        while i < len(ops):
+            if ops[i] in BACKWARD_OPS:
+                op_index = BACKWARD_OPS.index(ops[i])
+                ops[i] = FORWARD_OPS[op_index]
+            i += 1
+        ops.reverse()
+        terms.reverse()
+    label = "_".join(ops)
+    return ParseNode(label=label,
+                     value=label,
+                     children=terms,
+                     eval_mode=EvalModes.FUNCALL)
 
 def make_array_node(elements):
     label = "{...}"
@@ -165,15 +174,15 @@ def parse_comparison(t):
     terms = [parse_sum(t)]
     comparison_ops = []
     for _ in range(2):
-        if not t.next_is_one_of(Tokens.LT, Tokens.GT, Tokens.LEQ, Tokens.GEQ, Tokens.ASSIGNMENT_OP):
+        if not t.next_is_one_of(Tokens.EQ, Tokens.LT, Tokens.GT,
+                                Tokens.LEQ, Tokens.GEQ, Tokens.ASSIGNMENT_OP):
             break
         comparison_ops.append(t.read_any())
         terms.append(parse_sum(t))
     if not comparison_ops:
         return terms[0]
-    # Leave it up to the evaluation step to determine if
-    # invalid comparison operations have been mixed together.
-    return make_comparison_node(terms, comparison_ops)
+    return make_comparison_node(terms,
+                                list(map(lambda t: t.tag, comparison_ops)))
 
 def parse_sum(t):
     return parse_binary_op(t, parse_product, [Tokens.PLUS, Tokens.MINUS])

@@ -5,6 +5,7 @@ ka is a small calculator language. It supports various useful features for day-t
 * Fractions.
 * Units and unit conversion.
 * Variable assignment.
+* Probability distributions and sampling.
 
 There are 3 ways to interact with it: executing individual expressions through the CLI (`ka '1+1'`), a CLI interpreter (`ka`), and a GUI (`ka --gui`).
 
@@ -12,15 +13,16 @@ There are 3 ways to interact with it: executing individual expressions through t
 >>> 2 * (1/2)
 1
 >>> 1 metre + 1 foot to feet
-4.2808398950131235
+4.28084
 >>> p = 0.7; C(10,3) * p^3 * (1-p)^7
-0.009001692000000007
+>>> p=.7; N=10; sum({C(N,k)*p^k*(1-p)^(N-k) : k in [0,4]})
+0.047349
 >>> sin(90 deg)
 1 
 >>> e^pi
-23.140692632779263
+23.1407
 >>> X = Binomial(10, 0.3); P(3 <= X < 7)
-0.606625
+0.6066
 ```
 
 ## Contents
@@ -34,6 +36,7 @@ There are 3 ways to interact with it: executing individual expressions through t
   - [Functions and operators](#functions-and-operators)
   - [Units](#units)
   - [Probability](#probability)
+  - [Arrays](#arrays)
   - [Configuration](#configuration)
 * [FAQ](#faq)
 * [Contributing](#contributing)
@@ -97,12 +100,12 @@ An expression is a sequence of math operations that returns a value. Addition, s
 ka has basic support for variables: `blah=9^3; blah`.
 
 ### Constants
-`pi` and `e` are the only constants provided. Currently, they're treated like variables and can be overwritten.
+`pi` and `e` are the only constants provided. Currently, they're treated like variables and can be overwritten: `pi=3`, woops.
 
 ### Types
-ka is strongly typed, not statically typed. What this means is that when you pass a fractional number to a function that expects an integer, the type system will complain. But you don't have to declare the type of anything in advance.
+ka is strongly typed, not statically typed. This means that when you pass a fractional number to a function that expects an integer, the type system will complain. But you don't have to declare the type of anything in advance.
 
-The type system consists of (1) a hierarchy of numerical types, and (2) quantities.
+The type system consists of (1) a hierarchy of numerical types, (2) quantities, and (3) some other types like arrays and random variables that don't mix with the other types so much.
 
 The hierarchy of numerical types goes: Number > Real > Rational/Fraction > Integral/Integer. 'Real' numbers are represented as floating point numbers. If a fraction can be simplified to an integer, such as 2/2, then this will happen automatically. In the other direction, a type that is lower down the hierarchy, such as an integer, can be cast into a type that's further up the hierarchy in order to match a function signature.
 
@@ -111,9 +114,9 @@ Quantities consist of two components: a magnitude and a unit (see: the section o
 Most functions can be applied to both Numbers and Quantities.
 
 ### Functions and operators
-Here's a list of all the functions and operators in the language. To find out more about any of them (including what types of arguments they accept), run the CLI command `ka --function {name}`, or run the interpreter commands `%f {name}` or `%fun {name}`.
+Here's a selection of functions and operators in the language. To list all the functions, run `ka --functions`. To find out more about any particular function (including what types of arguments it accepts), run the CLI command `ka --function {name}`, or run the interpreter commands `%f {name}` or `%fun {name}`.
 
-* +, -, *, /, %, ^, sin, cos, tan, sqrt, ln, log10, log2, abs, floor, ceil, round, int, float, log, C, !, quit
+* +, -, *, /, %, ^, <, <=, ==, !=, >, >=, sin, cos, tan, sqrt, ln, log10, log2, abs, floor, ceil, round, int, float, log, C, !, quit
 
 ka has functions and 3 types of operators: binary operators, prefix operators, and postfix operators.
 
@@ -129,13 +132,18 @@ Operator precedence goes:
 * `^`
 * `*`, `/`, `%`
 * `+`, `-`
+* `<`, `<=`, `>`, `>=`, `==`, `!=`
 
 This means that `2^3!*5+1` gets parsed the same as `((2^(3!))*5)+1`.
 
 ### Units
-Here are most of the units supported by the language. To see a complete list, run `ka --units` from the command-line. All of the prefixes you might expect are also supported.
+Here are most of the units supported by the language. To see a complete list, run `ka --units` from the command-line. 
 
 * second (s), metre (m), gram (g), ampere (A), kelvin (K), mole (mol), candela (cd), hertz (Hz), radian (rad), steradian (sr), newton (N), pascal (Pa), joule (J), watt (W), coulomb (C), volt (V), farad (F), ohm (ohm), siemens (S), weber (Wb), tesla (T), henry (H), degC (degC), lumen (lm), lux (lx), becquerel (Bq), gray (Gy), sievert (Sv), katal (kat), minute (min), hour (h), day (d), astronomicalunit (au), degree (deg), hectare (ha), acre (acre), litre (l), tonne (t), dalton (Da), electronvolt (eV), lightyear (lj), parsec (pc), inch (in), foot (ft), yard (yd), mile (mi), nauticalmile (sm), teaspoon (tsp), tablespoon (tbsp), fluidounce (floz), cup (cup), gill (gill), pint (pt), quart (qt), gallon (gal), grain (gr), dram (dr), ounce (oz), pound (lb), horsepower (hp), bar (bar), calorie (cal)
+
+The following prefixes are also supported, mostly coming from the SI standard. For convenience, their shorthand names and multipliers are provided here.
+
+* yotta (Y, 10^24), zetta (Z, 10^21), exa (E, 10^18), peta (P, 10^15), tera (T, 10^12), giga (G, 10^9), mega (M, 10^6), kilo (k, 10^3), kilo (K, 10^3), hecto (h, 10^2), deca (da, 10^1), deci (d, 10^-1), centi (c, 10^-2), milli (m, 10^-3), micro (μ, 10^-6), nano (n, 10^-9), pico (p, 10^-12), femto (f, 10^-15), atto (a, 10^-18), zepto (z, 10^-21), yocto (y, 10^-24), kibi (Ki, 2^10), mebi (Mi, 2^20), gibi (Gi, 2^30), tebi (Ti, 2^40)
 
 Notes on units:
 
@@ -143,7 +151,7 @@ Notes on units:
 * To find out more about a specific unit, run `ka --unit {name}`, or execute `%u {name}` or `%unit {name}` in the interpreter.
 * Units are case sensitive.
 * You can convert from one unit to another using the `to` operator: `1m to feet`.
-* Units are part of what makes up a quantity, together with a magnitude. It only makes sense to add or subtract quantities with the same unit type. You can add two areas, for example, but it doesn't make sense to add an area and a velocity. You can multiply and divide any quantities, however.
+* Units are part of what makes up a quantity, together with a magnitude. It only makes sense to add or subtract quantities of the same unit type. You can add two areas, for example, but it doesn't make sense to add an area and a velocity. You can multiply and divide any quantities, however.
 * A unit can be a multiple of base units (a pound is 0.45 kilograms), but it can also have an offset, as in the case of the degree Celcius, which is offset from the kelvin by -273.15. This makes degC tricky to work with and as a result you can't generally combine it with other units.
 * UK / Imperial measures are used for the teaspoon and other ambiguous (mostly cooking-related) units, see: <https://en.wikipedia.org/wiki/Cooking_weights_and_measures>
 
@@ -164,6 +172,7 @@ A number of discrete and continuous probability distributions / random variables
 * `P(X=3)` gives the probability of the value 3 (discrete random variables only).
 * `P(X<3)`, `P(1 < X <= 3)`, `P(X > 5)` calculate the probability of a range.
 * `sample(X)` returns a random value from the distribution.
+* `sample(X, n)` returns `n` random values from the distribution.
 
 These are the discrete probability distributions and their parameters:
 
@@ -179,6 +188,26 @@ And these are the continuous ones:
 * `Uniform(lo, hi)`: uniform distribution over real numbers between `lo` and `hi`.
 * `Gaussian(mu, stddev)`: normal distribution with mean `mu` and standard deviation `stddev`.
 
+### Arrays
+Arrays are written like so: `{1,2,3}`. They're basically a shim over Python lists.
+
+The elements can be arbitrary expressions: `{1+1,2*x, 1 m}`.
+
+The interval `[lo,hi]` generates a range of integers `lo`, `lo+1`, ..., `hi`.
+
+Based on the mathematical notation for sets, arrays can also be generated from a series of clauses / conditions. For example, to calculate the sum of the squares of all odd numbers between 1 and 10: `sum({x^2 : x in [1,10], (x%2)==1})`. 
+
+Array-related functions, given an array `A`:
+
+* `sum(A)` calculates the sum of the elements.
+* `prod(A)` calculates the product of the elements.
+* `mean(A)` calculates the mean.
+* `median(A)` calculates the median.
+* `size(A)` returns the number of elements in the array.
+* `max(A)` returns the maximum element in the array.
+* `min(A)` -- need I say more?
+* `range(lo,hi)` returns an array of all integers between the integers `lo` and `hi` (bounds are inclusive). `[lo,hi]` is syntax sugar for calling this function.
+* `range(lo,hi,step)` returns numbers between `lo` and `hi` in steps of size `step`.
 
 ### Configuration
 ka can be configured through a config file at `${YOUR_HOME_DIR}/.config/ka/config`. Currently, the only configurable property is the floating-point precision, which can be set by including the following line in the config file:
@@ -205,9 +234,6 @@ It's worth commenting a bit more on the grammar. Frink basically represents all 
 [Qalculate!](https://qalculate.github.io/) seems awesome and has bucketfuls of features! On the other hand, it's a massive project written in C++, while ka consists of 1000 lines of Python code. It sensibly handles both `1m/s` and `4m / 2m`, somehow.
 
 [F#](https://fsharpforfunandprofit.com/posts/units-of-measure/) is an example of a "real" programming language with cool unit features, but it's not suitable as a calculator.
-
-## Contributing
-Contributions are welcome, whether they be bug fixes or documentation or anything at all! I don't intend to make any major additions to the core language, since for the purposes of a calculator it's reasonably complete. That means I don't plan to make it Turing-complete.
 
 ## Development
 To install ka locally, clone the repo and run `pip3 install .`. You may wish to test it within a virtual environment, however, if you have a copy of ka that you actually use and you don't want to break it.

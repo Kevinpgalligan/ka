@@ -44,6 +44,7 @@ class Tokens:
     FACTORIAL = '!'
     UNIT_DIVIDE = '|'
     UNIT_CONVERT = 'to'
+    EQ = '=='
     LT = '<'
     LEQ = '<='
     GT = '>'
@@ -60,6 +61,7 @@ class Tokens:
 CONST_TOKENS = [
     # Need to make sure that if token A is a prefix of token B, then it
     # comes after token B in the list.
+    Tokens.EQ,
     Tokens.LEQ,
     Tokens.GEQ,
     Tokens.LT,

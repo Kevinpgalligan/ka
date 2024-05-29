@@ -136,7 +136,7 @@ def test_parse_double_comparison():
          t(Tokens.VAR, name="X"),
          t(Tokens.LEQ),
          t(Tokens.NUM, value=3)],
-        pn("< <=", [pn(1), pn("X"), pn(3)]))
+        pn("<_<=", [pn(1), pn("X"), pn(3)]))
 
 def test_fails_more_than_two_compares():
     validate_parsing_error(
@@ -190,3 +190,9 @@ def test_parse_array_with_conditions():
              pn("range", [pn(1), pn(3)]),
              pn("<=", [pn("x"), pn(2)])]))
 
+def test_parse_equals():
+    validate_parse(
+        [t(Tokens.VAR, name="x"),
+         t(Tokens.EQ),
+         t(Tokens.NUM, value=1)],
+        pn("==", [pn("x"), pn(1)]))

@@ -17,7 +17,6 @@ class EvalModes:
     STATEMENTS = "statements"
     QUANTITY = "quantity"
     CONVERT_UNIT = "convert-unit"
-    COMPARE = "compare"
     ARRAY = "array"
     ARRAY_WITH_CONDITION = "array-with-condition"
 
@@ -71,8 +70,6 @@ def eval_based_on_mode(node, env, child_values):
         return make_quantity(child_values[0], node.value)
     if mode == EvalModes.CONVERT_UNIT:
         return convert_quantity(child_values[0], node.value)
-    if mode == EvalModes.COMPARE:
-        return compare(child_values, node.meta["ops"])
     if mode == EvalModes.ARRAY:
         return Array(child_values)
     if mode == EvalModes.ARRAY_WITH_CONDITION:
@@ -126,26 +123,7 @@ def compose_units(unit_sig):
             raise EvalError(f"The only valid exponent for unit '{name}' is 1, but it was given as {exp}.")
     return qv, multiple, offset
 
-FORWARD_OPS = [ComparisonOp.LT, ComparisonOp.LEQ]
-BACKWARD_OPS = [ComparisonOp.GT, ComparisonOp.GEQ]
-
 def compare(operands, ops):
-    if len(ops) > 1 and ComparisonOp.EQ in ops:
-        raise EvalError(
-            "Equality comparison operator can't be chained with other comparison operators.")
-    back = any(op in BACKWARD_OPS for op in ops)
-    if back:
-        if any(op in FORWARD_OPS for op in ops):
-            raise EvalError("Conflicting comparison operators.")
-        # Flip the operators to reduce function duplication. We only
-        # implement the forward-facing comparison operators.
-        i = 0
-        while i < len(ops):
-            op_index = BACKWARD_OPS.index(ops[i])
-            ops[i] = FORWARD_OPS[op_index]
-            i += 1
-        ops.reverse()
-        operands.reverse()
     return dispatch(get_comparison_fun(ops), operands)
 
 def get_comparison_fun(ops):
@@ -182,16 +160,15 @@ def eval_comprehension(node, env):
             env.set_variable(name, subarray[subarray_index])
         if subarrays_exhausted:
             break
-        condition_failed = False
+        success = True
         for condition in condition_nodes:
             result = eval_node(condition, env)
             if not bool_like(result):
                 raise EvalError("Expected boolean-interpretable result in array condition.")
             if result == 0:
-                condition_failed = True
-        if condition_failed:
-            break
-        output.append(eval_node(body_node, env))
+                success = False
+        if success:
+            output.append(eval_node(body_node, env))
         subarray_index += 1
     return output
 

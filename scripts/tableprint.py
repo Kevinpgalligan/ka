@@ -2,10 +2,11 @@
 
 import argparse
 from ka.functions import FUNCTIONS
+from ka.units import PREFIXES
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("thing", choices=["units", "functions"])
+    parser.add_argument("thing", choices=["units", "functions", "prefixes"])
     args = parser.parse_args()
 
     if args.thing == "units":
@@ -16,6 +17,10 @@ def main():
         for name, params in fs:
             sigs = [sig for f, sig in params]
             print_row([name, "<br/>".join(stringify_sig(sig) for sig in sigs)])
+    elif args.thing == "prefixes":
+        for px in PREFIXES:
+            print(f"{px.name_prefix} ({px.symbol_prefix}, {px.base}^{px.exponent}), ", end="")
+        
 
 def print_header(headers):
     print("| " + " | ".join(headers) + " |")
