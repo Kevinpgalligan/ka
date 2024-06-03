@@ -1,6 +1,6 @@
 import pytest
 
-from ka.tokens import tokenise, Tokens, UnknownTokenError
+from ka.tokens import tokenise, Tokens, UnknownTokenError, BadNumberError
 
 def test_tokenise_valid_tokens():
     expected = [
@@ -56,5 +56,11 @@ def test_tokenise_empty():
     assert [] == tokenise("")
 
 def test_alt_bases():
-    for expected, t in zip([10, 2, 8, 16], tokenise("0d10 0b10 0o10 0x10")):
+    for expected, t in zip([10, 2, 8, 16, 15, 15],
+                            tokenise("0d10 0b10 0o10 0x10 0xf 0xF")):
         assert expected == t.meta("value")
+
+def test_bad_digit_for_base():
+    for s in ["0b2", "0o8", "0da"]:
+        with pytest.raises(BadNumberError):
+            tokenise(s)

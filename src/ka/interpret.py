@@ -2,7 +2,7 @@ import readline
 from fractions import Fraction as frac
 import sys
 
-from .tokens import tokenise, UnknownTokenError
+from .tokens import tokenise, UnknownTokenError, BadNumberError
 from .parse import parse_tokens, ParsingError
 from .eval import eval_parse_tree, EvalError, EvalEnvironment, EvalModes
 from .types import Quantity, Array
@@ -62,13 +62,18 @@ def print_unit_info(name):
     if unit is None:
         print("Unknown unit.")
     else:
-        print("                     Name:", unit.singular_name)
-        print("              Plural name:", unit.plural_name)
-        print("                   Symbol:", unit.symbol)
-        print("               Quantities:", ", ".join(unit.quantities))
-        print("    Base units equivalent:", unit.quantity_vector.prettified())
-        print("  Magnitude in base units:", unit.multiple)
-        print("   Offset from base units:", unit.offset)
+        print(format_unit_info(unit))
+
+def format_unit_info(unit):
+    return "\n".join([
+        f"Name: {unit.singular_name}", 
+        f"Plural name: {unit.plural_name}",
+        f"Symbol: {unit.symbol}",
+        f"Quantities: " + ", ".join(unit.quantities),
+        f"Base units: {unit.quantity_vector.prettified()}",
+        f"Multiplier: {unit.multiple}",
+        f"Offset: {unit.offset}",
+    ])
 
 def print_functions():
     print(get_functions_string())
@@ -80,15 +85,20 @@ def print_function_info(name):
     if name not in FUNCTIONS:
         print("Unknown function.")
     else:
-        signatures = list(map(lambda x: x[1], FUNCTIONS[name]))
-        print("                   Name:", name)
-        print("          Documentation:", FUNCTION_DOCUMENTATION[name] if name in FUNCTION_DOCUMENTATION else DEFAULT_DOCSTRING)
-        types_prompt = "Accepted argument types: "
-        print(types_prompt, end="")
-        for i, sig in enumerate(signatures):
-            if i > 0:
-                print(" "*len(types_prompt), end="")
-            print("(" + ", ".join(make_sig_printable(sig)) + ")")
+        print(format_function_info(name))
+
+def format_function_info(name):
+    des = (FUNCTION_DOCUMENTATION[name]
+           if name in FUNCTION_DOCUMENTATION
+           else DEFAULT_DOCSTRING)
+    sigs = list(map(lambda x: x[1], FUNCTIONS[name]))
+    return "\n".join([
+        f"Name: {name}",
+        f"Description: {des}",
+        "Accepted argument types: ",
+        "\n".join("  (" + ", ".join(make_sig_printable(sig)) + ")"
+                  for sig in sigs)
+    ])
 
 INTERPRETER_COMMANDS = [
     (("q", "quit"), interp_cmd(interp_quit, 0, "exit the interpreter")),
@@ -152,6 +162,9 @@ def execute(s, env=None, out=sys.stdout,
         tokens = tokenise(s)
     except UnknownTokenError as e:
         error("Unknown token!", e.index, s, errout)
+        return 1
+    except BadNumberError as e:
+        error("Bad number! (Probably mixing number bases).", e.index, s, errout)
         return 1
     try:
         parse_tree = parse_tokens(tokens)

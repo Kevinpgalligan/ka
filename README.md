@@ -31,7 +31,7 @@ There are 3 ways to interact with it: executing individual expressions through t
 * [Manual](#manual)
   - [Grammar](#grammar)
   - [Variables](#variables)
-  - [Constants](#constants)
+  - [Constants and Numbers](#constants-and-numbers)
   - [Types](#types)
   - [Functions and operators](#functions-and-operators)
   - [Units](#units)
@@ -39,7 +39,6 @@ There are 3 ways to interact with it: executing individual expressions through t
   - [Arrays](#arrays)
   - [Configuration](#configuration)
 * [FAQ](#faq)
-* [Contributing](#contributing)
 * [Development](#development)
 
 ## Installation
@@ -96,14 +95,13 @@ An assignment consists of a variable name (such as `a`), followed by `=`, follow
 
 An expression is a sequence of math operations that returns a value. Addition, subtraction, function calls, and so on. If the value of an expression is a quantity (a number with a unit attached), then the unit can be converted to something else using the operator `to`. For example, this assigns `a` the magnitude of 3 metres when it's converted to feet: `a = 3m to ft`.
 
-
 ### Variables
 ka has basic support for variables: `blah=9^3; blah`.
 
 ### Constants and Numbers
 `pi` and `e` are the only constants provided. Currently, they're treated like variables and can be overwritten: `pi=3`, woops.
 
-The normal selection of number bases are supported: use the `0b` prefix for binary, `0o` for octal, and `0x` for hexadecimal. So `0x10` is 16 in base-10.
+The typical selection of number bases are supported: use the `0b` prefix for binary, `0o` for octal, and `0x` for hexadecimal. So `0x10` is 16 in base-10. Note that alternative bases can only be integers, and can't be mixed with scientific notation (otherwise, there's a parsing ambiguity in something like `0x1e-10`).
 
 ### Types
 ka is strongly typed, not statically typed. This means that when you pass a fractional number to a function that expects an integer, the type system will complain. But you don't have to declare the type of anything in advance.
@@ -146,7 +144,7 @@ Here are most of the units supported by the language. To see a complete list, ru
 
 The following prefixes are also supported, mostly coming from the SI standard. For convenience, their shorthand names and multipliers are provided here.
 
-* yotta (Y, 10^24), zetta (Z, 10^21), exa (E, 10^18), peta (P, 10^15), tera (T, 10^12), giga (G, 10^9), mega (M, 10^6), kilo (k, 10^3), kilo (K, 10^3), hecto (h, 10^2), deca (da, 10^1), deci (d, 10^-1), centi (c, 10^-2), milli (m, 10^-3), micro (μ, 10^-6), nano (n, 10^-9), pico (p, 10^-12), femto (f, 10^-15), atto (a, 10^-18), zepto (z, 10^-21), yocto (y, 10^-24), kibi (Ki, 2^10), mebi (Mi, 2^20), gibi (Gi, 2^30), tebi (Ti, 2^40)
+* yotta (Y, 10^24), zetta (Z, 10^21), exa (E, 10^18), peta (P, 10^15), tera (T, 10^12), giga (G, 10^9), mega (M, 10^6), kilo (k/K, 10^3), hecto (h, 10^2), deca (da, 10^1), deci (d, 10^-1), centi (c, 10^-2), milli (m, 10^-3), micro (μ, 10^-6), nano (n, 10^-9), pico (p, 10^-12), femto (f, 10^-15), atto (a, 10^-18), zepto (z, 10^-21), yocto (y, 10^-24), kibi (Ki, 2^10), mebi (Mi, 2^20), gibi (Gi, 2^30), tebi (Ti, 2^40)
 
 Notes on units:
 

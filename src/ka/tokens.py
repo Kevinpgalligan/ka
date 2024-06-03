@@ -1,9 +1,11 @@
 import re
 from fractions import Fraction as frac
 
-# 0b 0x 0o 0d
 NUM_REGEX = re.compile(
-    r"(0(x|o|b|d))?(([0-9]+\.?[0-9]*)|([0-9]*\.?[0-9]+))(e\-?[0-9]+)?")
+    r"""(0(x|o|b|d)([0-9a-fA-F]+))               # Integer with base prefix
+        | (([0-9]+\.?[0-9]*)|([0-9]*\.?[0-9]+))  # Decimal, float or integer
+          (e\-?[0-9]+)?                          # Scientific notation""",
+    re.VERBOSE)
 VAR_REGEX = re.compile(r"[a-zA-Z][_a-zA-Z0-9]*")
 
 class Token:
@@ -97,6 +99,10 @@ class UnknownTokenError(Exception):
     def __init__(self, index):
         self.index = index
 
+class BadNumberError(Exception):
+    def __init__(self, index):
+        self.index = index
+
 def tokenise(s):
     """
     raises: UnknownTokenError
@@ -138,22 +144,29 @@ def read_token(i, s):
 
 def read_num_token(i, s):
     m = NUM_REGEX.match(s, i)
-    raw_value = m.group(3)
-    # Keep it as an integer if possible.
-    if '.' in raw_value:
-        value = float(raw_value)
-    else:
+    with_base = m.group(1)
+    if with_base:
         base = 10
         raw_base = m.group(2)
         if raw_base:
             if "b" == raw_base: base = 2
             elif "o" == raw_base: base = 8
             elif "x" == raw_base: base = 16
-        value = int(raw_value, base=base)
-    if m.group(6):
-        exponent = int(m.group(6)[1:])
-        if exponent < 0:
-            value *= frac(1, 10**-exponent)
+        try:
+            value = int(m.group(3), base=base)
+        except ValueError:
+            raise BadNumberError(i)
+    else:
+        raw_value = m.group(4)
+        # Keep it as an integer if possible.
+        if '.' in raw_value:
+            value = float(raw_value)
         else:
-            value *= 10**exponent
+            value = int(raw_value)
+        if m.group(7):
+            exponent = int(m.group(7)[1:])
+            if exponent < 0:
+                value *= frac(1, 10**-exponent)
+            else:
+                value *= 10**exponent
     return Token(Tokens.NUM, m.start(), m.end(), value=value)

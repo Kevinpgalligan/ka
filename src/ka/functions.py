@@ -325,3 +325,5 @@ def ka_range(lo, hi, step):
 
 register_function(ka_range, "range", (Number, Number, Number),
                   "Generates array of all numbers between lower bound and upper bound with given step size.")
+
+FUNCTION_NAMES = list(FUNCTIONS.keys())
