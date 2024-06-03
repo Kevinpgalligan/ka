@@ -54,3 +54,7 @@ def test_tokenise_unknown():
 
 def test_tokenise_empty():
     assert [] == tokenise("")
+
+def test_alt_bases():
+    for expected, t in zip([10, 2, 8, 16], tokenise("0d10 0b10 0o10 0x10")):
+        assert expected == t.meta("value")

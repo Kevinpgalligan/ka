@@ -1,8 +1,9 @@
 import re
 from fractions import Fraction as frac
 
+# 0b 0x 0o 0d
 NUM_REGEX = re.compile(
-    r"(([0-9]+\.?[0-9]*)|([0-9]*\.?[0-9]+))(e\-?[0-9]+)?")
+    r"(0(x|o|b|d))?(([0-9]+\.?[0-9]*)|([0-9]*\.?[0-9]+))(e\-?[0-9]+)?")
 VAR_REGEX = re.compile(r"[a-zA-Z][_a-zA-Z0-9]*")
 
 class Token:
@@ -137,14 +138,20 @@ def read_token(i, s):
 
 def read_num_token(i, s):
     m = NUM_REGEX.match(s, i)
-    raw_value = m.group(1)
+    raw_value = m.group(3)
     # Keep it as an integer if possible.
     if '.' in raw_value:
         value = float(raw_value)
     else:
-        value = int(raw_value)
-    if m.group(4):
-        exponent = int(m.group(4)[1:])
+        base = 10
+        raw_base = m.group(2)
+        if raw_base:
+            if "b" == raw_base: base = 2
+            elif "o" == raw_base: base = 8
+            elif "x" == raw_base: base = 16
+        value = int(raw_value, base=base)
+    if m.group(6):
+        exponent = int(m.group(6)[1:])
         if exponent < 0:
             value *= frac(1, 10**-exponent)
         else:

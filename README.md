@@ -96,11 +96,14 @@ An assignment consists of a variable name (such as `a`), followed by `=`, follow
 
 An expression is a sequence of math operations that returns a value. Addition, subtraction, function calls, and so on. If the value of an expression is a quantity (a number with a unit attached), then the unit can be converted to something else using the operator `to`. For example, this assigns `a` the magnitude of 3 metres when it's converted to feet: `a = 3m to ft`.
 
+
 ### Variables
 ka has basic support for variables: `blah=9^3; blah`.
 
-### Constants
+### Constants and Numbers
 `pi` and `e` are the only constants provided. Currently, they're treated like variables and can be overwritten: `pi=3`, woops.
+
+The normal selection of number bases are supported: use the `0b` prefix for binary, `0o` for octal, and `0x` for hexadecimal. So `0x10` is 16 in base-10.
 
 ### Types
 ka is strongly typed, not statically typed. This means that when you pass a fractional number to a function that expects an integer, the type system will complain. But you don't have to declare the type of anything in advance.
