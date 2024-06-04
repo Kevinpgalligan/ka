@@ -1,8 +1,9 @@
 import sys
 import io
 import html
+import re
 
-from PyQt5.QtCore import QT_VERSION_STR, PYQT_VERSION_STR, Qt
+from PyQt5.QtCore import QT_VERSION_STR, PYQT_VERSION_STR, Qt, QEvent
 from PyQt5.QtGui import QKeySequence
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import (QApplication, QWidget, QLineEdit, QLabel,
@@ -17,9 +18,11 @@ from .functions import FUNCTION_NAMES
 from .units import UNITS, PREFIXES
 
 REPO_URL = "https://github.com/Kevinpgalligan/ka"
-WSIZE = (600, 300)
+WSIZE = (600, 400)
 HELP_SIZE = (400, 200)
 DOC_SIZE = (500, 300)
+
+WHITESPACE_AT_START = re.compile("^[ ]+", re.MULTILINE)
 
 def add_exit_shortcut(w):
     shortcut = QShortcut(QKeySequence("Ctrl+W"), w)
@@ -30,7 +33,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.resize(*WSIZE)
         self.setWindowTitle("ka")
-        self.ka_widget = KaWidget()
+        self.ka_widget = KaWidget(self)
         self.setCentralWidget(self.ka_widget)
         
         add_exit_shortcut(self)
@@ -57,41 +60,77 @@ class HelpWindow(QWidget):
         self.label.setText(f"""{get_version_string()}.<br>
 ka is a calculator language. For documentation, see <a href='{REPO_URL}'>{REPO_URL}</a>.<br>""")
 
+        add_exit_shortcut(self)
+
+class Combo(QComboBox):
+    def __init__(self, parent):
+        super().__init__(parent)
+    
+    def showPopup(self):
+        self.view().installEventFilter(self)
+        super().showPopup()
+
+    def eventFilter(self, source, e):
+        # Need to intercept certain key presses to ensure that
+        # keyboard shortcuts work while the popup is visible.
+        if (e.type() == QEvent.KeyPress
+                and (e.modifiers() & QtCore.Qt.ControlModifier
+                     or e.modifiers() & QtCore.Qt.AltModifier)):
+            self.keyPressEvent(e)
+            return True
+        return super().eventFilter(source, e)
+
+    def keyPressEvent(self, e):
+        super().keyPressEvent(e)
+        self.parent().keyPressEvent(e)
+
 class HintBar(QWidget):
     display_fn_signal = QtCore.pyqtSignal(int)
     display_unit_signal = QtCore.pyqtSignal(int)
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.parent = parent
 
-        cb_functions = QComboBox(self)
-        cb_functions.addItem("Functions / Ops")
-        cb_functions.addItems(FUNCTION_NAMES)
-        cb_units = QComboBox(self)
-        cb_units.addItem("Units")
-        cb_units.addItems([f"{u.singular_name} ({u.symbol})" for u in UNITS])
-        cb_prefixes = QComboBox(self)
-        cb_prefixes.addItem("Prefixes")
-        cb_prefixes.addItems([f"{p.name_prefix} ({p.symbol_prefix}, {p.base}^{p.exponent})"
+        self.cb_functions = Combo(self)
+        self.cb_functions.addItem("Functions / Ops")
+        self.cb_functions.addItems(FUNCTION_NAMES)
+        self.cb_units = Combo(self)
+        self.cb_units.addItem("Units")
+        self.cb_units.addItems([f"{u.singular_name} ({u.symbol})" for u in UNITS])
+        self.cb_prefixes = Combo(self)
+        self.cb_prefixes.addItem("Prefixes")
+        self.cb_prefixes.addItems([f"{p.name_prefix} ({p.symbol_prefix}, {p.base}^{p.exponent})"
                               for p in PREFIXES])
 
-        cb_functions.currentIndexChanged.connect(self.display_fn_signal)
-        cb_units.currentIndexChanged.connect(self.display_unit_signal)
+        self.cb_functions.currentIndexChanged.connect(self.display_fn_signal)
+        self.cb_units.currentIndexChanged.connect(self.display_unit_signal)
 
         selection_area = QHBoxLayout()
-        selection_area.addWidget(cb_functions)
-        selection_area.addWidget(cb_units)
-        selection_area.addWidget(cb_prefixes)
+        selection_area.addWidget(self.cb_functions)
+        selection_area.addWidget(self.cb_units)
+        selection_area.addWidget(self.cb_prefixes)
         self.setLayout(selection_area)
-        
+
+    def show_functions(self):
+        self.cb_functions.showPopup()
+
+    def show_units(self):
+        self.cb_units.showPopup()
+
+    def show_prefixes(self):
+        self.cb_prefixes.showPopup()
+
+    def keyPressEvent(self, e):
+        super().keyPressEvent(e)
+        self.parent().keyPressEvent(e)
+ 
 class KaWidget(QWidget):
     key_pressed = QtCore.pyqtSignal(int)
     display_fn_signal = QtCore.pyqtSignal(int)
     display_unit_signal = QtCore.pyqtSignal(int)
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
         self.initUI()
 
     def keyPressEvent(self, event):
@@ -109,7 +148,7 @@ class KaWidget(QWidget):
         self.output_box.setStyleSheet("background-color: white;")
         self.output_box.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.output_box.setWordWrap(True)
-        #self.output_box.setAlignment(Qt.AlignRight)
+        #self.output_box.setAlignment(Qt.AlignLeft)
 
         # Make output area scrollable.
         self.scroll_area = QScrollArea()
@@ -133,7 +172,14 @@ class KaWidget(QWidget):
         layout.addWidget(self.hint_bar)
         self.setLayout(layout)
 
-        add_exit_shortcut(self)
+    def show_functions(self):
+        self.hint_bar.show_functions()
+
+    def show_units(self):
+        self.hint_bar.show_units()
+
+    def show_prefixes(self):
+        self.hint_bar.show_prefixes()
 
     def scroll_to_bottom(self):
         self.scroll_area.verticalScrollBar().setValue(
@@ -141,6 +187,21 @@ class KaWidget(QWidget):
 
 def get_version_string():
     return f"ka version {KA_VERSION}, QT version {QT_VERSION_STR}, PyQT version {PYQT_VERSION_STR}"
+
+def escape_whitespace(txt):
+    # This preserves formatting-related whitespace that is
+    # found at the start of a line, so that it doesn't get thrown out
+    # during HTML formatting. We don't want to escape all the whitespace,
+    # however, because then word wrap doesn't work.
+    result = io.StringIO()
+    i = 0
+    for m in WHITESPACE_AT_START.finditer(txt):
+        result.write(txt[i:m.start()])
+        for _ in range(m.end()-m.start()):
+            result.write("&nbsp;")
+        i = m.end()
+    result.write(txt[i:])
+    return result.getvalue()
 
 def run_gui():
     print(get_version_string())
@@ -153,7 +214,7 @@ def run_gui():
     def add_display_text(txt):
         displayed_stuff.extend([
             '<font color="grey">',
-            html.escape(txt).replace("\n", "<br>").replace(" ", "&nbsp;"),
+            escape_whitespace(html.escape(txt)).replace("\n", "<br>"),
             '</font>',
             '<br>'
         ])
@@ -218,6 +279,9 @@ def run_gui():
             update_display()
     QShortcut(QKeySequence("Ctrl+Up"), w).activated.connect(previous_command)
     QShortcut(QKeySequence("Ctrl+Down"), w).activated.connect(next_command)
+    QShortcut(QKeySequence("Ctrl+f"), w).activated.connect(w.ka_widget.show_functions)
+    QShortcut(QKeySequence("Ctrl+q"), w).activated.connect(w.ka_widget.show_units)
+    QShortcut(QKeySequence("Ctrl+p"), w).activated.connect(w.ka_widget.show_prefixes)
     w.ka_widget.key_pressed.connect(on_key)
     w.ka_widget.display_fn_signal.connect(display_fn)
     w.ka_widget.display_unit_signal.connect(display_unit)

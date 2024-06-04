@@ -84,7 +84,7 @@ def register_function(f, name, arg_types, docstring=None):
         FUNCTION_DOCUMENTATION[name] = docstring
 
 def register_binary_op(name, op, docstring=None):
-    register_function(op, name, (Number, Number), docstring=None)
+    register_function(op, name, (Number, Number), docstring=docstring)
 
 def register_numeric_function(name, f, num_args=1, docstring=None):
     register_function(f, name, num_args*(Number,), docstring=docstring)
@@ -133,16 +133,22 @@ NUMERIC_FUNCTIONS = [
     ("floor", math.floor, "Rounds a number down to the next smallest integer."),
     ("ceil", math.ceil, "Rounds a number up to the next largest integer."),
     ("round", round, "Rounds a number to the nearest integer."),
-    ("int", int, "Converts a number to the nearest integer between that number and zero."),
+    ("int", int, "Converts a number to the nearest integer in the direction of zero."),
     ("float", float, "Force a number (such as a fraction) to its (imprecise) floating point representation."),
-    ("+", operator.pos, "Positive sign; prefix operator."),
-    ("-", operator.neg, "Negate a number; prefix operator."),
+    ("+", operator.pos, None),
+    ("-", operator.neg, None),
 ]
 for name, f, docstring in NUMERIC_FUNCTIONS:
     register_numeric_function(name, f, docstring=docstring)
-register_numeric_function("log", lambda base, x: math.log(x, base), num_args=2, docstring="Logarithm function. The first argument determines the base.")
-register_function(choose, "C", (Integral, Integral), "Binomial coefficient function from combinatorics. It returns how many ways there are from a total of n items (first argument) to select k items (second argument).")
-register_function(factorial, "!", (Integral,), "Factorial function, postfix operator. 3!=6.")
+register_numeric_function("log",
+                          lambda base, x: math.log(x, base),
+                          num_args=2,
+                          docstring="Logarithm function. The first argument determines the base.")
+register_function(choose,
+                  "C",
+                  (Integral, Integral),
+                  "Binomial coefficient function from combinatorics. It returns how many ways there are from a total of n items (first argument) to select k items (second argument).")
+register_function(factorial, "!", (Integral,), "Factorial postfix operator.")
 def register_quantities_op(name,
                            quantity_vector_combiner=None,
                            wrap_in_quantity=True):
@@ -233,7 +239,7 @@ for op1 in [ComparisonOp.LEQ, ComparisonOp.LT]:
         register_function(make_double_event_fun(op1, op2),
                           "_".join([op1, op2]),
                           (Number, RandomVariable, Number),
-                          "Double comparison.")
+                          "Double comparison operator.")
 
 for etype in [Event, DoubleEvent]:
     register_function(lambda event: event.probability(), "P", (etype,), "Evaluate the probability of an event.")
@@ -324,6 +330,6 @@ def ka_range(lo, hi, step):
     return Array(result)
 
 register_function(ka_range, "range", (Number, Number, Number),
-                  "Generates array of all numbers between lower bound and upper bound with given step size.")
+                  "Generates array of all numbers between lower bound (1st arg) and upper bound (2nd arg) with given step size (3rd arg).")
 
 FUNCTION_NAMES = list(FUNCTIONS.keys())
