@@ -3,7 +3,7 @@ import io
 import html
 import re
 
-from PyQt5.QtCore import QT_VERSION_STR, PYQT_VERSION_STR, Qt, QEvent
+from PyQt5.QtCore import QT_VERSION_STR, PYQT_VERSION_STR, Qt
 from PyQt5.QtGui import QKeySequence
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import (QApplication, QWidget, QLineEdit, QLabel,
@@ -24,9 +24,23 @@ DOC_SIZE = (500, 300)
 
 WHITESPACE_AT_START = re.compile("^[ ]+", re.MULTILINE)
 
+DEFAULT_SHORTCUT_UP = "Ctrl+Up"
+DEFAULT_SHORTCUT_DOWN = "Ctrl+Down"
+DEFAULT_SHORTCUT_FUNCTIONS = "Ctrl+F"
+DEFAULT_SHORTCUT_UNITS = "Ctrl+Q"
+DEFAULT_SHORTCUT_PREFIXES = "Ctrl+P"
+DEFAULT_SHORTCUT_CLOSE = "Ctrl+W"
+
 def add_exit_shortcut(w):
-    shortcut = QShortcut(QKeySequence("Ctrl+W"), w)
+    shortcut = QShortcut(QKeySequence(DEFAULT_SHORTCUT_CLOSE), w)
     shortcut.activated.connect(w.close)
+
+def make_scroll(subwidget):
+    w = QScrollArea()
+    w.setWidget(subwidget)
+    w.setWidgetResizable(True)
+    w.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+    return w
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -40,49 +54,58 @@ class MainWindow(QMainWindow):
 
         menu = self.menuBar()
 
-        self.help_window = HelpWindow()
-        help_menu = menu.addMenu("&Help")
+        self.about_window = AboutWindow()
         about_action = QAction("&About", self)
-        about_action.triggered.connect(self.help_window.show)
+        about_action.triggered.connect(self.about_window.show)
 
+        self.shortcuts_window = ShortcutsWindow()
+        shortcuts_action = QAction("&Shortcuts", self)
+        shortcuts_action.triggered.connect(self.shortcuts_window.show)
+
+        help_menu = menu.addMenu("&Help")
         help_menu.addAction(about_action)
+        help_menu.addAction(shortcuts_action)
 
-class HelpWindow(QWidget):
+def add_help_text(w, txt):
+    w.label = QLabel(w)
+    w.label.setFont(QtGui.QFont('monospace', 15))
+    w.label.setStyleSheet("background-color: white;")
+    w.label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+    w.label.resize(w.size())
+    w.label.setWordWrap(True)
+    w.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+    w.label.setOpenExternalLinks(True)
+    w.label.setText(txt)
+    w.scroll = make_scroll(w.label)
+    layout = QVBoxLayout()
+    layout.addWidget(w.scroll)
+    w.setLayout(layout)
+
+class AboutWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.resize(*HELP_SIZE)
-        self.setWindowTitle("Help")
-        self.label = QLabel(self)
-        self.label.resize(self.size())
-        self.label.setWordWrap(True)
-        self.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.label.setOpenExternalLinks(True)
-        self.label.setText(f"""{get_version_string()}.<br>
-ka is a calculator language. For documentation, see <a href='{REPO_URL}'>{REPO_URL}</a>.<br>""")
+        self.setWindowTitle("About")
+        add_help_text(self, f"""{get_version_string()}.
 
+For documentation, see {REPO_URL}.""")
         add_exit_shortcut(self)
 
-class Combo(QComboBox):
-    def __init__(self, parent):
-        super().__init__(parent)
-    
-    def showPopup(self):
-        self.view().installEventFilter(self)
-        super().showPopup()
+class ShortcutsWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.resize(*HELP_SIZE)
+        self.setWindowTitle("Shortcuts")
+        add_help_text(self, f"""Default keyboard shortcuts are as follows. They can be adjusted in the config file.
 
-    def eventFilter(self, source, e):
-        # Need to intercept certain key presses to ensure that
-        # keyboard shortcuts work while the popup is visible.
-        if (e.type() == QEvent.KeyPress
-                and (e.modifiers() & QtCore.Qt.ControlModifier
-                     or e.modifiers() & QtCore.Qt.AltModifier)):
-            self.keyPressEvent(e)
-            return True
-        return super().eventFilter(source, e)
-
-    def keyPressEvent(self, e):
-        super().keyPressEvent(e)
-        self.parent().keyPressEvent(e)
+* Close window: {DEFAULT_SHORTCUT_CLOSE}.
+* Previous command in history: {DEFAULT_SHORTCUT_UP}.
+* Next command in history: {DEFAULT_SHORTCUT_DOWN}.
+* Open list of functions: {DEFAULT_SHORTCUT_FUNCTIONS}.
+* Open list of units: {DEFAULT_SHORTCUT_UNITS}.
+* Open list of prefixes: {DEFAULT_SHORTCUT_PREFIXES}.
+""")
+        add_exit_shortcut(self)
 
 class HintBar(QWidget):
     display_fn_signal = QtCore.pyqtSignal(int)
@@ -91,13 +114,13 @@ class HintBar(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.cb_functions = Combo(self)
+        self.cb_functions = QComboBox(self)
         self.cb_functions.addItem("Functions / Ops")
         self.cb_functions.addItems(FUNCTION_NAMES)
-        self.cb_units = Combo(self)
+        self.cb_units = QComboBox(self)
         self.cb_units.addItem("Units")
         self.cb_units.addItems([f"{u.singular_name} ({u.symbol})" for u in UNITS])
-        self.cb_prefixes = Combo(self)
+        self.cb_prefixes = QComboBox(self)
         self.cb_prefixes.addItem("Prefixes")
         self.cb_prefixes.addItems([f"{p.name_prefix} ({p.symbol_prefix}, {p.base}^{p.exponent})"
                               for p in PREFIXES])
@@ -119,10 +142,6 @@ class HintBar(QWidget):
 
     def show_prefixes(self):
         self.cb_prefixes.showPopup()
-
-    def keyPressEvent(self, e):
-        super().keyPressEvent(e)
-        self.parent().keyPressEvent(e)
  
 class KaWidget(QWidget):
     key_pressed = QtCore.pyqtSignal(int)
@@ -151,11 +170,10 @@ class KaWidget(QWidget):
         #self.output_box.setAlignment(Qt.AlignLeft)
 
         # Make output area scrollable.
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidget(self.output_box)
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.verticalScrollBar().rangeChanged.connect(self.scroll_to_bottom)
-        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll_area = make_scroll(self.output_box)
+        self.scroll_area.verticalScrollBar() \
+            .rangeChanged \
+            .connect(self.scroll_to_bottom)
 
         self.input_widget = QLineEdit(self)
         self.input_widget.setFont(font)
@@ -277,11 +295,21 @@ def run_gui():
             add_display_text(format_unit_info(UNITS[i-1]))
             add_display_text("\n")
             update_display()
-    QShortcut(QKeySequence("Ctrl+Up"), w).activated.connect(previous_command)
-    QShortcut(QKeySequence("Ctrl+Down"), w).activated.connect(next_command)
-    QShortcut(QKeySequence("Ctrl+f"), w).activated.connect(w.ka_widget.show_functions)
-    QShortcut(QKeySequence("Ctrl+q"), w).activated.connect(w.ka_widget.show_units)
-    QShortcut(QKeySequence("Ctrl+p"), w).activated.connect(w.ka_widget.show_prefixes)
+    QShortcut(QKeySequence(DEFAULT_SHORTCUT_UP), w) \
+        .activated \
+        .connect(previous_command)
+    QShortcut(QKeySequence(DEFAULT_SHORTCUT_DOWN), w) \
+        .activated \
+        .connect(next_command)
+    QShortcut(QKeySequence(DEFAULT_SHORTCUT_FUNCTIONS), w) \
+        .activated \
+        .connect(w.ka_widget.show_functions)
+    QShortcut(QKeySequence(DEFAULT_SHORTCUT_UNITS), w) \
+        .activated \
+        .connect(w.ka_widget.show_units)
+    QShortcut(QKeySequence(DEFAULT_SHORTCUT_PREFIXES), w) \
+        .activated \
+        .connect(w.ka_widget.show_prefixes)
     w.ka_widget.key_pressed.connect(on_key)
     w.ka_widget.display_fn_signal.connect(display_fn)
     w.ka_widget.display_unit_signal.connect(display_unit)
