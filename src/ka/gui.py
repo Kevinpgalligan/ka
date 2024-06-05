@@ -16,23 +16,17 @@ from .interpret import (KA_VERSION, execute, ResultBox, stringify_result,
 from .eval import EvalEnvironment
 from .functions import FUNCTION_NAMES
 from .units import UNITS, PREFIXES
+from .config import ConfigProperties
+import ka.config
 
 REPO_URL = "https://github.com/Kevinpgalligan/ka"
-WSIZE = (600, 400)
 HELP_SIZE = (400, 200)
 DOC_SIZE = (500, 300)
 
 WHITESPACE_AT_START = re.compile("^[ ]+", re.MULTILINE)
 
-DEFAULT_SHORTCUT_UP = "Ctrl+Up"
-DEFAULT_SHORTCUT_DOWN = "Ctrl+Down"
-DEFAULT_SHORTCUT_FUNCTIONS = "Ctrl+F"
-DEFAULT_SHORTCUT_UNITS = "Ctrl+Q"
-DEFAULT_SHORTCUT_PREFIXES = "Ctrl+P"
-DEFAULT_SHORTCUT_CLOSE = "Ctrl+W"
-
 def add_exit_shortcut(w):
-    shortcut = QShortcut(QKeySequence(DEFAULT_SHORTCUT_CLOSE), w)
+    shortcut = QShortcut(QKeySequence(ka.config.get(ConfigProperties.DEFAULT_SHORTCUT_CLOSE)), w)
     shortcut.activated.connect(w.close)
 
 def make_scroll(subwidget):
@@ -43,11 +37,11 @@ def make_scroll(subwidget):
     return w
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, size, font_size):
         super().__init__()
-        self.resize(*WSIZE)
+        self.resize(*size)
         self.setWindowTitle("ka")
-        self.ka_widget = KaWidget(self)
+        self.ka_widget = KaWidget(self, size, font_size)
         self.setCentralWidget(self.ka_widget)
         
         add_exit_shortcut(self)
@@ -98,12 +92,12 @@ class ShortcutsWindow(QWidget):
         self.setWindowTitle("Shortcuts")
         add_help_text(self, f"""Default keyboard shortcuts are as follows. They can be adjusted in the config file.
 
-* Close window: {DEFAULT_SHORTCUT_CLOSE}.
-* Previous command in history: {DEFAULT_SHORTCUT_UP}.
-* Next command in history: {DEFAULT_SHORTCUT_DOWN}.
-* Open list of functions: {DEFAULT_SHORTCUT_FUNCTIONS}.
-* Open list of units: {DEFAULT_SHORTCUT_UNITS}.
-* Open list of prefixes: {DEFAULT_SHORTCUT_PREFIXES}.
+* Close window: {ka.config.get(ConfigProperties.DEFAULT_SHORTCUT_CLOSE)}.
+* Previous command in history: {ka.config.get(ConfigProperties.DEFAULT_SHORTCUT_UP)}.
+* Next command in history: {ka.config.get(ConfigProperties.DEFAULT_SHORTCUT_DOWN)}.
+* Open list of functions: {ka.config.get(ConfigProperties.DEFAULT_SHORTCUT_FUNCTIONS)}.
+* Open list of units: {ka.config.get(ConfigProperties.DEFAULT_SHORTCUT_UNITS)}.
+* Open list of prefixes: {ka.config.get(ConfigProperties.DEFAULT_SHORTCUT_PREFIXES)}.
 """)
         add_exit_shortcut(self)
 
@@ -148,18 +142,18 @@ class KaWidget(QWidget):
     display_fn_signal = QtCore.pyqtSignal(int)
     display_unit_signal = QtCore.pyqtSignal(int)
 
-    def __init__(self, parent):
+    def __init__(self, parent, size, font_size):
         super().__init__(parent)
-        self.initUI()
+        self.initUI(size, font_size)
 
     def keyPressEvent(self, event):
         super().keyPressEvent(event)
         self.key_pressed.emit(event.key())
 
-    def initUI(self):
-        width, height = WSIZE
+    def initUI(self, size, font_size):
+        width, height = size
 
-        font = QtGui.QFont('monospace', 15)
+        font = QtGui.QFont('monospace', font_size)
         
         #self.output_box.resize(*wsize)
         self.output_box = QLabel()
@@ -223,8 +217,11 @@ def escape_whitespace(txt):
 
 def run_gui():
     print(get_version_string())
+    size = (ka.config.get(ConfigProperties.WINDOW_WIDTH),
+            ka.config.get(ConfigProperties.WINDOW_HEIGHT))
+    font_size = ka.config.get(ConfigProperties.FONT_SIZE)
     app = QApplication([])
-    w = MainWindow()
+    w = MainWindow(size, font_size)
     env = EvalEnvironment()
     displayed_stuff = []
     command_history = []
@@ -295,19 +292,19 @@ def run_gui():
             add_display_text(format_unit_info(UNITS[i-1]))
             add_display_text("\n")
             update_display()
-    QShortcut(QKeySequence(DEFAULT_SHORTCUT_UP), w) \
+    QShortcut(QKeySequence(ka.config.get(ConfigProperties.DEFAULT_SHORTCUT_UP)), w) \
         .activated \
         .connect(previous_command)
-    QShortcut(QKeySequence(DEFAULT_SHORTCUT_DOWN), w) \
+    QShortcut(QKeySequence(ka.config.get(ConfigProperties.DEFAULT_SHORTCUT_DOWN)), w) \
         .activated \
         .connect(next_command)
-    QShortcut(QKeySequence(DEFAULT_SHORTCUT_FUNCTIONS), w) \
+    QShortcut(QKeySequence(ka.config.get(ConfigProperties.DEFAULT_SHORTCUT_FUNCTIONS)), w) \
         .activated \
         .connect(w.ka_widget.show_functions)
-    QShortcut(QKeySequence(DEFAULT_SHORTCUT_UNITS), w) \
+    QShortcut(QKeySequence(ka.config.get(ConfigProperties.DEFAULT_SHORTCUT_UNITS)), w) \
         .activated \
         .connect(w.ka_widget.show_units)
-    QShortcut(QKeySequence(DEFAULT_SHORTCUT_PREFIXES), w) \
+    QShortcut(QKeySequence(ka.config.get(ConfigProperties.DEFAULT_SHORTCUT_PREFIXES)), w) \
         .activated \
         .connect(w.ka_widget.show_prefixes)
     w.ka_widget.key_pressed.connect(on_key)

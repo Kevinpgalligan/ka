@@ -211,10 +211,19 @@ Array-related functions, given an array `A`:
 * `range(lo,hi,step)` returns numbers between `lo` and `hi` in steps of size `step`.
 
 ### Configuration
-ka can be configured through a config file at `${YOUR_HOME_DIR}/.config/ka/config`. Currently, the only configurable property is the floating-point precision, which can be set by including the following line in the config file:
+ka can be configured through a config file at `${YOUR_HOME_DIR}/.config/ka/config`. All available properties are shown below with their default values. `precision` determines the floating point precision; the other properties determine various characteristics of the GUI like its dimensions and keyboard shortcuts.
 
 ```
-precision=4
+precision=6
+font-size=15
+window-width=600
+window-height=400
+shortcut-up=Ctrl+Up
+shortcut-down=Ctrl+Down
+shortcut-functions=Ctrl+F
+shortcut-units=Ctrl+Q
+shortcut-prefixes=Ctrl+P
+shortcut-close=Ctrl+W
 ```
 
 ## FAQ

@@ -12,6 +12,7 @@ from .functions import (FUNCTIONS, UnknownFunctionError,
     FunctionArgError)
 from .units import UNITS, PREFIXES, lookup_unit
 from .probability import InvalidParameterException
+from .config import ConfigProperties
 import ka.config
 
 PROMPT = ">>> "
@@ -323,7 +324,7 @@ def stringify_result(r, brackets_for_frac=False):
     return str(r)
 
 def precisionify_float(f):
-    fstring = "{:." + str(ka.config.PRECISION) + "g}"
+    fstring = "{:." + str(ka.config.get(ConfigProperties.PRECISION)) + "g}"
     return fstring.format(f)
 
 def prettify_frac(f, brackets=False):
