@@ -226,9 +226,9 @@ def run_gui():
     displayed_stuff = []
     command_history = []
     command_index = 0
-    def add_display_text(txt):
+    def add_display_text(txt, colour="gray"):
         displayed_stuff.extend([
-            '<font color="grey">',
+            f"<font color=\"{colour}\">",
             escape_whitespace(html.escape(txt)).replace("\n", "<br>"),
             '</font>',
             '<br>'
@@ -249,13 +249,7 @@ def run_gui():
                              result_box=result_box, brackets_for_frac=True,
                              assigned_box=assigned_box)
             add_display_text(txt)
-            output_str = html.escape(out.getvalue())
-            if status != 0:
-                displayed_stuff.append('<font color="red">')
-            displayed_stuff.append(output_str)
-            if status != 0:
-                displayed_stuff.append('</font>')
-            displayed_stuff.append("<br>")
+            add_display_text(out.getvalue(), colour="red" if status != 0 else "gray")
             update_display()
             if assigned_box.value is not None:
                 w.ka_widget.input_widget.setText(assigned_box.value)
