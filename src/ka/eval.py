@@ -19,6 +19,7 @@ class EvalModes:
     CONVERT_UNIT = "convert-unit"
     ARRAY = "array"
     ARRAY_WITH_CONDITION = "array-with-condition"
+    KEYWORD_ARG = "keyword-arg"
 
 class EvalError(Exception):
     def __init__(self, message):
@@ -61,7 +62,7 @@ def eval_based_on_mode(node, env, child_values):
     if mode == EvalModes.VARIABLE:
         return env.get_variable(node.value)
     if mode == EvalModes.FUNCALL:
-        return dispatch(node.value, child_values)
+        return eval_funcall(node, child_values)
     if mode == EvalModes.ASSIGNMENT:
         return env.set_variable(node.value, child_values[0])
     if mode == EvalModes.STATEMENTS:
@@ -74,7 +75,20 @@ def eval_based_on_mode(node, env, child_values):
         return Array(child_values)
     if mode == EvalModes.ARRAY_WITH_CONDITION:
         return eval_comprehension(node, env)
+    if mode == EvalModes.KEYWORD_ARG:
+        return child_values[0]
     raise EvalError(f"Unknown evaluation mode: '{mode}' (This is a bug!)")
+
+def eval_funcall(node, child_values):
+    num_pos_args = sum(1 for child in node.children
+                         if child.eval_mode != EvalModes.KEYWORD_ARG)
+    return dispatch(
+        node.value,
+        child_values[:num_pos_args],
+        kw_args=dict((child.label, v)
+                     for child, v
+                     in zip(node.children[num_pos_args:],
+                            child_values[num_pos_args:])))
 
 def make_quantity(magnitude, unit_signature):
     if not is_number(magnitude):

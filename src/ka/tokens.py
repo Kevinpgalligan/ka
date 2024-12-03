@@ -60,6 +60,7 @@ class Tokens:
     INTERVAL_OPEN = "["
     INTERVAL_CLOSE = "]"
     INTERVAL_SEPARATOR = ","
+    KW_SEPARATOR = ':'
 
 CONST_TOKENS = [
     # Need to make sure that if token A is a prefix of token B, then it
@@ -91,6 +92,7 @@ CONST_TOKENS = [
     Tokens.INTERVAL_OPEN,
     Tokens.INTERVAL_CLOSE,
     Tokens.INTERVAL_SEPARATOR,
+    Tokens.KW_SEPARATOR,
 ]
 
 ALPHA_TOKENS = set(t for t in CONST_TOKENS if t.isalpha())

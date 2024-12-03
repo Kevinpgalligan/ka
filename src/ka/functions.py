@@ -12,14 +12,34 @@ from .probability import (Binomial, Poisson, Geometric, Bernoulli,
                           RandomVariable, Event, DoubleEvent, ComparisonOp,
                           DiscreteRandomVariable)
 from .utils import lazy_choose, lazy_factorial
+from .plot import plot
 from functools import cmp_to_key
 
 FUNCTIONS = collections.defaultdict(list)
 FUNCTION_DOCUMENTATION = {}
 
+class FunctionHeader:
+    def __init__(self, name, f, sig, kw_args=None):
+        self.name = name
+        self.f = f
+        self.sig = sig
+        self.kw_args = kw_args or dict()
+
 class UnknownFunctionError(Exception):
     def __init__(self, name):
         self.name = name
+
+class UnknownKeywordError(Exception):
+    def __init__(self, fn_header, kw_name):
+        self.fn_header = fn_header
+        self.kw_name = kw_name
+
+class BadTypeKeywordError(Exception):
+    def __init__(self, fn_header, kw_name, kw_value, expected_type):
+        self.fn_header = fn_header
+        self.kw_name = kw_name
+        self.kw_value = kw_value
+        self.expected_type = expected_type
 
 class NoMatchingFunctionSignatureError(Exception):
     def __init__(self, name, attempted_signature, actual_signatures):
@@ -42,45 +62,60 @@ class FunctionArgError(Exception):
 def make_sig_printable(sig):
     return tuple(map(lambda t: t.__name__, sig))
 
-def dispatch(name, args):
+def dispatch(name, args, kw_args=None):
     global FUNCTIONS
+    if kw_args is None:
+        kw_args = dict()
     if name not in FUNCTIONS:
         raise UnknownFunctionError(name)
-    matching_signatures = lookup_function(name, args)
-    if not matching_signatures:
-        all_signatures = list(map(lambda x: x[1], FUNCTIONS[name]))
+    matching_headers = lookup_function(name, args)
+    if not matching_headers:
+        all_signatures = list(map(lambda x: x.sig, FUNCTIONS[name]))
         all_sig_names = [make_sig_printable(sig) for sig in all_signatures]
         raise NoMatchingFunctionSignatureError(
             name,
             list(map(get_external_type_name, args)),
             all_sig_names)
-    f, sig = get_closest_match(matching_signatures)
-    return simplify_type(f(*map(coerce_to, args, sig)))
+    header = get_closest_match(matching_headers)
+    for k, v in kw_args.values():
+        if k not in header.keyword_args:
+            raise UnknownKeywordError(header, k)
+        expected_type = header.keyword_args[k]
+        if not isinstance(v, expected_type):
+            raise BadTypeKeywordError(header, k, v, expected_type)
+    return simplify_type(
+        header.f(*map(coerce_to, args, header.sig),
+                 **dict((k, coerce_to(v, header.keyword_args[k]))
+                        for k, v in kw_args.values())))
 
 def lookup_function(name, args):
-    return [(f, types) for (f, types) in FUNCTIONS[name]
-            if (len(types) == len(args)
-                and all(isinstance(arg, t) for arg, t in zip(args, types)))]
+    return [header for header in FUNCTIONS[name]
+            if (len(header.sig) == len(args)
+                and all(isinstance(arg, t)
+                        for arg, t in zip(args, header.sig)))]
 
-def get_closest_match(matching_signatures):
+def get_closest_match(matching_headers):
     # (Integral, Integral) should come before
     # (Rational, Rational), for example. Unclear what
     # to do in case there's (Integral, Rational) and
     # (Rational, Integral).
-    closest_f, closest_types = matching_signatures[0]
-    for f, types in matching_signatures[1:]:
-        if types_below(types, closest_types):
-            closest_f, closest_types = f, types
-    return closest_f, closest_types
+    closest_header = matching_headers[0]
+    for header in matching_headers[1:]:
+        if types_below(header.sig, header.sig):
+            closest_header = header
+    return closest_header
 
 def types_below(types_A, types_B):
     # Returns whether types_A is clearly below types_B in
     # the type hierarchy.
     return all(issubclass(tA, tB) for tA, tB in zip(types_A, types_B))
 
-def register_function(f, name, arg_types, docstring=None):
+def register_function(f, name, arg_types,
+        docstring=None,
+        kw_args=None):
+    """kwargs should be a mapping from names to types."""
     global FUNCTIONS
-    FUNCTIONS[name].append((f, arg_types))
+    FUNCTIONS[name].append(FunctionHeader(name, f, arg_types, kw_args=kw_args))
     if docstring is not None and name not in FUNCTION_DOCUMENTATION:
         FUNCTION_DOCUMENTATION[name] = docstring
 
@@ -367,6 +402,8 @@ def ka_range(lo, hi, step):
 
 register_function(ka_range, "range", (Number, Number, Number),
                   "Generates array of all numbers between lower bound (1st arg) and upper bound (2nd arg) with given step size (3rd arg).")
+
+register_function(plot, "plot", (Array, Array), "A 2-dimensional line plot.")
 
 FUNCTION_NAMES = list(FUNCTIONS.keys())
 

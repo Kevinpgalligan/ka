@@ -5,8 +5,9 @@ import sys
 from .tokens import tokenise, UnknownTokenError, BadNumberError
 from .parse import parse_tokens, ParsingError
 from .eval import eval_parse_tree, EvalError, EvalEnvironment, EvalModes
-from .types import Quantity, Array, Combinatoric
+from .types import Quantity, Array, Combinatoric, KaRuntimeError
 from .functions import (FUNCTIONS, UnknownFunctionError,
+    UnknownKeywordError, BadTypeKeywordError,
     NoMatchingFunctionSignatureError, IncompatibleQuantitiesError,
     make_sig_printable, ExitKaSignal, FUNCTION_DOCUMENTATION,
     FunctionArgError, resolve_combinatoric)
@@ -208,12 +209,24 @@ def execute(s, env=None, out=sys.stdout,
     except EvalError as e:
         print_err(errout, e.message)
         return 1
+    except KaRuntimeError as e:
+        print_err(errout, e.msg)
+        return 1
     except UnknownFunctionError as e:
         print_err(errout, f"Unknown function: '{e.name}'")
         global FUNCTIONS
         alternatives = find_close_matches(e.name, FUNCTIONS.keys())
         if alternatives:
             print_err(errout, "  You may have meant:", ", ".join(alternatives))
+        return 1
+    except UnknownKeywordError as e:
+        print_err(errout,
+            f"Function '{e.fn_header.name}' received unknown keyword: '{e.kw_name}'")
+        print_err(errout, "Available keywords:", ", ".join(e.fn_header.kw_args.keys()))
+        return 1
+    except BadTypeKeywordError as e:
+        print_err(errout,
+            f"Function '{e.fn_header.name}' received type '{e.kw_value}' for keyword '{e.kw_name}', but expected '{e.expected_type}'.")
         return 1
     except InvalidParameterException as e:
         print_err(errout, e.msg)

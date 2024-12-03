@@ -21,7 +21,10 @@ class ParseNode:
         return str(self)
 
     def __str__(self):
-        return "ParseNode(" + ",".join([str(self.label)] + list(map(str, self.children))) + ")"
+        return ("ParseNode("
+            + ",".join([str(self.label)]
+            + list(map(str, self.children)))
+            + ")")
 
 def funcall_node(name, children):
     return ParseNode(label=name,
@@ -294,12 +297,31 @@ def parse_function(t):
     return node
 
 def parse_args(t):
+    return parse_positional_args(t) + parse_keyword_args(t)
+
+def parse_positional_args(t):
     args = []
     while not t.next_is_one_of(Tokens.RBRACKET):
         if args:
             t.read(Tokens.FUNCTION_ARG_SEPARATOR)
+        if t.next_are(Tokens.VAR, Tokens.KW_SEPARATOR):
+            # Keyword argument, stop.
+            break
         args.append(parse_expression(t))
     return args
+
+def parse_keyword_args(t):
+    kw_args = []
+    while not t.next_is_one_of(Tokens.RBRACKET):
+        if kw_args:
+            t.read(Tokens.FUNCTION_ARG_SEPARATOR)
+        name = t.read(Tokens.VAR).meta('name')
+        t.read(Tokens.KW_SEPARATOR)
+        kw_args.append(
+            ParseNode(label=name,
+                      children=[parse_expression(t)],
+                      eval_mode=EvalModes.KEYWORD_ARG))
+    return kw_args
 
 def parse_variable(t):
     name = t.read(Tokens.VAR).meta('name')

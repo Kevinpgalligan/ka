@@ -2,6 +2,10 @@ import math
 import numbers
 from fractions import Fraction as frac
 
+class KaRuntimeError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+
 def get_external_type_name(x):
     t = type(x)
     if t is int:
