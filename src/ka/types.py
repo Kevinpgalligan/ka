@@ -79,3 +79,85 @@ class Array:
 
     def append(self, x):
         self.contents.append(x)
+
+class IntRange:
+    def __init__(self, lo, hi):
+        self.lo = lo
+        self.hi = hi
+
+    def copy(self):
+        return IntRange(self.lo, self.hi)
+
+    def is_empty(self):
+        return self.lo > self.hi
+
+    def intersects(self, other):
+        return not (self.hi < other.lo or other.hi < self.lo)
+
+    def difference(self, other):
+        if self.hi < other.lo or other.hi < self.lo:
+            return [self], [other]
+        self_remain = []
+        other_remain = []
+        if self.lo <= other.lo and other.hi <= self.hi:
+            return (
+                ([IntRange(self.lo, other.lo-1)]
+                 if self.lo < other.lo else [])
+                + ([IntRange(other.hi+1, self.hi)]
+                   if other.hi < self.hi else []),
+                []
+            )
+        elif other.lo <= self.lo and self.hi <= other.hi:
+            return (
+                [],
+                ([IntRange(other.lo, self.lo-1)]
+                 if other.lo < self.lo else [])
+                + ([IntRange(self.hi+1, other.hi)]
+                   if self.hi < other.hi else [])
+            )
+        elif other.lo <= self.hi:
+            return [IntRange(self.lo, other.lo-1)], [IntRange(self.hi+1, other.hi)]
+        return [IntRange(self.lo, other.lo-1)], [IntRange(self.hi+1, other.hi)]
+
+    def __str__(self):
+        return f"[{self.lo},{self.hi}]"
+
+class Combinatoric:
+    def __init__(self, ns=None, ds=None):
+        # numerator IntRanges
+        self.ns = ns if ns else []
+        # denominator IntRanges
+        self.ds = ds if ds else []
+
+    def mul(self, new_ns, new_ds):
+        result_ds = []
+        ns = self.ns + new_ns
+        ds = self.ds + new_ds
+        while ds:
+            d = ds.pop()
+            i = 0
+            intersected = False
+            while i < len(ns):
+                if ns[i].intersects(d):
+                    remaining_n, remaining_d = ns[i].difference(d)
+                    ns = ns[:i] + remaining_n + ns[i+1:]
+                    ds.extend(remaining_d)
+                    intersected = True
+                    break
+                i += 1
+            if not intersected:
+                result_ds.append(d)
+        return Combinatoric(ns=ns, ds=result_ds)
+
+    def __str__(self):
+        return "".join(["{",
+            " ".join(map(str, self.ns)),
+            ";",
+            " ".join(map(str, self.ds)),
+            "}"
+        ])
+
+if __name__ == "__main__":
+    print(Combinatoric(ns=[IntRange(2, 9)]).mul(
+        [IntRange(4, 5)],
+        [IntRange(3, 7)]))

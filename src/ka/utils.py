@@ -1,31 +1,19 @@
 import math
+from .types import Combinatoric, IntRange
 
-# Yoinked this directly from the scipy source, since it is
-# slow to import scipy just for this.
-# Credit:
-# https://github.com/scipy/scipy/blob/main/scipy/special/_comb.pyx
 def choose(n, k):
     if k > n or n < 0 or k < 0:
         return 0
-
-    M = n + 1
-    nterms = min(k, n - k)
-
-    numerator = 1
-    denominator = 1
-    for j in range(1, nterms + 1):
-        numerator *= M - j
-        denominator *= j
-
-    return numerator // denominator
+    # n!/(k!(n-k)!)
+    return Combinatoric(
+        ns=[] if n < 2 else [IntRange(2, n)],
+        ds=[r for r in [IntRange(2, k), IntRange(2, n-k)]
+            if not r.is_empty()])
 
 def factorial(n):
-	result = 1
-	if n < 2:
-		return result
-	for k in range(2, n+1):
-		result *= k
-	return result
+    if n < 2:
+        return 1
+    return Combinatoric(ns=[IntRange(2, n)])
 
 # Copied someone's port of scipy's C implementation.
 # See:

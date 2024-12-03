@@ -5,11 +5,11 @@ import sys
 from .tokens import tokenise, UnknownTokenError, BadNumberError
 from .parse import parse_tokens, ParsingError
 from .eval import eval_parse_tree, EvalError, EvalEnvironment, EvalModes
-from .types import Quantity, Array
+from .types import Quantity, Array, Combinatoric
 from .functions import (FUNCTIONS, UnknownFunctionError,
     NoMatchingFunctionSignatureError, IncompatibleQuantitiesError,
     make_sig_printable, ExitKaSignal, FUNCTION_DOCUMENTATION,
-    FunctionArgError)
+    FunctionArgError, resolve_combinatoric)
 from .units import UNITS, PREFIXES, lookup_unit
 from .probability import InvalidParameterException
 from .config import ConfigProperties
@@ -188,7 +188,7 @@ def execute(s, env=None, out=sys.stdout,
         if last_one.eval_mode == EvalModes.ASSIGNMENT and assigned_box is not None:
             assigned_box.value = last_one.value
     try:
-        result = eval_parse_tree(parse_tree, env)
+        result = finalise_result(eval_parse_tree(parse_tree, env))
         if result is None:
             print(file=out)
         else:
@@ -234,6 +234,11 @@ def execute(s, env=None, out=sys.stdout,
     except FunctionArgError as e:
         print_err(errout, e.msg)
         return 1
+
+def finalise_result(r):
+    if isinstance(r, Combinatoric):
+        return resolve_combinatoric(r)
+    return r
 
 def print_err(errout, *msgs):
     print(*msgs, file=errout)

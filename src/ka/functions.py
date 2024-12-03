@@ -1,10 +1,11 @@
 import collections
 import operator
 import math
-from numbers import Number, Integral
+from numbers import Number, Integral, Rational
 from fractions import Fraction as frac
 
-from .types import simplify_type, Quantity, get_external_type_name, Array
+from .types import (simplify_type, Quantity, get_external_type_name,
+    Array, Combinatoric, IntRange)
 from .units import QSPACE
 from .probability import (Binomial, Poisson, Geometric, Bernoulli,
                           UniformInt, Exponential, Uniform, Gaussian,
@@ -86,6 +87,20 @@ def register_function(f, name, arg_types, docstring=None):
 def register_binary_op(name, op, docstring=None):
     register_function(op, name, (Number, Number), docstring=docstring)
 
+def register_combinatoric_binary_op(name, op):
+    register_combinatoric_with_num_binary_op(name, op)
+    def resolve_both(x, y):
+        return op(resolve_combinatoric(x), resolve_combinatoric(y))
+    register_function(resolve_both, name, (Combinatoric, Combinatoric))
+
+def register_combinatoric_with_num_binary_op(name, op):
+    def resolve_left(x, y):
+        return op(resolve_combinatoric(x), y)
+    def resolve_right(x, y):
+        return op(x, resolve_combinatoric(y))
+    register_function(resolve_left, name, (Combinatoric, Number))
+    register_function(resolve_right, name, (Number, Combinatoric))
+
 def register_numeric_function(name, f, num_args=1, docstring=None):
     register_function(f, name, num_args*(Number,), docstring=docstring)
     if num_args == 1:
@@ -101,6 +116,33 @@ def intify(f):
         return 1 if f(x, y) else 0
     return f_new
 
+def resolve_combinatoric(co):
+    result = 1
+    # Copy all the ranges so that we don't corrupt the combinatoric.
+    # Could probably avoid copying and still not corrupt, if this is slow.
+    denom_ranges = [r.copy() for r in co.ds]
+    for numerator_range in co.ns:
+        numerator_range = numerator_range.copy()
+        while not numerator_range.is_empty():
+            # Multiply by the highest number in the range, since it's
+            # likely to have the most divisors.
+            result *= numerator_range.hi
+            numerator_range.hi -= 1
+            # Similarly, try to divide by the smallest number in the denominator
+            # range, since it's most likely to divide evenly.
+            # (Dividing to try keeping the result small).
+            if denom_ranges and result % denom_ranges[-1].lo == 0:
+                result //= denom_ranges[-1].lo
+                denom_ranges[-1].lo += 1
+                if denom_ranges[-1].is_empty():
+                    denom_ranges.pop()
+    denom = 1
+    for denom_range in denom_ranges:
+        while not denom_range.is_empty():
+            denom *= denom_range.lo
+            denom_range.lo += 1
+    return simplify_type(fraction_divide(result, denom))
+
 BINARY_OPS = [
     ("+", operator.add, "Addition binary operator."),
     ("-", operator.sub, "Subtraction binary operator."),
@@ -115,11 +157,40 @@ BINARY_OPS = [
     (">", intify(operator.gt), "Greater than."),
     (">=", intify(operator.ge), "Greater than or equal to."),
 ]
+SPECIAL_COMBINATORIC_OPS = ["*", "/"]
 for name, op, docstring in BINARY_OPS:
     register_binary_op(name, op, docstring=docstring)
+    if name not in SPECIAL_COMBINATORIC_OPS:
+        register_combinatoric_binary_op(name, op)
 # Override division for integers so that
 # it returns a fraction.
 register_function(fraction_divide, "/", (Integral, Integral))
+# Special handling for certain combinatoric ops.
+# Combinatoric with number is fine...
+register_combinatoric_with_num_binary_op("*", operator.mul)
+register_combinatoric_with_num_binary_op("/", operator.truediv)
+# But we want special case for combinatoric times combinatoric, or
+# combinatoric times integer/fraction.
+def comb_times_comb(c1, c2):
+    return c1.mul(c2.ns, c2.ds)
+def comb_div_comb(c1, c2):
+    return c1.mul(c2.ds, c2.ns)
+def comb_times_frac(c, f):
+    n, d = f.as_integer_ratio()
+    return c.mul([] if n == 1 else [IntRange(n, n)],
+                 [] if d == 1 else [IntRange(d, d)])
+def comb_div_frac(c, f):
+    return comb_times_frac(c, 1/f)
+def frac_times_comb(f, c):
+    return comb_times_frac(c, f)
+def frac_div_comb(f, c):
+    return comb_times_frac(Combinatoric(ns=c.ds, ds=c.ns), f)
+register_function(comb_times_comb, "*", (Combinatoric, Combinatoric))
+register_function(comb_div_comb, "/", (Combinatoric, Combinatoric))
+register_function(comb_times_frac, "*", (Combinatoric, Rational))
+register_function(comb_div_frac, "/", (Combinatoric, Rational))
+register_function(frac_times_comb, "*", (Rational, Combinatoric))
+register_function(frac_div_comb, "/", (Rational, Combinatoric))
 
 NUMERIC_FUNCTIONS = [
     ("sin", math.sin, "Trigonometric sine function."),
@@ -333,3 +404,8 @@ register_function(ka_range, "range", (Number, Number, Number),
                   "Generates array of all numbers between lower bound (1st arg) and upper bound (2nd arg) with given step size (3rd arg).")
 
 FUNCTION_NAMES = list(FUNCTIONS.keys())
+
+if __name__ == "__main__":
+    print(resolve_combinatoric(
+        Combinatoric(ns=[IntRange(2,9), IntRange(4,5)],
+                     ds=[IntRange(3,7), IntRange(5,6)])))
