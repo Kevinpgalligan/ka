@@ -4,6 +4,21 @@ from .types import Combinatoric, IntRange
 def choose(n, k):
     if k > n or n < 0 or k < 0:
         return 0
+
+    M = n + 1
+    nterms = min(k, n - k)
+
+    numerator = 1
+    denominator = 1
+    for j in range(1, nterms + 1):
+        numerator *= M - j
+        denominator *= j
+
+    return numerator // denominator
+
+def lazy_choose(n, k):
+    if k > n or n < 0 or k < 0:
+        return 0
     # n!/(k!(n-k)!)
     return Combinatoric(
         ns=[] if n < 2 else [IntRange(2, n)],
@@ -11,6 +26,14 @@ def choose(n, k):
             if not r.is_empty()])
 
 def factorial(n):
+    result = 1
+    if n < 2:
+        return result
+    for k in range(2, n+1):
+        result *= k
+    return result
+
+def lazy_factorial(n):
     if n < 2:
         return 1
     return Combinatoric(ns=[IntRange(2, n)])

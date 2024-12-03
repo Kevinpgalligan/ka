@@ -36,6 +36,9 @@ def simplify_type(x):
         return Quantity(simplify_number(x.mag), x.qv)
     return x
 
+def fraction_divide(n1, n2):
+    return frac(n1, n2)
+
 def simplify_number(x):
     if isinstance(x, float):
         fraction, whole = math.modf(x)
@@ -122,12 +125,13 @@ class IntRange:
     def __str__(self):
         return f"[{self.lo},{self.hi}]"
 
-class Combinatoric:
+class Combinatoric(numbers.Number):
     def __init__(self, ns=None, ds=None):
         # numerator IntRanges
         self.ns = ns if ns else []
         # denominator IntRanges
         self.ds = ds if ds else []
+        self.value = None
 
     def mul(self, new_ns, new_ds):
         result_ds = []
@@ -149,8 +153,45 @@ class Combinatoric:
                 result_ds.append(d)
         return Combinatoric(ns=ns, ds=result_ds)
 
+    def resolve(self):
+        if self.value:
+            return self.value
+        result = 1
+        # Copy all the ranges so that we don't corrupt the combinatoric.
+        # Could probably avoid copying and still not corrupt, if this is slow.
+        denom_ranges = [r.copy() for r in self.ds]
+        for numerator_range in self.ns:
+            numerator_range = numerator_range.copy()
+            while not numerator_range.is_empty():
+                # Multiply by the highest number in the range, since it's
+                # likely to have the most divisors.
+                result *= numerator_range.hi
+                numerator_range.hi -= 1
+                # Similarly, try to divide by the smallest number in the denominator
+                # range, since it's most likely to divide evenly.
+                # (Dividing to try keeping the result small).
+                if denom_ranges and result % denom_ranges[-1].lo == 0:
+                    result //= denom_ranges[-1].lo
+                    denom_ranges[-1].lo += 1
+                    if denom_ranges[-1].is_empty():
+                        denom_ranges.pop()
+        denom = 1
+        for denom_range in denom_ranges:
+            while not denom_range.is_empty():
+                denom *= denom_range.lo
+                denom_range.lo += 1
+        
+        self.value = simplify_type(fraction_divide(result, denom))
+        return self.value
+
+    def __eq__(self, other):
+        return other == self.resolve()
+
+    def __repr__(self):
+        return str(self)
+
     def __str__(self):
-        return "".join(["{",
+        return "".join(["Combinatoric{",
             " ".join(map(str, self.ns)),
             ";",
             " ".join(map(str, self.ds)),

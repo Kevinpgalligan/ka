@@ -2,10 +2,12 @@
 ka is a small calculator language. It supports various useful features for day-to-day calculations, such as:
 
 * Common math functions and constants.
-* Fractions.
-* Units and unit conversion.
+* Fractions (`(5/3) * 3` gives the integer `5`).
+* Units and unit conversion (`5 ft to m`).
 * Variable assignment.
-* Probability distributions and sampling.
+* Probability distributions and sampling (`X = Bernoulli(0.3); P(X=1)`).
+* Arrays with math-like syntax (`{3*x : x in [1,3]}` gives `{3,6,9}`).
+* Lazy combinatorics (`10000000!/9999999!` gives `10000000` rather than hanging).
 
 There are 3 ways to interact with it: executing individual expressions through the CLI (`ka '1+1'`), a CLI interpreter (`ka`), and a GUI (`ka --gui`).
 
@@ -37,6 +39,7 @@ There are 3 ways to interact with it: executing individual expressions through t
   - [Units](#units)
   - [Probability](#probability)
   - [Arrays](#arrays)
+  - [Lazy Combinatorics](#lazy-combinatorics)
   - [Configuration](#configuration)
 * [FAQ](#faq)
 * [Development](#development)
@@ -108,7 +111,9 @@ ka is strongly typed, not statically typed. This means that when you pass a frac
 
 The type system consists of (1) a hierarchy of numerical types, (2) quantities, and (3) some other types like arrays and random variables that don't mix with the other types so much.
 
-The hierarchy of numerical types goes: Number > Real > Rational/Fraction > Integral/Integer. 'Real' numbers are represented as floating point numbers. If a fraction can be simplified to an integer, such as 2/2, then this will happen automatically. In the other direction, a type that is lower down the hierarchy, such as an integer, can be cast into a type that's further up the hierarchy in order to match a function signature.
+The hierarchy of numerical types goes: Number > Real > Rational/Fraction > Integral/Integer. There's also a Combinatoric type, used to lazily evaluate combinatoric operators/functions like `!` and `C`, and Number > Combinatoric.
+
+'Real' numbers are represented as floating point numbers. If a fraction can be simplified to an integer, such as 2/2, then this will happen automatically. In the other direction, a type that is lower down the hierarchy, such as an integer, can be cast into a type that's further up the hierarchy in order to match a function signature.
 
 Quantities consist of two components: a magnitude and a unit (see: the section on units). Any quantities can be multiplied together or divided into each other, but only quantities of the same unit type can be added or subtracted. For example, you can add `1 metre` and `1 foot`, but not `1 metre` and `1 second`. This is enforced by the binary operators themselves (addition and subtraction).
 
@@ -209,6 +214,9 @@ Array-related functions, given an array `A`:
 * `min(A)` -- need I say more?
 * `range(lo,hi)` returns an array of all integers between the integers `lo` and `hi` (bounds are inclusive). `[lo,hi]` is syntax sugar for calling this function.
 * `range(lo,hi,step)` returns numbers between `lo` and `hi` in steps of size `step`.
+
+### Lazy Combinatorics
+Some functions and operators, like the factorial (`5!`) and binomial coefficient function (`C(5,3)`), return a Combinatoric type instead of a number. This type can be used wherever the Number type can be used, but is evaluated lazily. For example, if `a=100!` is entered at the REPL, the factorial won't be evaluated at all, because its value hasn't been used anywhere. If `a/99!` is then entered, the Combinatoric will finally be evaluated, but not before the numerator and denominator mostly cancel out, leaving just `100`. Basically no multiplication is required to compute the final value.
 
 ### Configuration
 ka can be configured through a config file at `${YOUR_HOME_DIR}/.config/ka/config`. All available properties are shown below with their default values. `precision` determines the floating point precision; the other properties determine various characteristics of the GUI like its dimensions and keyboard shortcuts.

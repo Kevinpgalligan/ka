@@ -84,6 +84,14 @@ def test_equations_and_functions():
         ("3!", 6),
     ])
 
+def test_combinatorics():
+    validate_results([
+        ("10000!/9999!", 10000),
+        ("5! * (6/2)", 360),
+        ("3*C(4,2)", 18),
+        ("sin(3!)", math.sin(6)),
+    ])
+
 def test_quantities():
     validate_results([
         ("5 m | s", Quantity(5, M / S)),
