@@ -77,16 +77,16 @@ def dispatch(name, args, kw_args=None):
             list(map(get_external_type_name, args)),
             all_sig_names)
     header = get_closest_match(matching_headers)
-    for k, v in kw_args.values():
-        if k not in header.keyword_args:
+    for k, v in kw_args.items():
+        if k not in header.kw_args:
             raise UnknownKeywordError(header, k)
-        expected_type = header.keyword_args[k]
+        expected_type = header.kw_args[k]
         if not isinstance(v, expected_type):
             raise BadTypeKeywordError(header, k, v, expected_type)
     return simplify_type(
         header.f(*map(coerce_to, args, header.sig),
-                 **dict((k, coerce_to(v, header.keyword_args[k]))
-                        for k, v in kw_args.values())))
+                 **dict((k, coerce_to(v, header.kw_args[k]))
+                        for k, v in kw_args.items())))
 
 def lookup_function(name, args):
     return [header for header in FUNCTIONS[name]

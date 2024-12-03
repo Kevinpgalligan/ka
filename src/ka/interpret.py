@@ -220,9 +220,11 @@ def execute(s, env=None, out=sys.stdout,
             print_err(errout, "  You may have meant:", ", ".join(alternatives))
         return 1
     except UnknownKeywordError as e:
+        kw_args = e.fn_header.kw_args
         print_err(errout,
             f"Function '{e.fn_header.name}' received unknown keyword: '{e.kw_name}'")
-        print_err(errout, "Available keywords:", ", ".join(e.fn_header.kw_args.keys()))
+        print_err(errout, "Available keywords:",
+            ", ".join(kw_args.keys()) if len(kw_args) > 0 else "<none>")
         return 1
     except BadTypeKeywordError as e:
         print_err(errout,
