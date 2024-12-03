@@ -17,6 +17,7 @@ There are 3 ways to interact with it: executing individual expressions through t
 >>> 1 metre + 1 foot to feet
 4.28084
 >>> p = 0.7; C(10,3) * p^3 * (1-p)^7
+0.00900169
 >>> p=.7; N=10; sum({C(N,k)*p^k*(1-p)^(N-k) : k in [0,4]})
 0.047349
 >>> sin(90 deg)
