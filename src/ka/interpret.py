@@ -2,7 +2,8 @@ import readline
 from fractions import Fraction as frac
 import sys
 
-from .tokens import tokenise, UnknownTokenError, BadNumberError
+from .tokens import (tokenise, UnknownTokenError, BadNumberError,
+    UnclosedStringError)
 from .parse import parse_tokens, ParsingError
 from .eval import eval_parse_tree, EvalError, EvalEnvironment, EvalModes
 from .types import Quantity, Array, Combinatoric, KaRuntimeError
@@ -167,6 +168,9 @@ def execute(s, env=None, out=sys.stdout,
         return 1
     except BadNumberError as e:
         error("Bad number! (Probably mixing number bases).", e.index, s, errout)
+        return 1
+    except UnclosedStringError as e:
+        error("String is missing closing delimiter.", e.index, s, errout)
         return 1
     try:
         parse_tree = parse_tokens(tokens)

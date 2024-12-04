@@ -202,6 +202,9 @@ class Combinatoric(numbers.Number):
             "}"
         ])
 
+def is_true(x):
+    return x != 0
+
 if __name__ == "__main__":
     print(Combinatoric(ns=[IntRange(2, 9)]).mul(
         [IntRange(4, 5)],

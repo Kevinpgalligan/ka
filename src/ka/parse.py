@@ -108,6 +108,9 @@ class BagOfTokens:
     def empty(self):
         return self.ptr >= len(self.tokens)
 
+    def next_is(self, tag):
+        return self.next_are(tag)
+
     def next_are(self, *tags):
         return all(self.check_type(i, tag) for i, tag in enumerate(tags))
 
@@ -205,11 +208,17 @@ def parse_factor(t):
     return parse_binary_op(t, parse_term, [Tokens.EXP])
 
 def parse_term(t):
-    if t.next_are(Tokens.ARRAY_OPEN):
+    if t.next_is(Tokens.STRING):
+        return parse_string(t)
+    if t.next_is(Tokens.ARRAY_OPEN):
         return parse_array(t)
-    if t.next_are(Tokens.INTERVAL_OPEN):
+    if t.next_is(Tokens.INTERVAL_OPEN):
         return parse_interval(t)
     return parse_maybe_quantity(t)
+
+def parse_string(t):
+    s = t.read(Tokens.STRING).meta("value")
+    return ParseNode(label="\"" + s + "\"", value=s)
 
 def parse_array(t):
     t.read(Tokens.ARRAY_OPEN)

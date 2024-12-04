@@ -60,7 +60,8 @@ class Tokens:
     INTERVAL_OPEN = "["
     INTERVAL_CLOSE = "]"
     INTERVAL_SEPARATOR = ","
-    KW_SEPARATOR = ':'
+    KW_SEPARATOR = ":"
+    STRING = "string"
 
 CONST_TOKENS = [
     # Need to make sure that if token A is a prefix of token B, then it
@@ -105,6 +106,10 @@ class BadNumberError(Exception):
     def __init__(self, index):
         self.index = index
 
+class UnclosedStringError(Exception):
+    def __init__(self, index):
+        self.index = index
+
 def tokenise(s):
     """
     raises: UnknownTokenError
@@ -126,6 +131,8 @@ def skip_whitespace(i, s):
     return i
 
 def read_token(i, s):
+    if s[i] == "\"":
+        return read_string(i, s)
     if s[i].isnumeric() or s[i] == '.':
         return read_num_token(i, s)
     for t in CONST_TOKENS:
@@ -143,6 +150,17 @@ def read_token(i, s):
         m = VAR_REGEX.match(s, i)
         return Token(Tokens.VAR, m.start(), m.end(), name=m.group(0))
     return None
+
+def read_string(i, s):
+    j = i+1
+    while j < len(s):
+        if s[j] == "\\" and j+1 < len(s) and s[j+1] == "\"":
+            j += 2
+        elif s[j] == "\"":
+            return Token(Tokens.STRING, i, j+1, value=s[i+1:j])
+        else:
+            j += 1
+    raise UnclosedStringError(i)
 
 def read_num_token(i, s):
     m = NUM_REGEX.match(s, i)

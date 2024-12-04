@@ -403,7 +403,27 @@ def ka_range(lo, hi, step):
 register_function(ka_range, "range", (Number, Number, Number),
                   "Generates array of all numbers between lower bound (1st arg) and upper bound (2nd arg) with given step size (3rd arg).")
 
-register_function(plot, "plot", (Array, Array), "A 2-dimensional line plot.")
+register_function(
+    plot,
+    "plot",
+    (Array, Array),
+    "A 2-dimensional line plot.",
+    dict(
+        label=str,
+        xlabel=str,
+        ylabel=str,
+        xlo=Number,
+        xhi=Number,
+        ylo=Number,
+        yhi=Number,
+        marker=str,
+        markercolour=str,
+        colour=str,
+        grid=Number,
+        title=str,
+        ylog=Number,
+        xlog=Number,
+        legend=Number))
 
 FUNCTION_NAMES = list(FUNCTIONS.keys())
 
