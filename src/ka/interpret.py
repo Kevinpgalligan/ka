@@ -94,7 +94,7 @@ def format_function_info(name):
     des = (FUNCTION_DOCUMENTATION[name]
            if name in FUNCTION_DOCUMENTATION
            else DEFAULT_DOCSTRING)
-    sigs = list(map(lambda x: x[1], FUNCTIONS[name]))
+    sigs = list(map(lambda h: h.sig, FUNCTIONS[name]))
     return "\n".join([
         f"Name: {name}",
         f"Description: {des}",
