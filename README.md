@@ -1,15 +1,17 @@
-# ka(lculator) 🔢
-ka is a small calculator language. It supports various useful features for day-to-day calculations, such as:
+# Ka(lculator) 🔢
+Ka is a small calculator language for quick, day-to-day calculations. It aims to be convenient: you can start the GUI, do your sums, and close the GUI with Ctrl-W -- no keyboard needed! Or if you're pottering about in the terminal, you can do a quick one-off calculation with `ka '1+1'`.
 
-* Common math functions and constants.
-* Fractions (`(5/3) * 3` gives the integer `5`).
-* Units and unit conversion (`5 ft to m`).
-* Variable assignment.
-* Probability distributions and sampling (`X = Bernoulli(0.3); P(X=1)`).
-* Arrays with math-like syntax (`{3*x : x in [1,3]}` gives `{3,6,9}`).
-* Lazy combinatorics (`10000000!/9999999!` gives `10000000` rather than hanging).
+Featuring...
 
-There are 3 ways to interact with it: executing individual expressions through the CLI (`ka '1+1'`), a CLI interpreter (`ka`), and a GUI (`ka --gui`).
+* A **GUI** and **CLI**.
+* **Fractions**: `(5/3) * 3` gives `5`.
+* **Units** and unit conversion: `5 ft to m`.
+* **Probability** distributions and sampling: `X = Bernoulli(0.3); P(X=1)`.
+* **Arrays** with math-like syntax: `{3*x : x in [1,3]}` gives `{3,6,9}`.
+* **Lazy combinatorics**: `10000000!/9999999!` gives `10000000` rather than hanging.
+* Other boring stuff: Variable assignment. Common math functions and constants.
+
+More examples.
 
 ```
 >>> 2 * (1/2)
@@ -53,8 +55,6 @@ Requirements:
 
 To install, run: `pip3 install ka-cli`. ka is currently distributed through the [Python Package Index](https://pypi.org/project/ka-cli/).
 
-I would appreciate it if a kind person could help me to package it for Linux package managers.
-
 ## Usage
 To execute a single expression, pass it as an argument to the CLI. You may wish to surround the expression in single quotes so that it's not messed up by your terminal. 
 
@@ -69,7 +69,7 @@ Start the interpreter by executing `ka` from your CLI with no arguments.
 
 ```
 $ ka
-ka version 1.0
+ka version 1.2
 >>> 1+1
 2
 >>> %help
@@ -78,15 +78,13 @@ ka version 1.0
 $
 ```
 
-There are also interpreter-specific commands, prefixed by '%'. Run `%help` to see a list of these commands.
+There are also interpreter-specific commands, prefixed by '%', like `%help`. Run `%help` to see a list of these commands.
 
 To start the GUI, run `ka --gui`.
 
-For more information on the language and the features it offers, see the manual below.
-
 ## Manual
 ### Grammar
-The basic unit of grammar is the statement. You can execute multiple statements at once, separated by semi-colons:
+The basic unit of grammar is the statement. Multiple statements can be executed at once, separated by semi-colons:
 
 ```
 >>> a = 3; b = 2; 2*a*b
@@ -98,9 +96,6 @@ An individual statement can be either an assignment (`a = 3`) or an expression (
 An assignment consists of a variable name (such as `a`), followed by `=`, followed by an expression (such as `3` or `1+1` or `sin(90 deg)`). Assignments are not expressions, so you can't nest assignments like `a=(b=3)`. You can, however, assign the value of one variable to another: `a=3; b=a;`.
 
 An expression is a sequence of math operations that returns a value. Addition, subtraction, function calls, and so on. If the value of an expression is a quantity (a number with a unit attached), then the unit can be converted to something else using the operator `to`. For example, this assigns `a` the magnitude of 3 metres when it's converted to feet: `a = 3m to ft`.
-
-### Variables
-ka has basic support for variables: `blah=9^3; blah`.
 
 ### Constants and Numbers
 `pi` and `e` are the only constants provided. Currently, they're treated like variables and can be overwritten: `pi=3`, woops.
@@ -246,13 +241,12 @@ I would love to be able to write `1m/s`, but this would result in a parsing ambi
 Units have higher precedence than division, so `5/4 m` is parsed the same as `5 / (4 m)`. The solution is to write `(5/4)m`.
 
 #### How does this compare to other calculator languages?
-[Frink](https://frinklang.org/) is Turing-complete, has configurable units, has many more features than ka, and has a cool grammar. On the other hand, it's closed-source, it has expanded way beyond the scope of a simple calculator, and it has a slow start-up time, which makes it unsuitable for my purposes.
+Below is a selection of other calculator languages that I'm aware of. A few things that set ka apart: a relatively small codebase; math-like probability and array syntax; and lazy combinatorics.
 
-It's worth commenting a bit more on the grammar. Frink basically represents all units as variables. This means that the variable namespace is full of unit names, and it's possible for units to be overwritten accidentally. The good thing is that, coupled with the Frink grammar's support for implicit multiplication, you can write nice things like `1 m/s` and it's interpreted as you would expect (the number 1, multiplied by metres, divided by seconds; this gives 1 metre per second). But if you write `4m / 2m` you get `2m^2`. There are design trade-offs when incorporating units into the grammar of a computer language and I don't think there's a perfect solution.
-
-[Qalculate!](https://qalculate.github.io/) seems awesome and has bucketfuls of features! On the other hand, it's a massive project written in C++, while ka consists of 1000 lines of Python code. It sensibly handles both `1m/s` and `4m / 2m`, somehow.
-
-[F#](https://fsharpforfunandprofit.com/posts/units-of-measure/) is an example of a "real" programming language with cool unit features, but it's not suitable as a calculator.
+* [Frink](https://frinklang.org/) - or more specifically, Hillel Wayne's [article](https://www.hillelwayne.com/post/frink/) about it - was my inspiration for making my own calculator language. Frink's syntax is very nice. Space-separated expressions are multiplied together, so `2 x` multiplies `2` by `x`, and units are all represented as variables. As a result, `1 m/s` is interpreted as "one times metres divided by seconds". Neat! Frink's unit catalogue is more extensive than ka's, and it has string-processing and control structures that ka doesn't, among other things. On the other hand, it's closed-source and has a slow start-up time, which makes it unsuitable for my purposes.
+* [Qalculate!](https://qalculate.github.io/) is a feature-rich C++-based calculator. If I'd known of its existence before starting ka, then I mightn't have bothered, although there are advantages to the ka codebase being small and written in a dynamic language.
+* [numbat](https://github.com/sharkdp/numbat) also looks cool.
+* [F#](https://fsharpforfunandprofit.com/posts/units-of-measure/) is an example of a "real" programming language with unit features, but it's not suitable as a calculator.
 
 ## Development
 To install ka locally, clone the repo and run `pip3 install .`. You may wish to test it within a virtual environment, however, if you have a copy of ka that you actually use and you don't want to break it.
