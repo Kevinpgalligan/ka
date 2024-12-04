@@ -53,7 +53,7 @@ Requirements:
 * Qt 5 GUI framework (try: `apt install qt5-default`).
 * Python 3.6+.
 
-To install, run: `pip3 install ka-cli`. ka is currently distributed through the [Python Package Index](https://pypi.org/project/ka-cli/).
+To install, run: `pip3 install ka-cli`. Ka is currently distributed through the [Python Package Index](https://pypi.org/project/ka-cli/).
 
 ## Usage
 To execute a single expression, pass it as an argument to the CLI. You may wish to surround the expression in single quotes so that it's not messed up by your terminal. 
@@ -103,7 +103,7 @@ An expression is a sequence of math operations that returns a value. Addition, s
 The typical selection of number bases are supported: use the `0b` prefix for binary, `0o` for octal, and `0x` for hexadecimal. So `0x10` is 16 in base-10. Note that alternative bases can only be integers, and can't be mixed with scientific notation (otherwise, there's a parsing ambiguity in something like `0x1e-10`).
 
 ### Types
-ka is strongly typed, not statically typed. This means that when you pass a fractional number to a function that expects an integer, the type system will complain. But you don't have to declare the type of anything in advance.
+Ka is strongly typed, not statically typed. This means that when you pass a fractional number to a function that expects an integer, the type system will complain. But you don't have to declare the type of anything in advance.
 
 The type system consists of (1) a hierarchy of numerical types, (2) quantities, and (3) some other types like arrays and random variables that don't mix with the other types so much.
 
@@ -120,7 +120,7 @@ Here's a selection of functions and operators in the language. To list all the f
 
 * +, -, *, /, %, ^, <, <=, ==, !=, >, >=, sin, cos, tan, sqrt, ln, log10, log2, abs, floor, ceil, round, int, float, log, C, !, quit
 
-ka has functions and 3 types of operators: binary operators, prefix operators, and postfix operators.
+Ka has functions and 3 types of operators: binary operators, prefix operators, and postfix operators.
 
 The binary operators, like addition (`+`), exponentiation (`^`) and division (`/`), take two arguments and come between those arguments, like `1+1`.
 
@@ -215,7 +215,7 @@ Array-related functions, given an array `A`:
 Some functions and operators, like the factorial (`5!`) and binomial coefficient function (`C(5,3)`), return a Combinatoric type instead of a number. This type can be used wherever the Number type can be used, but is evaluated lazily. For example, if `a=100!` is entered at the REPL, the factorial won't be evaluated at all, because its value hasn't been used anywhere. If `a/99!` is then entered, the Combinatoric will finally be evaluated, but not before the numerator and denominator mostly cancel out, leaving just `100`. Basically no multiplication is required to compute the final value.
 
 ### Configuration
-ka can be configured through a config file at `${YOUR_HOME_DIR}/.config/ka/config`. All available properties are shown below with their default values. `precision` determines the floating point precision; the other properties determine various characteristics of the GUI like its dimensions and keyboard shortcuts.
+Ka can be configured through a config file at `${YOUR_HOME_DIR}/.config/ka/config`. All available properties are shown below with their default values. `precision` determines the floating point precision; the other properties determine various characteristics of the GUI like its dimensions and keyboard shortcuts.
 
 ```
 precision=6
@@ -235,21 +235,21 @@ shortcut-close=Ctrl+W
 Call the function `quit()`, use the interpreter command `%q` / `%quit`, or trigger an interrupt with CTRL+C.
 
 #### Why is 1 metre per second written as `1m|s` instead of `1m/s`?
-I would love to be able to write `1m/s`, but this would result in a parsing ambiguity: is it 1 metre divided by the variable called `s`, or 1 metre per second? So ka instead uses `|` to represent division in unit signatures.
+I would love to be able to write `1m/s`, but this would result in a parsing ambiguity: is it 1 metre divided by the variable called `s`, or 1 metre per second? So Ka instead uses `|` to represent division in unit signatures.
 
 #### Why does `5/4 m` give units in `m^-1`?
 Units have higher precedence than division, so `5/4 m` is parsed the same as `5 / (4 m)`. The solution is to write `(5/4)m`.
 
 #### How does this compare to other calculator languages?
-Below is a selection of other calculator languages that I'm aware of. A few things that set ka apart: a relatively small codebase; math-like probability and array syntax; and lazy combinatorics.
+Below is a selection of other calculator languages that I'm aware of. A few things that set Ka apart: a relatively small codebase; math-like probability and array syntax; and lazy combinatorics.
 
-* [Frink](https://frinklang.org/) - or more specifically, Hillel Wayne's [article](https://www.hillelwayne.com/post/frink/) about it - was my inspiration for making my own calculator language. Frink's syntax is very nice. Space-separated expressions are multiplied together, so `2 x` multiplies `2` by `x`, and units are all represented as variables. As a result, `1 m/s` is interpreted as "one times metres divided by seconds". Neat! Frink's unit catalogue is more extensive than ka's, and it has string-processing and control structures that ka doesn't, among other things. On the other hand, it's closed-source and has a slow start-up time, which makes it unsuitable for my purposes.
-* [Qalculate!](https://qalculate.github.io/) is a feature-rich C++-based calculator. If I'd known of its existence before starting ka, then I mightn't have bothered, although there are advantages to the ka codebase being small and written in a dynamic language.
+* [Frink](https://frinklang.org/) - or more specifically, Hillel Wayne's [article](https://www.hillelwayne.com/post/frink/) about it - was my inspiration for making my own calculator language. Frink's syntax is very nice. Space-separated expressions are multiplied together, so `2 x` multiplies `2` by `x`, and units are all represented as variables. As a result, `1 m/s` is interpreted as "one times metres divided by seconds". Neat! Frink's unit catalogue is more extensive than Ka's, and it has string-processing and control structures that Ka doesn't, among other things. On the other hand, it's closed-source and has a slow start-up time, which makes it unsuitable for my purposes.
+* [Qalculate!](https://qalculate.github.io/) is a feature-rich C++-based calculator. If I'd known of its existence before starting Ka, then I mightn't have bothered, although there are advantages to the Ka codebase being small and written in a dynamic language.
 * [numbat](https://github.com/sharkdp/numbat) also looks cool.
 * [F#](https://fsharpforfunandprofit.com/posts/units-of-measure/) is an example of a "real" programming language with unit features, but it's not suitable as a calculator.
 
 ## Development
-To install ka locally, clone the repo and run `pip3 install .`. You may wish to test it within a virtual environment, however, if you have a copy of ka that you actually use and you don't want to break it.
+To install Ka locally, clone the repo and run `pip3 install .`. You may wish to test it within a virtual environment, however, if you have a copy of Ka that you actually use and you don't want to break it.
 
 [tox](https://tox.wiki/en/latest/) is used for unit testing, execute `tox` from the base directory to run all unit tests.
 
