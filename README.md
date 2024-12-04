@@ -2,7 +2,7 @@
 Ka is a small calculator language for quick, day-to-day calculations. It aims to be convenient: you can start the GUI, do your sums, and close the GUI with Ctrl-W -- no keyboard needed! Or if you're pottering about in the terminal, you can do a quick one-off calculation with `ka '1+1'`.
 
 <p align="center">
-  <img src="https://github.com/Kevinpgalligan/Ka/blob/master/ka-gui.png" alt="The Ka GUI in action" />
+  <img src="https://github.com/user-attachments/assets/1e5cfb37-c8c9-4fa8-a280-c485970c4961" alt="The Ka GUI in action" />
 </p>
 
 Featuring...
