@@ -1,18 +1,11 @@
 import math
 import numbers
 from fractions import Fraction as frac
+from numbers import Number
 
 class KaRuntimeError(Exception):
     def __init__(self, msg):
         self.msg = msg
-
-def get_external_type_name(x):
-    t = type(x)
-    if t is int:
-        t = numbers.Integral
-    elif t is float:
-        t = numbers.Real
-    return t.__name__
 
 class Quantity:
     def __init__(self, mag, qv):
@@ -202,8 +195,39 @@ class Combinatoric(numbers.Number):
             "}"
         ])
 
+class TypeAlias:
+    def __init__(self, name, actual_type):
+        self.name = name
+        self.actual_type = actual_type
+
+    def __str__(self):
+        return self.name
+
+String = TypeAlias("String", str)
+Bool = TypeAlias("Bool", Number)
+
+def is_type(x, t):
+    if isinstance(t, TypeAlias):
+        t = t.actual_type
+    return isinstance(x, t)
+
 def is_true(x):
     return x != 0
+
+def get_type_as_string(t):
+    if isinstance(t, TypeAlias):
+        return t.name
+    return t.__name__
+
+def get_external_type_name(x):
+    t = type(x)
+    if t is int:
+        t = numbers.Integral
+    elif t is float:
+        t = numbers.Real
+    elif isinstance(t, str):
+        t = String
+    return get_type_as_string(t)
 
 if __name__ == "__main__":
     print(Combinatoric(ns=[IntRange(2, 9)]).mul(

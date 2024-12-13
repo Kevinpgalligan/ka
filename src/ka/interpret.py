@@ -12,6 +12,7 @@ from .functions import (FUNCTIONS, UnknownFunctionError,
     NoMatchingFunctionSignatureError, IncompatibleQuantitiesError,
     make_sig_printable, ExitKaSignal, FUNCTION_DOCUMENTATION,
     FunctionArgError, resolve_combinatoric)
+from .plot import Plot
 from .units import UNITS, PREFIXES, lookup_unit
 from .probability import InvalidParameterException
 from .config import ConfigProperties
@@ -193,13 +194,16 @@ def execute(s, env=None, out=sys.stdout,
         if last_one.eval_mode == EvalModes.ASSIGNMENT and assigned_box is not None:
             assigned_box.value = last_one.value
     try:
-        result = finalise_result(eval_parse_tree(parse_tree, env))
-        if result is None:
+        result = eval_parse_tree(parse_tree, env)
+        reduced = reduce_result(result)
+        if reduced is None:
             print(file=out)
         else:
-            display_result(result, out, brackets_for_frac=brackets_for_frac)
+            display_result(reduced, out, brackets_for_frac=brackets_for_frac)
             if result_box is not None:
-                result_box.value = result
+                result_box.value = reduced
+            if isinstance(result, Plot):
+                execute_plot(result, errout)
         return 0
     except ExitKaSignal as e:
         if reraise_signals:
@@ -254,10 +258,19 @@ def execute(s, env=None, out=sys.stdout,
         print_err(errout, e.msg)
         return 1
 
-def finalise_result(r):
+def reduce_result(r):
+    if isinstance(r, Plot):
+        return "[...plotting...]"
     if isinstance(r, Combinatoric):
         return resolve_combinatoric(r)
     return r
+
+def execute_plot(plot, errout):
+    try:
+        plot.do()
+    except Exception as e:
+        print_err(errout, "Error in call to plotting lib...")
+        print_err(errout, e)
 
 def print_err(errout, *msgs):
     print(*msgs, file=errout)
@@ -360,4 +373,3 @@ def prettify_frac(f, brackets=False):
     if brackets:
         s = "(" + s + ")"
     return s
-

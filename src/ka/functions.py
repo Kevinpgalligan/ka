@@ -5,25 +5,84 @@ from numbers import Number, Integral, Rational
 from fractions import Fraction as frac
 
 from .types import (simplify_type, Quantity, get_external_type_name,
-    Array, Combinatoric, IntRange, fraction_divide)
+    Array, Combinatoric, IntRange, fraction_divide, is_true,
+    String, Bool, get_type_as_string, is_type)
 from .units import QSPACE
 from .probability import (Binomial, Poisson, Geometric, Bernoulli,
                           UniformInt, Exponential, Uniform, Gaussian,
                           RandomVariable, Event, DoubleEvent, ComparisonOp,
                           DiscreteRandomVariable)
-from .utils import lazy_choose, lazy_factorial
-from .plot import plot
+from .utils import lazy_choose, lazy_factorial, _g, separate_kwargs
+from .plot import (plot, line, check_all_numerical, Plot, only_not_none,
+    vline, hline, scatter, text)
 from functools import cmp_to_key
 
 FUNCTIONS = collections.defaultdict(list)
 FUNCTION_DOCUMENTATION = {}
 
+class FunctionSignature:
+    def __init__(self, args, vararg=None, kw_args=None):
+        self.args = args
+        self.vararg = vararg
+        self.kw_args = kw_args or dict()
+
+    def matches(self, args):
+        i = 0
+        while i < len(self.args):
+            if i >= len(args):
+                return False
+            t = self.args[i]
+            if not is_type(args[i], t):
+                return False
+            i += 1
+        return (i == len(args)
+            or (self.vararg is not None
+                and all(is_type(arg, self.vararg)
+                        for arg in args)))
+
+    def __str__(self):
+        if len(self.args) == 0 and self.vararg is None:
+            return "Nothing"
+        return "".join([
+            "(",
+            ",".join(map(get_type_as_string, self.args)),
+            ", " if len(self.args)>0 else "",
+            "*" if self.vararg else "",
+            get_type_as_string(self.vararg) if self.vararg else "",
+            ")"
+        ])
+
+    def coerce_args(self, args):
+        # Assumes that the args match the signature.
+        result = []
+        i = 0
+        while i < len(self.args):
+            result.append(coerce_to(args[i], self.args[i]))
+            i += 1
+        while i < len(args):
+            # Must be vararg type.
+            result.append(coerce_to(args[i], self.vararg))
+            i += 1
+        return result
+
+    def coerce_kwarg(self, k, v):
+        # Likewise.
+        return coerce_to(v, self.kw_args[k])
+
 class FunctionHeader:
-    def __init__(self, name, f, sig, kw_args=None):
+    def __init__(self, name, f, sig):
         self.name = name
         self.f = f
         self.sig = sig
-        self.kw_args = kw_args or dict()
+
+    def sig_matches(self, args):
+        return self.sig.matches(args)
+
+    def coerce_args(self, args):
+        return self.sig.coerce_args(args)
+
+    def coerce_kwarg(self, k, v):
+        return self.sig.coerce_kwarg(k, v)
 
 class UnknownFunctionError(Exception):
     def __init__(self, name):
@@ -60,7 +119,7 @@ class FunctionArgError(Exception):
         self.msg = msg
 
 def make_sig_printable(sig):
-    return tuple(map(lambda t: t.__name__, sig))
+    return tuple(map(get_type_as_string, sig))
 
 def dispatch(name, args, kw_args=None):
     global FUNCTIONS
@@ -71,7 +130,7 @@ def dispatch(name, args, kw_args=None):
     matching_headers = lookup_function(name, args)
     if not matching_headers:
         all_signatures = list(map(lambda x: x.sig, FUNCTIONS[name]))
-        all_sig_names = [make_sig_printable(sig) for sig in all_signatures]
+        all_sig_names = [str(sig) for sig in all_signatures]
         raise NoMatchingFunctionSignatureError(
             name,
             list(map(get_external_type_name, args)),
@@ -84,15 +143,13 @@ def dispatch(name, args, kw_args=None):
         if not isinstance(v, expected_type):
             raise BadTypeKeywordError(header, k, v, expected_type)
     return simplify_type(
-        header.f(*map(coerce_to, args, header.sig),
-                 **dict((k, coerce_to(v, header.kw_args[k]))
+        header.f(*header.coerce_args(args),
+                 **dict((k, header.coerce_kwarg(k, v))
                         for k, v in kw_args.items())))
 
 def lookup_function(name, args):
     return [header for header in FUNCTIONS[name]
-            if (len(header.sig) == len(args)
-                and all(isinstance(arg, t)
-                        for arg, t in zip(args, header.sig)))]
+            if header.sig_matches(args)]
 
 def get_closest_match(matching_headers):
     # (Integral, Integral) should come before
@@ -112,10 +169,16 @@ def types_below(types_A, types_B):
 
 def register_function(f, name, arg_types,
         docstring=None,
-        kw_args=None):
+        kw_args=None,
+        vararg_type=None):
     """kwargs should be a mapping from names to types."""
     global FUNCTIONS
-    FUNCTIONS[name].append(FunctionHeader(name, f, arg_types, kw_args=kw_args))
+    FUNCTIONS[name].append(
+        FunctionHeader(name,
+                       f,
+                       FunctionSignature(arg_types,
+                                         vararg=vararg_type,
+                                         kw_args=kw_args)))
     if docstring is not None and name not in FUNCTION_DOCUMENTATION:
         FUNCTION_DOCUMENTATION[name] = docstring
 
@@ -255,6 +318,9 @@ def ka_quit():
 
 register_function(ka_quit, "quit", tuple(), docstring="Exit the program.")
 
+###############
+# Probability #
+###############
 RVS = (
     (Binomial, (Integral, Number), 
      "Binomial random variable with n samples and probability p."),
@@ -315,6 +381,9 @@ for op1 in [ComparisonOp.LEQ, ComparisonOp.LT]:
 for etype in [Event, DoubleEvent]:
     register_function(lambda event: event.probability(), "P", (etype,), "Evaluate the probability of an event.")
 
+##########
+# Arrays #
+##########
 def array_prod(arr):
     result = 1
     for e in arr.contents:
@@ -369,7 +438,6 @@ def array_median(arr):
     if len(arr.contents) == 0:
         raise FunctionArgError("Tried to take median of empty array.")
     arr_sorted = list(sorted(arr.contents, key=cmp_to_key(ka_cmp)))
-    print(arr_sorted)
     if len(arr_sorted)%2 == 0:
         mid_i = len(arr_sorted) // 2
         return dispatch("/", (dispatch("+",
@@ -403,27 +471,117 @@ def ka_range(lo, hi, step):
 register_function(ka_range, "range", (Number, Number, Number),
                   "Generates array of all numbers between lower bound (1st arg) and upper bound (2nd arg) with given step size (3rd arg).")
 
+############
+# Plotting #
+############
+# Had to move this here so it could use `dispatch` without a circular
+# dependency.
+def histogram(xs, **kwargs):
+    check_all_numerical(xs)
+    sel, o = separate_kwargs(kwargs,
+        ["label", "cumulative", "normalise", "colour",
+         "num_bins", "bin_width", "start", "align"])
+    start = _g(sel, "start", 0)
+    bin_width = _g(sel, "bin_width")
+    num_bins = _g(sel, "num_bins", 10)
+    def do():
+        if num_bins <= 0:
+            raise KaRuntimeError("Number of bins  must be positive but was " + str(num_bins))
+        if bin_width:
+            if bin_width <= 0:
+                raise KaRuntimeError("Bin width must be positive but was " + str(bin_width))
+            lo = dispatch("min", (xs,))
+            if dispatch("<", (lo, start)):
+                start -= bin_width*math.ceil(dispatch("-", (start, lo))/bin_width)
+            hi = dispatch("max", (xs,))
+            bins = []
+            b = start
+            while True:
+                if b > hi:
+                    break
+                bins.append(b)
+                b += bin_width
+        else:
+            bins = num_bins
+        normalise = _g(sel, "normalise", False)
+        params = dict(
+            label=_g(sel, "label"),
+            color=_g(sel, "colour"),
+            cumulative=is_true(_g(sel, "cumulative", False)),
+            density=is_true(normalise),
+            # Don't pass unless necessary.
+            stacked=True if is_true(normalise) else None,
+            align=_g(sel, "align", "mid"),
+            bins=bins)
+
+        plt.hist(xs, **only_not_none(params))
+    return Plot(do, o)
+
+plot_option_types = dict(
+    xlo=Number,
+    xhi=Number,
+    ylo=Number,
+    yhi=Number,
+    grid=Bool,
+    title=String,
+    ylog=Bool,
+    xlog=Bool,
+    legend=Bool)
+
 register_function(
-    plot,
-    "plot",
+    line,
+    "line",
     (Array, Array),
     "A 2-dimensional line plot.",
     dict(
-        label=str,
-        xlabel=str,
-        ylabel=str,
-        xlo=Number,
-        xhi=Number,
-        ylo=Number,
-        yhi=Number,
-        marker=str,
-        markercolour=str,
-        colour=str,
-        grid=Number,
-        title=str,
-        ylog=Number,
-        xlog=Number,
-        legend=Number))
+        label=String,
+        xlabel=String,
+        ylabel=String,
+        marker=String,
+        markercolour=String,
+        colour=String,
+        **plot_option_types))
+
+register_function(
+    histogram,
+    "histogram",
+    (Array,),
+    "A histogram in the form of a bar chart.",
+    dict(
+        label=String,
+        cumulative=Bool,
+        normalise=Bool,
+        colour=String,
+        num_bins=Number,
+        bin_width=Number,
+        start=Number,
+        align=String,
+        **plot_option_types))
+
+register_function(plot,
+    "plot",
+    tuple(),
+    "Plots a series of plottable things.",
+    vararg_type=Plot)
+
+register_function(
+    scatter,
+    "scatter",
+    (Array, Array),
+    "Scatter plot of 2d data.",
+    dict(
+        label=String,
+        marker=String,
+        size=Number,
+        colour=String,
+        **plot_option_types))
+
+register_function(vline, "vline", (Number,),
+                  dict(colour=String, weight=Number, style=String))
+register_function(hline, "hline", (Number,),
+                  dict(colour=String, weight=Number, style=String))
+register_function(text, "text", (Number, Number, String),
+                  dict(colour=String, size=Number))
 
 FUNCTION_NAMES = list(FUNCTIONS.keys())
 

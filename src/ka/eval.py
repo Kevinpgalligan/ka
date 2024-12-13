@@ -6,7 +6,9 @@ from .probability import ComparisonOp
 
 CONSTANTS = {
     "e": math.e,
-    "pi": math.pi
+    "pi": math.pi,
+    "true": 1,
+    "false": 0
 }
 
 class EvalModes:

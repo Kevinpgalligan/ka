@@ -1,6 +1,19 @@
 import math
 from .types import Combinatoric, IntRange
 
+def separate_kwargs(kwargs, selected_keys):
+    selected = {}
+    other = {}
+    for k, v in kwargs.items():
+        if k in selected_keys:
+            selected[k] = v
+        else:
+            other[k] = v
+    return selected, other
+
+def _g(d, k, default=None):
+    return d.get(k, default)
+
 def choose(n, k):
     if k > n or n < 0 or k < 0:
         return 0

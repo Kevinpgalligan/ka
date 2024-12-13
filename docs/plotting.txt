@@ -1,0 +1,21 @@
+Brainstorming the plotting API.
+
+Plots implement the Plot class, which has a .run() or .show() method.
+
+On evaluation at the REPL (or wherever), we call .run()/.show().
+
+plots() is a sort of aggregate plot. Takes varargs, *Plot.
+Sorts options until the end -- so that .legend() is called after all the other plotting.
+
+plots(
+  options(legend: 1, title: "Business"),
+  plot(xs, ys, label: "stocks"),
+  scatter(us, vs, label: "blah"))
+
+Maybe, to allow doing...
+
+  plot(xs, ys, label: "hi", legend: 1)
+
+...directly, Plot should also have .get_options(). So plots(...) also uses that to extract options and move them to the end. Then there should be a .run_without_options() method.
+
+Last thing to consider: how to support different plotting back-ends. May not wish to be tied to matplotlib...
