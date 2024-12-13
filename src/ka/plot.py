@@ -3,6 +3,8 @@ from .utils import _g, separate_kwargs
 from numbers import Number
 import itertools
 
+plt = None
+
 class PlotType:
     pass
 
@@ -79,7 +81,9 @@ def plot(*plots):
     return Plot(do)
 
 def load_pyplot():
-    import matplotlib.pyplot as plt
+    global plt
+    import matplotlib.pyplot as pyplot
+    plt = pyplot
 
 def line(xs, ys, **kwargs):
     check_all_numerical(xs)
