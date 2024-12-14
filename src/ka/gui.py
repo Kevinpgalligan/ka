@@ -245,9 +245,11 @@ def run_gui():
             command_index = len(command_history)
             result_box = ResultBox()
             assigned_box = ResultBox()
+            post_display_action_box = ResultBox()
             status = execute(txt, out=out, errout=out, env=env,
                              result_box=result_box, brackets_for_frac=True,
-                             assigned_box=assigned_box)
+                             assigned_box=assigned_box,
+                             post_display_action_box=post_display_action_box)
             add_display_text(txt)
             add_display_text(out.getvalue(), colour="red" if status != 0 else "gray")
             update_display()
@@ -258,6 +260,8 @@ def run_gui():
                     stringify_result(result_box.value, brackets_for_frac=True))
             else:
                 w.ka_widget.input_widget.clear()
+            if post_display_action_box.value is not None:
+                post_display_action_box.value()
 
     def previous_command():
         nonlocal command_index, command_history

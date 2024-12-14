@@ -159,7 +159,8 @@ def execute(s, env=None, out=sys.stdout,
             # code.
             result_box=None,
             brackets_for_frac=False,
-            assigned_box=None):
+            assigned_box=None,
+            post_display_action_box=None):
     if env is None:
         env = EvalEnvironment()
     try:
@@ -202,8 +203,14 @@ def execute(s, env=None, out=sys.stdout,
             display_result(reduced, out, brackets_for_frac=brackets_for_frac)
             if result_box is not None:
                 result_box.value = reduced
-            if isinstance(result, Plot):
+        if isinstance(result, Plot):
+            def post_display_action():
+                print("[...printing...]", file=out)
                 execute_plot(result, errout)
+            if post_display_action_box is None:
+                post_display_action()
+            else:
+                post_display_action_box.value = post_display_action
         return 0
     except ExitKaSignal as e:
         if reraise_signals:
@@ -228,7 +235,7 @@ def execute(s, env=None, out=sys.stdout,
             print_err(errout, "  You may have meant:", ", ".join(alternatives))
         return 1
     except UnknownKeywordError as e:
-        kw_args = e.fn_header.kw_args
+        kw_args = e.fn_header.sig.kw_args
         print_err(errout,
             f"Function '{e.fn_header.name}' received unknown keyword: '{e.kw_name}'")
         print_err(errout, "Available keywords:",
@@ -245,7 +252,7 @@ def execute(s, env=None, out=sys.stdout,
         print_err(errout, f"Function '{e.name}' does not accept {printable_signature(e.attempted_signature)}.")
         print_err(errout, "It does accept:")
         for sig in e.actual_signatures:
-            print_err(errout, "   ", printable_signature(sig))
+            print_err(errout, "   ", sig)
         return 1
     except IncompatibleQuantitiesError as e:
         print_err(errout, "Tried to combine two incompatible quantities.")
@@ -260,7 +267,7 @@ def execute(s, env=None, out=sys.stdout,
 
 def reduce_result(r):
     if isinstance(r, Plot):
-        return "[...plotting...]"
+        return None
     if isinstance(r, Combinatoric):
         return resolve_combinatoric(r)
     return r
@@ -358,6 +365,8 @@ def stringify_result(r, brackets_for_frac=False):
                                              brackets_for_frac=brackets_for_frac) 
                             for x in r.contents)
                 + "}")
+    elif isinstance(r, str):
+        return "\"" + r + "\""
     return str(r)
 
 def precisionify_float(f):

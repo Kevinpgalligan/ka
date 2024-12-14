@@ -5,10 +5,10 @@ import itertools
 
 plt = None
 
-class PlotType:
+class Plot:
     pass
 
-class PlotOptions(PlotType):
+class PlotOptions(Plot):
     def __init__(self, xlabel=None, ylabel=None,
                  xlo=None, xhi=None, ylo=None, yhi=None,
                  grid=None, title=None, ylog=None, xlog=None,
@@ -17,6 +17,8 @@ class PlotOptions(PlotType):
         self.ylabel = ylabel
         self.xlo = xlo
         self.xhi = xhi
+        self.ylo = ylo
+        self.yhi = yhi
         self.grid = grid
         self.title = title
         self.ylog = ylog
@@ -45,10 +47,13 @@ class PlotOptions(PlotType):
         if self.legend:
             plt.legend()
 
-class Plot(PlotType):
+def options(**kwargs):
+    return PlotOptions(**kwargs)
+
+class PlotDrawing(Plot):
     def __init__(self, func, option_kwargs=None):
         self.func = func
-        self.options = Options(**option_kwargs) if option_kwargs else None
+        self.options = PlotOptions(**option_kwargs) if option_kwargs else None
 
     def do(self):
         load_pyplot()
@@ -78,12 +83,13 @@ def plot(*plots):
         for o in options:
             o.post_plot_do()
         plt.show()
-    return Plot(do)
+    return PlotDrawing(do)
 
 def load_pyplot():
     global plt
-    import matplotlib.pyplot as pyplot
-    plt = pyplot
+    if plt is None:
+        import matplotlib.pyplot as pyplot
+        plt = pyplot
 
 def line(xs, ys, **kwargs):
     check_all_numerical(xs)
@@ -99,7 +105,7 @@ def line(xs, ys, **kwargs):
             markerfacecolor=_g(sel, "markercolour"),
             markeredgecolor=_g(sel, "markercolour"))
         plt.plot(xs, ys, **only_not_none(params))
-    return Plot(do, o)
+    return PlotDrawing(do, o)
 
 def only_not_none(dictionary):
     return dict((k, v) for k, v in dictionary.items()
@@ -121,7 +127,7 @@ def scatter(xs, ys, **kwargs):
             marker=_g(sel, "marker"),
             s=_g(sel, "size"))
         plt.plot(xs, ys, **only_not_none(params))
-    return Plot(do, o)
+    return PlotDrawing(do, o)
 
 def vline(x, colour=None, weight=None, style=None):
     def do():
@@ -130,7 +136,7 @@ def vline(x, colour=None, weight=None, style=None):
             linewidth=weight,
             linestyle=style)
         plt.axhline(x, **only_not_none(params))
-    return Plot(do)
+    return PlotDrawing(do)
 
 def hline(y, colour=None, weight=None, style=None):
     def do():
@@ -139,7 +145,7 @@ def hline(y, colour=None, weight=None, style=None):
             linewidth=weight,
             linestyle=style)
         plt.axhline(y, **only_not_none(params))
-    return Plot(do)
+    return PlotDrawing(do)
     
 def text(x, y, s, colour=None, size=None):
     def do():
@@ -147,4 +153,4 @@ def text(x, y, s, colour=None, size=None):
             color=colour,
             fontsize=fontsize)
         plt.text(x, y, s, **only_not_none(params))
-    return Plot(do)
+    return PlotDrawing(do)

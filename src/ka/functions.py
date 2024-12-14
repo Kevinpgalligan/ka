@@ -13,8 +13,8 @@ from .probability import (Binomial, Poisson, Geometric, Bernoulli,
                           RandomVariable, Event, DoubleEvent, ComparisonOp,
                           DiscreteRandomVariable)
 from .utils import lazy_choose, lazy_factorial, _g, separate_kwargs
-from .plot import (plot, line, check_all_numerical, Plot, only_not_none,
-    vline, hline, scatter, text)
+from .plot import (plot, line, check_all_numerical, Plot, PlotDrawing,
+    only_not_none, vline, hline, scatter, text, options)
 from functools import cmp_to_key
 
 FUNCTIONS = collections.defaultdict(list)
@@ -137,10 +137,10 @@ def dispatch(name, args, kw_args=None):
             all_sig_names)
     header = get_closest_match(matching_headers)
     for k, v in kw_args.items():
-        if k not in header.kw_args:
+        expected_type = header.sig.kw_args.get(k, None)
+        if expected_type is None:
             raise UnknownKeywordError(header, k)
-        expected_type = header.kw_args[k]
-        if not isinstance(v, expected_type):
+        if not is_type(v, expected_type):
             raise BadTypeKeywordError(header, k, v, expected_type)
     return simplify_type(
         header.f(*header.coerce_args(args),
@@ -515,9 +515,11 @@ def histogram(xs, **kwargs):
             bins=bins)
 
         plt.hist(xs, **only_not_none(params))
-    return Plot(do, o)
+    return PlotDrawing(do, o)
 
 plot_option_types = dict(
+    xlabel=String,
+    ylabel=String,
     xlo=Number,
     xhi=Number,
     ylo=Number,
@@ -528,6 +530,9 @@ plot_option_types = dict(
     xlog=Bool,
     legend=Bool)
 
+register_function(options, "options", tuple(), "Configuring plot options.",
+                  plot_option_types)
+
 register_function(
     line,
     "line",
@@ -535,8 +540,6 @@ register_function(
     "A 2-dimensional line plot.",
     dict(
         label=String,
-        xlabel=String,
-        ylabel=String,
         marker=String,
         markercolour=String,
         colour=String,
@@ -590,3 +593,4 @@ if __name__ == "__main__":
         Combinatoric(ns=[IntRange(2,9), IntRange(4,5)],
                      ds=[IntRange(3,7), IntRange(5,6)])))
     print(dispatch("sin", (Combinatoric(ns=[IntRange(1,3)]),)))
+    print(repr(str(FunctionSignature(tuple(), vararg=Plot))))
