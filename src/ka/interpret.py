@@ -100,7 +100,7 @@ def format_function_info(name):
         f"Name: {name}",
         f"Description: {des}",
         "Accepted argument types: ",
-        "\n".join("  (" + ", ".join(make_sig_printable(sig)) + ")"
+        "\n".join("  " + make_sig_printable(sig)
                   for sig in sigs)
     ])
 

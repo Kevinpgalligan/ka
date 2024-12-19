@@ -42,11 +42,11 @@ class FunctionSignature:
 
     def __str__(self):
         if len(self.args) == 0 and self.vararg is None:
-            return "Nothing"
+            return "Void"
         return "".join([
             "(",
-            ",".join(map(get_type_as_string, self.args)),
-            ", " if len(self.args)>0 else "",
+            ", ".join(map(get_type_as_string, self.args)),
+            ", " if (len(self.args)>0) and self.vararg else "",
             "*" if self.vararg else "",
             get_type_as_string(self.vararg) if self.vararg else "",
             ")"
@@ -119,7 +119,7 @@ class FunctionArgError(Exception):
         self.msg = msg
 
 def make_sig_printable(sig):
-    return tuple(map(get_type_as_string, sig))
+    return str(sig)
 
 def dispatch(name, args, kw_args=None):
     global FUNCTIONS
@@ -162,10 +162,10 @@ def get_closest_match(matching_headers):
             closest_header = header
     return closest_header
 
-def types_below(types_A, types_B):
-    # Returns whether types_A is clearly below types_B in
-    # the type hierarchy.
-    return all(issubclass(tA, tB) for tA, tB in zip(types_A, types_B))
+def types_below(sig_A, sig_B):
+    # Returns whether the types in sig_A are clearly below the types
+    # in sig_B in the type hierarchy.
+    return all(issubclass(tA, tB) for tA, tB in zip(sig_A.args, sig_B.args))
 
 def register_function(f, name, arg_types,
         docstring=None,
@@ -278,7 +278,7 @@ register_numeric_function("log",
 register_function(lazy_choose,
                   "C",
                   (Integral, Integral),
-                  "Binomial coefficient function from combinatorics. It returns how many ways there are from a total of n items (first argument) to select k items (second argument).")
+                  "Binomial coefficient function from combinatorics. It returns how many ways there are to select k items (second argument) from a total of n items (first argument).")
 register_function(lazy_factorial,
                   "!",
                   (Integral,),
