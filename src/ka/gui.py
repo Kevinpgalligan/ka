@@ -215,6 +215,16 @@ def escape_whitespace(txt):
     result.write(txt[i:])
     return result.getvalue()
 
+SUP_START = "(((supstart)))"
+SUP_END = "(((supend)))"
+
+def gui_unit_format(qv):
+    # Jumping through hoops to get HTML into the output. Normally, it gets escaped, so
+    # we instead write special strings that will be substituted AFTER HTML escaping.
+    return " ".join(f"{name}{SUP_START}{exp}{SUP_END}" if exp != 1 else name
+                    for exp, name in zip(qv.v, qv.names)
+                    if exp!=0)
+
 def run_gui():
     print(get_version_string())
     size = (ka.config.get(ConfigProperties.WINDOW_WIDTH),
@@ -229,7 +239,10 @@ def run_gui():
     def add_display_text(txt, colour="gray"):
         displayed_stuff.extend([
             f"<font color=\"{colour}\">",
-            escape_whitespace(html.escape(txt)).replace("\n", "<br>"),
+            escape_whitespace(html.escape(txt)) \
+                .replace("\n", "<br>") \
+                .replace(SUP_START, "<sup>") \
+                .replace(SUP_END, "</sup>"),
             '</font>',
             '<br>'
         ])
@@ -249,7 +262,8 @@ def run_gui():
             status = execute(txt, out=out, errout=out, env=env,
                              result_box=result_box, brackets_for_frac=True,
                              assigned_box=assigned_box,
-                             post_display_action_box=post_display_action_box)
+                             post_display_action_box=post_display_action_box,
+                             unit_format_fn=gui_unit_format)
             add_display_text(txt)
             add_display_text(out.getvalue(), colour="red" if status != 0 else "gray")
             update_display()

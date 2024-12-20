@@ -151,6 +151,9 @@ class ResultBox:
     def __init__(self):
         self.value = None
 
+def default_unit_format(qv):
+    return qv.prettified()
+
 def execute(s, env=None, out=sys.stdout,
             errout=sys.stderr, reraise_signals=False,
             # This is a hacky, C-like way of passing
@@ -160,7 +163,8 @@ def execute(s, env=None, out=sys.stdout,
             result_box=None,
             brackets_for_frac=False,
             assigned_box=None,
-            post_display_action_box=None):
+            post_display_action_box=None,
+            unit_format_fn=default_unit_format):
     if env is None:
         env = EvalEnvironment()
     try:
@@ -200,12 +204,13 @@ def execute(s, env=None, out=sys.stdout,
         if reduced is None:
             print(file=out)
         else:
-            display_result(reduced, out, brackets_for_frac=brackets_for_frac)
+            display_result(reduced, out,
+                           brackets_for_frac=brackets_for_frac,
+                           unit_format_fn=unit_format_fn)
             if result_box is not None:
                 result_box.value = reduced
         if isinstance(result, Plot):
             def post_display_action():
-                print("[...printing...]", file=out)
                 execute_plot(result, errout)
             if post_display_action_box is None:
                 post_display_action()
@@ -315,19 +320,19 @@ def error(msg, index, s, errout):
             " "*(INDENT+len(left_fade)+index-context_low_index) + "^")
     print("\n".join(error_lines), file=errout)
 
-def display_result(r, out, brackets_for_frac=False, newline=True):
+def display_result(r, out, brackets_for_frac=False, newline=True, unit_format_fn=default_unit_format):
     # This is nightmare code. Oh well.
     newline_args = dict() if newline else dict(end="")
     if isinstance(r, Quantity):
         if isinstance(r.mag, frac):
             print(prettify_frac(r.mag, brackets=brackets_for_frac),
-                  r.qv.prettified(),
+                  unit_format_fn(r.qv),
                   end="",
                   file=out)
         else:
-            print(r.mag, r.qv.prettified(), end="", file=out)
+            print(r.mag, unit_format_fn(r.qv), end="", file=out)
         if isinstance(r.mag, frac):
-            print("    (" + str(float(r.mag)) + " " + r.qv.prettified() + ")", end="", file=out)
+            print("    (" + str(float(r.mag)) + " " + unit_format_fn(r.qv) + ")", end="", file=out)
         print(file=out, **newline_args)
     elif isinstance(r, frac):
         print(prettify_frac(r),
@@ -345,6 +350,7 @@ def display_result(r, out, brackets_for_frac=False, newline=True):
         print("}", file=out, **newline_args)
     else:
         print(r, file=out, **newline_args)
+
 
 def stringify_result(r, brackets_for_frac=False):
     """Stringify result so that it's syntactically valid, not just

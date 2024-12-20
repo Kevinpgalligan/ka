@@ -1,5 +1,5 @@
 # Ka(lculator) 🔢
-Ka is a small calculator language for quick, day-to-day calculations. It aims to be convenient: you can start the GUI, do your sums, and close the GUI with Ctrl-W -- no keyboard needed! Or if you're pottering about in the terminal, you can do a quick one-off calculation with `ka '1+1'`.
+Ka is a small calculator language for quick, day-to-day calculations.
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/1e5cfb37-c8c9-4fa8-a280-c485970c4961" alt="The Ka GUI in action" />
@@ -10,10 +10,13 @@ Featuring...
 * A **GUI** and **CLI**.
 * **Fractions**: `(5/3) * 3` gives `5`.
 * **Units** and unit conversion: `5 ft to m`.
-* **Probability** distributions and sampling: `X = Bernoulli(0.3); P(X=1)`.
-* **Arrays** with math-like syntax: `{3*x : x in [1,3]}` gives `{3,6,9}`.
+* **Probability** distributions and sampling, with a math-like syntax: `X = Bernoulli(0.3); P(X=1)`.
+* **Arrays**, also with math-like syntax: `{3*x : x in [1,3]}` gives `{3,6,9}`.
 * **Lazy combinatorics**: `10000000!/9999999!` gives `10000000` rather than hanging.
+* **Plotting**: comes with an ergonomic interface to Python's matplotlib.
 * Other boring stuff: Variable assignment. Common math functions and constants.
+
+Ka aims to be convenient: you can start the GUI, do your sums, and close the GUI with Ctrl-W -- no keyboard needed! Or if you're pottering about in the terminal, you can do a quick one-off calculation with `ka '1+1'`.
 
 More examples.
 
@@ -32,6 +35,8 @@ More examples.
 23.1407
 >>> X = Binomial(10, 0.3); P(3 <= X < 7)
 0.6066
+>>> line({0,1}, {0,1}, label: "hi", legend: true)
+[...shows a line plot...]
 ```
 
 ## Contents
@@ -44,8 +49,9 @@ More examples.
   - [Types](#types)
   - [Functions and operators](#functions-and-operators)
   - [Units](#units)
-  - [Probability](#probability)
+  - [Probability and Randomness](#probability-and-randomness)
   - [Arrays](#arrays)
+  - [Plotting](#plotting)
   - [Lazy Combinatorics](#lazy-combinatorics)
   - [Configuration](#configuration)
 * [FAQ](#faq)
@@ -60,6 +66,8 @@ Requirements:
 To install, run: `pip3 install ka-cli`. Ka is currently distributed through the [Python Package Index](https://pypi.org/project/ka-cli/).
 
 ## Usage
+There are various ways to interact with Ka: executing a single expression from the CLI; running an interpreter in the terminal; executing a script file; and a GUI.
+
 To execute a single expression, pass it as an argument to the CLI. You may wish to surround the expression in single quotes so that it's not messed up by your terminal. 
 
 ```
@@ -69,7 +77,7 @@ $ ka '1+1'
 
 The CLI offers introspection commands to show the available units, functions and whatnot (run `ka -h` for help with this).
 
-Start the interpreter by executing `ka` from your CLI with no arguments.
+Start the interpreter by executing `ka` from your CLI with no arguments. There are interpreter-specific commands, prefixed by '%', like `%help`. Run `%help` to see a list of these commands.
 
 ```
 $ ka
@@ -82,7 +90,11 @@ ka version 1.2
 $
 ```
 
-There are also interpreter-specific commands, prefixed by '%', like `%help`. Run `%help` to see a list of these commands.
+Execute a script file using the `--script` argument. Remember that each statement must be separated by a semi-colon; the value of the last statement will be printed to the console.
+
+```
+$ ka --script path/to/script.ka
+```
 
 To start the GUI, run `ka --gui`.
 
@@ -111,15 +123,21 @@ Ka is strongly typed, not statically typed. This means that when you pass a frac
 
 The type system consists of (1) a hierarchy of numerical types, (2) quantities, and (3) some other types like arrays and random variables that don't mix with the other types so much.
 
-The hierarchy of numerical types goes: Number > Real > Rational/Fraction > Integral/Integer. There's also a Combinatoric type, used to lazily evaluate combinatoric operators/functions like `!` and `C`, and Number > Combinatoric.
+The hierarchy of numerical types goes: `Number` > `Real` > `Rational` (Fraction) > `Integral` (Integer). There's also a `Combinatoric` type, used to lazily evaluate combinatoric operators/functions like `!` and `C`, and `Number` > `Combinatoric`.
 
 'Real' numbers are represented as floating point numbers. If a fraction can be simplified to an integer, such as 2/2, then this will happen automatically. In the other direction, a type that is lower down the hierarchy, such as an integer, can be cast into a type that's further up the hierarchy in order to match a function signature.
+
+`Bool` (stands for Boolean) is essentially an alias for the `Number` type. Non-zero values represent true. The variables `true` and `false` are provided as syntax sugar, but you can pass 1 and 0 wherever they're used.
 
 Quantities consist of two components: a magnitude and a unit (see: the section on units). Any quantities can be multiplied together or divided into each other, but only quantities of the same unit type can be added or subtracted. For example, you can add `1 metre` and `1 foot`, but not `1 metre` and `1 second`. This is enforced by the binary operators themselves (addition and subtraction).
 
 Most functions can be applied to both Numbers and Quantities.
 
+`String`s, like `"hello world"`, are (so far) only used as configuration parameters for the plotting interface, and there's no way to manipulate or combine them.
+
 ### Functions and operators
+Functions accept positional arguments and keyword arguments. A function call can look something like the following: `f(x, y, keyword_arg: 1, another: "hi")`. Some functions, like `plot`, accept a variable number of the same argument type; `plot` happens to accept any number of `Plot`-type arguments.
+
 Here's a selection of functions and operators in the language. To list all the functions, run `ka --functions`. To find out more about any particular function (including what types of arguments it accepts), run the CLI command `ka --function {name}`, or run the interpreter commands `%f {name}` or `%fun {name}`.
 
 * +, -, *, /, %, ^, <, <=, ==, !=, >, >=, sin, cos, tan, sqrt, ln, log10, log2, abs, floor, ceil, round, int, float, log, C, !, quit
@@ -171,8 +189,13 @@ Further reading for the interested:
 * <https://www.hillelwayne.com/post/frink/>
 * <https://gmpreussner.com/research/dimensional-analysis-in-programming-languages>
 
-### Probability
-A number of discrete and continuous probability distributions / random variables are provided. Various properties of these distributions can be calculated, and they can be sampled from. A full list of distributions is shown below. For now, let's say we've already entered `X = Binomial(10, .5)`. Then:
+### Probability and Randomness
+First, the usual utilities for randomness:
+
+* `rand()` gives a random number in the range 0-1.
+* `seed(n)` sets the (integer) seed for random number generation and sampling.
+
+Additionally, a number of discrete and continuous probability distributions / random variables are provided. Various properties of these distributions can be calculated, and they can be sampled from. A full list of distributions is shown below. For now, let's say we've already entered `X = Binomial(10, .5)`. Then:
 
 * `E(X)` or `mean(X)` gives the expectation, a.k.a. the mean.
 * `P(X=3)` gives the probability of the value 3 (discrete random variables only).
@@ -183,7 +206,7 @@ A number of discrete and continuous probability distributions / random variables
 These are the discrete probability distributions and their parameters:
 
 * `Binomial(n, p)`: `n` trials and success probability `p`.
-* `Poisson(lambda)`: rate `lambda`.
+* `Poisson(lambda)`: rate `lambda` (an integer, representing the average).
 * `Geometric(p)`: success probability `p`.
 * `Bernoulli(p)`: success probability `p`.
 * `UniformInt(lo, hi)`: uniform distribution over the integers `lo`, `lo+1`, ..., `hi-1`, `hi`.
@@ -193,6 +216,18 @@ And these are the continuous ones:
 * `Exponential(lambda)`: rate `lambda` .
 * `Uniform(lo, hi)`: uniform distribution over real numbers between `lo` and `hi`.
 * `Gaussian(mu, stddev)`: normal distribution with mean `mu` and standard deviation `stddev`.
+
+Here's an example (found at `examples/estimate-pi.ka`; run with `ka --script examples/estimate-pi.ka`) that samples from the `Uniform` distribution to estimate the value of `pi`. It makes use of the Array type, discussed in the next section.
+
+```
+N = 10000;
+X = Uniform(0, 1);
+xs = sample(X, N);
+ys = sample(X, N);
+distances = {sqrt(x^2+y^2) : x in xs, y in ys};
+f = size({d : d in distances, d<=1})/N;
+4*f
+```
 
 ### Arrays
 Arrays are written like so: `{1,2,3}`. They're basically a shim over Python lists.
@@ -215,8 +250,112 @@ Array-related functions, given an array `A`:
 * `range(lo,hi)` returns an array of all integers between the integers `lo` and `hi` (bounds are inclusive). `[lo,hi]` is syntax sugar for calling this function.
 * `range(lo,hi,step)` returns numbers between `lo` and `hi` in steps of size `step`.
 
+### Plotting
+The following interface is basically a shim over Python's matplotlib from Python. The drawing functions, like `line(...)` and `histogram(...)`, return a `Plot`, which can then be passed to the `plot(...)` function in order to actually render a plot. Alternatively, if a `Plot` is the last value in a script, or is returned at the REPL, it implicitly gets passed to `plot(...)`. Wherever a `colour` parameter is expected (as a String), it should follow the format expected by the matplotlib API ("red", "#0f0f0f", ...). The same applies for other String-type arguments that get passed along to matplotlib. 
+
+Here's an example. Executing this script (`ka --script examples/trigplot.ka`) will render a plot of sin(x) versus cos(x).
+
+```
+xs = {0.2*i : i in [0,100]};
+plot(
+	options(
+		integer_x_ticks: true,
+		xlabel: "x",
+		ylabel: "y",
+		grid: true,
+		legend: true),
+	line(xs, {sin(x) : x in xs}, label: "sin(x)", colour: "blue"),
+	line(xs, {cos(x) : x in xs}, label: "cos(x)", colour: "red"));
+```
+
+`plot(*ps)` accepts a variable number of `Plot`-type arguments and uses them to produce a plot, as seen above.
+
+`options(...)` configures the appearance of the plot, and returns a `Plot` type. That `Plot` should be passed to the `plot(...)` function to have any effect. The following keyword arguments are accepted:
+
+* `xlabel` (String) Label for the x-axis.
+* `ylabel` (String)       "       y-axis.
+* `xlo` (Number) Lower bound for x-axis.
+* `xhi` (Number) Upper        "
+* `ylo` (Number) Same, but for y-axis.
+* `yhi` (Number)          "
+* `grid` (Bool) Whether to display a grid of lines over the plot.
+* `title` (String) Plot title.
+* `xlog` (Bool) Whether to use log10 scale in x dimension.
+* `ylog` (Bool)            "                  y     ".
+* `legend` (Bool) Whether to display a legend, showing plot labels.
+* `xticks` (Array) Where to place ticks on the x-axis.
+* `yticks` (Array) Same, but for y-axis.
+* `integer_x_ticks` (Bool) Whether to use integer-rounded ticks for the x-axis.
+* `integer_y_ticks` (Bool) Same, but for y-axis.
+
+`line(xs, ys, ...)` does a line plot with the given x & y values (passed as Arrays`. It returns a `Plot`, which, if it's the last value in a script or is returned at the REPL, will produce a matplotlib plot. It accepts all the keywords that can be passed to `options`, as well as:
+
+* `label` (String) Label for the line.
+* `colour` (String) The colour of the line itself.
+* `marker` (String) Determines the appearance of the marker. See the matplotlib API for which values are acceptable, but e.g. `"o"` gives a circle, `"s"` gives a square, and `"."` gives a small dot.
+* `markercolour` (String) The colour of the marker.
+
+`histogram(xs, ...)` returns a `Plot` that can be used to render a histogram based on the values in `xs`. The range of the values is divided up into bins, the number of values falling in each bin is counted, and then a bar is plotted for each bin showing the number of values it contains. Like `line`, it accepts all the same keyword arguments as `options`, as well as:
+
+* `label` (String) Label for the histogram.
+* `cumulative` (Bool) Whether the count should accumulate across the bins. If `true`, the bars will always increase in height. 
+* `normalise` (Bool) If `true`, the height of each bar will be divided by the total number of values. This can be combined with `cumulative` to plot a cumulative distribution function (CDF).
+* `colour` (String) Colour of the bars.
+* `num_bins` (Number) How many bins.
+* `bin_width` (Number) The width of the bins.
+* `start` (Number) Where the bins should start. If not given, this is based on the minimum of the values.
+* `align` (String) How the bars should be aligned with the center of the bin. Acceptable values are `"left"`, `"mid"` (default), and `"right"`.
+
+Here's an example that uses `histogram(...)` to plot the CDF of a Poisson distribution.
+
+```
+X = Poisson(7);
+xs = sample(X, 1000);
+histogram(xs,
+          grid: true,
+		  title: "Sample CDF for Poisson distribution with rate=7",
+		  xlabel: "x",
+		  ylabel: "cumulative probability",
+          normalise: true,
+          cumulative: true,
+		  integer_x_ticks: true,
+		  yticks: range(0,1,0.2),
+		  border_colour: "black")
+```
+
+`scatter(xs, ys, ...)` produces a scatter plot using the given x & y coordinates, and accepts the following keyword arguments in addition to the common ones:
+
+* `label` (String) Need I say more?
+* `marker` (String) See above.
+* `size` (Number) Size of the marker.
+* `colour` (String) Colour of the marker.
+
+An example, found in `examples/scatterplot.ka`:
+
+```
+G = Gaussian(0, 10);
+N = 100;
+scatter(
+	sample(G, N),
+	sample(G, N),
+	marker: ".",
+	colour: "green",
+	xlabel: "x",
+	ylabel: "y",
+	title: "2d Gaussian",
+	grid: true)
+```
+
+`vline(x, colour: String, weight: Number, style: String)` draws a vertical line at the given x coordinate. The keyword argument `weight` determines the line thickness, and `style` determines the line style (e.g. use `"--"` for a dotted line; consult the matplotlib API for other line styles).
+
+`hline(y, ...)` is like `vline` but horizontal.
+
+`text(x, y, s, colour: String, size: String)` displays the String `s` at the given `x` & `y` coordinates. The keyword argument `size` sets the font size.
+
 ### Lazy Combinatorics
 Some functions and operators, like the factorial (`5!`) and binomial coefficient function (`C(5,3)`), return a Combinatoric type instead of a number. This type can be used wherever the Number type can be used, but is evaluated lazily. For example, if `a=100!` is entered at the REPL, the factorial won't be evaluated at all, because its value hasn't been used anywhere. If `a/99!` is then entered, the Combinatoric will finally be evaluated, but not before the numerator and denominator mostly cancel out, leaving just `100`. Basically no multiplication is required to compute the final value.
+
+The value won't always be resolved automatically, e.g. currently you'll get an error if you pass a Combinatoric type in an Array to the plotting interface. This can be resolved by explicitly resolving the value with `int(c)` or `float(c)`.
 
 ### Configuration
 Ka can be configured through a config file at `${YOUR_HOME_DIR}/.config/ka/config`. All available properties are shown below with their default values. `precision` determines the floating point precision; the other properties determine various characteristics of the GUI like its dimensions and keyboard shortcuts.
@@ -245,7 +384,7 @@ I would love to be able to write `1m/s`, but this would result in a parsing ambi
 Units have higher precedence than division, so `5/4 m` is parsed the same as `5 / (4 m)`. The solution is to write `(5/4)m`.
 
 #### How does this compare to other calculator languages?
-Below is a selection of other calculator languages that I'm aware of. A few things that set Ka apart: a relatively small codebase; math-like probability and array syntax; and lazy combinatorics.
+Below is a selection of other calculator languages that I'm aware of. A few things that set Ka apart: a relatively small codebase; math-like probability and array syntax; lazy combinatorics; and a plotting interface.
 
 * [Frink](https://frinklang.org/) - or more specifically, Hillel Wayne's [article](https://www.hillelwayne.com/post/frink/) about it - was my inspiration for making my own calculator language. Frink's syntax is very nice. Space-separated expressions are multiplied together, so `2 x` multiplies `2` by `x`, and units are all represented as variables. As a result, `1 m/s` is interpreted as "one times metres divided by seconds". Neat! Frink's unit catalogue is more extensive than Ka's, and it has string-processing and control structures that Ka doesn't, among other things. On the other hand, it's closed-source and has a slow start-up time, which makes it unsuitable for my purposes.
 * [Qalculate!](https://qalculate.github.io/) is a feature-rich C++-based calculator. If I'd known of its existence before starting Ka, then I mightn't have bothered, although there are advantages to the Ka codebase being small and written in a dynamic language.

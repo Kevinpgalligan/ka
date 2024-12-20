@@ -1,0 +1,11 @@
+G = Gaussian(0, 10);
+N = 100;
+scatter(
+	sample(G, N),
+	sample(G, N),
+	marker: ".",
+	colour: "green",
+	xlabel: "x",
+	ylabel: "y",
+	title: "2d Gaussian",
+	grid: true)

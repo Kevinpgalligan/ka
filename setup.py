@@ -15,5 +15,5 @@ setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License"
     ],
-    install_requires=["PyQt5"]
+    install_requires=["PyQt5", "matplotlib"]
 )

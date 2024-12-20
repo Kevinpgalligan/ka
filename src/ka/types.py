@@ -203,6 +203,9 @@ class TypeAlias:
     def __str__(self):
         return self.name
 
+    def __repr__(self):
+        return str(self)
+
 String = TypeAlias("String", str)
 Bool = TypeAlias("Bool", Number)
 

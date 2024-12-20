@@ -1,0 +1,7 @@
+N = 10000;
+X = Uniform(0, 1);
+xs = sample(X, N);
+ys = sample(X, N);
+distances = {sqrt(x^2+y^2) : x in xs, y in ys};
+f = size({d : d in distances, d<=1})/N;
+4*f

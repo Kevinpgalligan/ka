@@ -6,7 +6,7 @@ import random
 from .utils import choose, factorial, erfinv
 
 def unit():
-	return random.random()
+    return random.random()
 
 class InvalidParameterException(Exception):
     def __init__(self, msg):

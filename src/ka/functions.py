@@ -3,6 +3,7 @@ import operator
 import math
 from numbers import Number, Integral, Rational
 from fractions import Fraction as frac
+import random
 
 from .types import (simplify_type, Quantity, get_external_type_name,
     Array, Combinatoric, IntRange, fraction_divide, is_true,
@@ -11,10 +12,10 @@ from .units import QSPACE
 from .probability import (Binomial, Poisson, Geometric, Bernoulli,
                           UniformInt, Exponential, Uniform, Gaussian,
                           RandomVariable, Event, DoubleEvent, ComparisonOp,
-                          DiscreteRandomVariable)
+                          DiscreteRandomVariable, unit)
 from .utils import lazy_choose, lazy_factorial, _g, separate_kwargs
 from .plot import (plot, line, check_all_numerical, Plot, PlotDrawing,
-    only_not_none, vline, hline, scatter, text, options)
+    only_not_none, vline, hline, scatter, text, options, get_plt)
 from functools import cmp_to_key
 
 FUNCTIONS = collections.defaultdict(list)
@@ -41,14 +42,19 @@ class FunctionSignature:
                         for arg in args)))
 
     def __str__(self):
-        if len(self.args) == 0 and self.vararg is None:
-            return "Void"
+        if (len(self.args) == 0
+                and self.vararg is None
+                and len(self.kw_args) == 0):
+            return "...none..."
         return "".join([
             "(",
             ", ".join(map(get_type_as_string, self.args)),
             ", " if (len(self.args)>0) and self.vararg else "",
             "*" if self.vararg else "",
             get_type_as_string(self.vararg) if self.vararg else "",
+            ", " if (len(self.args)>0 or self.vararg) and len(self.kw_args)>0 else "",
+            ", ".join(f"{name}: {get_type_as_string(t)}"
+                      for name, t in self.kw_args.items()),
             ")"
         ])
 
@@ -318,6 +324,16 @@ def ka_quit():
 
 register_function(ka_quit, "quit", tuple(), docstring="Exit the program.")
 
+##############
+# Randomness #
+##############
+register_function(
+    unit, "rand", tuple(),
+    docstring="Random float value between 0-1")
+register_function(
+    random.seed, "seed", (Integral,),
+    docstring="Sets seed for random number generation, sampling, etc.")
+
 ###############
 # Probability #
 ###############
@@ -480,11 +496,12 @@ def histogram(xs, **kwargs):
     check_all_numerical(xs)
     sel, o = separate_kwargs(kwargs,
         ["label", "cumulative", "normalise", "colour",
-         "num_bins", "bin_width", "start", "align"])
+         "num_bins", "bin_width", "start", "align", "border_colour"])
     start = _g(sel, "start", 0)
     bin_width = _g(sel, "bin_width")
     num_bins = _g(sel, "num_bins", 10)
     def do():
+        nonlocal start
         if num_bins <= 0:
             raise KaRuntimeError("Number of bins  must be positive but was " + str(num_bins))
         if bin_width:
@@ -512,9 +529,9 @@ def histogram(xs, **kwargs):
             # Don't pass unless necessary.
             stacked=True if is_true(normalise) else None,
             align=_g(sel, "align", "mid"),
-            bins=bins)
-
-        plt.hist(xs, **only_not_none(params))
+            bins=bins,
+            edgecolor=_g(sel, "border_colour"))
+        get_plt().hist(xs, **only_not_none(params))
     return PlotDrawing(do, o)
 
 plot_option_types = dict(
@@ -528,7 +545,11 @@ plot_option_types = dict(
     title=String,
     ylog=Bool,
     xlog=Bool,
-    legend=Bool)
+    legend=Bool,
+    xticks=Array,
+    yticks=Array,
+    integer_x_ticks=Bool,
+    integer_y_ticks=Bool)
 
 register_function(options, "options", tuple(), "Configuring plot options.",
                   plot_option_types)
@@ -559,6 +580,7 @@ register_function(
         bin_width=Number,
         start=Number,
         align=String,
+        border_colour=String,
         **plot_option_types))
 
 register_function(plot,
@@ -580,11 +602,14 @@ register_function(
         **plot_option_types))
 
 register_function(vline, "vline", (Number,),
-                  dict(colour=String, weight=Number, style=String))
+                  "Draw a vertical line at the given x coordinate.",
+                  kw_args=dict(colour=String, weight=Number, style=String))
 register_function(hline, "hline", (Number,),
-                  dict(colour=String, weight=Number, style=String))
+                  "Draw a horizontal line at the given y coordinate.",
+                  kw_args=dict(colour=String, weight=Number, style=String))
 register_function(text, "text", (Number, Number, String),
-                  dict(colour=String, size=Number))
+                  "Write text with top-left corner at the given x & y coordinate.",
+                  kw_args=dict(colour=String, size=Number))
 
 FUNCTION_NAMES = list(FUNCTIONS.keys())
 
