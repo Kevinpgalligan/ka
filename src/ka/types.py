@@ -262,6 +262,12 @@ def validate_time(quantity):
     if not (SECONDS == quantity.qv):
         raise KaRuntimeError("Tried to use a non-time quantity when time was expected: " + quantity.qv.prettified())
 
+
+class Interval:
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
+
 class TypeAlias:
     def __init__(self, name, actual_type):
         self.name = name

@@ -259,7 +259,7 @@ The following functions and operations are also available for working with time:
 
 * `now()` gives the current date & time in the local timezone.
 * `today()` gives the current date in the local timezone, with the time set to 00:00:00 (midnight).
-* `floor(instant)` returns a copy of the Instant with the time set to midnight at the *START* of the day..
+* `floor(instant)` returns a copy of the Instant with the time set to midnight at the *START* of the day.
 * `ceil(instant)` returns a copy of the Instant with the time set to midnight at the *END* of the day.
 * Time quantities (like `10 seconds`) can be added to an Instant to get a new Instant. Same for integers, in which case the integer represents a number of days. You can also subtract time quantities and integers from an Instant.
 
@@ -282,14 +282,14 @@ Here's an example. Executing this script (`ka --script examples/trigplot.ka`) wi
 ```
 xs = {0.2*i : i in [0,100]};
 plot(
-	options(
-		integer_x_ticks: true,
-		xlabel: "x",
-		ylabel: "y",
-		grid: true,
-		legend: true),
-	line(xs, {sin(x) : x in xs}, label: "sin(x)", colour: "blue"),
-	line(xs, {cos(x) : x in xs}, label: "cos(x)", colour: "red"));
+    options(
+        integer_x_ticks: true,
+        xlabel: "x",
+        ylabel: "y",
+        grid: true,
+        legend: true),
+    line(xs, {sin(x) : x in xs}, label: "sin(x)", colour: "blue"),
+    line(xs, {cos(x) : x in xs}, label: "cos(x)", colour: "red"));
 ```
 
 `plot(*ps)` accepts a variable number of `Plot`-type arguments and uses them to produce a plot, as seen above.
@@ -337,14 +337,14 @@ X = Poisson(7);
 xs = sample(X, 1000);
 histogram(xs,
           grid: true,
-		  title: "Sample CDF for Poisson distribution with rate=7",
-		  xlabel: "x",
-		  ylabel: "cumulative probability",
+          title: "Sample CDF for Poisson distribution with rate=7",
+          xlabel: "x",
+          ylabel: "cumulative probability",
           normalise: true,
           cumulative: true,
-		  integer_x_ticks: true,
-		  yticks: range(0,1,0.2),
-		  border_colour: "black")
+          integer_x_ticks: true,
+          yticks: range(0,1,0.2),
+          border_colour: "black")
 ```
 
 `scatter(xs, ys, ...)` produces a scatter plot using the given x & y coordinates, and accepts the following keyword arguments in addition to the common ones:
@@ -360,14 +360,14 @@ An example, found in `examples/scatterplot.ka`:
 G = Gaussian(0, 10);
 N = 100;
 scatter(
-	sample(G, N),
-	sample(G, N),
-	marker: ".",
-	colour: "green",
-	xlabel: "x",
-	ylabel: "y",
-	title: "2d Gaussian",
-	grid: true)
+    sample(G, N),
+    sample(G, N),
+    marker: ".",
+    colour: "green",
+    xlabel: "x",
+    ylabel: "y",
+    title: "2d Gaussian",
+    grid: true)
 ```
 
 `vline(x, colour: String, weight: Number, style: String)` draws a vertical line at the given x coordinate. The keyword argument `weight` determines the line thickness, and `style` determines the line style (e.g. use `"--"` for a dotted line; consult the matplotlib API for other line styles).

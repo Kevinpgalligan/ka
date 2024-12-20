@@ -2,11 +2,11 @@ X = Poisson(7);
 xs = sample(X, 1000);
 histogram(xs,
           grid: true,
-		  title: "Sample CDF for Poisson distribution with rate=7",
-		  xlabel: "x",
-		  ylabel: "cumulative probability",
+          title: "Sample CDF for Poisson distribution with rate=7",
+          xlabel: "x",
+          ylabel: "cumulative probability",
           normalise: true,
           cumulative: true,
-		  integer_x_ticks: true,
-		  yticks: range(0,1,0.2),
-		  border_colour: "black")
+          integer_x_ticks: true,
+          yticks: range(0,1,0.2),
+          border_colour: "black")

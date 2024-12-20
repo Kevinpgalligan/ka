@@ -10,7 +10,7 @@ from .types import (simplify_type, Quantity, get_external_type_name,
     String, Bool, get_type_as_string, is_type, now, Instant,
     instant_plus_quantity, instant_plus_int, instant_minus_quantity,
     instant_minus_int, today, floor_instant, ceil_instant,
-    instant_minus_instant)
+    instant_minus_instant, Interval)
 from .units import QSPACE
 from .probability import (Binomial, Poisson, Geometric, Bernoulli,
                           UniformInt, Exponential, Uniform, Gaussian,
@@ -220,6 +220,12 @@ def coerce_to(x, t):
     if isinstance(x, Combinatoric) and t == Number:
         return resolve_combinatoric(x)
     return x
+
+def strict_pow(x, y):
+    # Fractional power, and negative number.
+    if ((not is_true(dispatch("==", (dispatch("int", (y,)), y))))
+            and is_true(dispatch("<", (x, 0)))):
+        raise KaRuntimeError("Tried to take fractional power of a negative number.")
 
 BINARY_OPS = [
     ("+", operator.add, "Addition binary operator."),
@@ -639,6 +645,43 @@ register_commutative_op(instant_plus_quantity, "+", Instant, Quantity)
 register_commutative_op(instant_plus_int, "+", Instant, Integral)
 register_function(instant_minus_quantity, "-", (Instant, Quantity))
 register_function(instant_minus_int, "-", (Instant, Integral))
+
+#############
+# Intervals #
+#############
+def make_interval_with_num_op(opname):
+    def op(intr, n):
+        new_a = dispatch(opname, (intr.a, n))
+        new_b = dispatch(opname, (intr.b, n))
+        return make_interval_from_bounds(new_a, new_b)
+    return op
+
+def make_num_with_interval_op(opname):
+    def op(intr, n):
+        new_a = dispatch(opname, (n, intr.a))
+        new_b = dispatch(opname, (n, intr.b))
+        return make_interval_from_bounds(new_a, new_b)
+    return op
+
+def make_interval_from_bounds(x, y):
+    return Interval(dispatch("min", (x, y)),
+                    dispatch("max", (x, y)))
+
+for n in ["+", "*"]:
+    register_commutative_op(make_interval_with_num_op(n), n, Interval, Number)
+for n in ["-", "/"]:
+    register_function(make_interval_with_num_op(n), n, (Interval, Number))
+    register_function(make_num_with_interval_op(n), n, (Interval, Number))
+
+def interval_contains(intr, x):
+    return dispatch("<=", (intr.a, x)) * dispatch("<=", (x, intr.b))
+
+" TODO
+def interval_to_power(intr, exponent):
+    if is_true(interval_contains(intr, 0)):
+        return Interval(dispatch("min", (
+register_function(interval_to_power, "^", (Interval, Number))
+"
 
 FUNCTION_NAMES = list(FUNCTIONS.keys())
 

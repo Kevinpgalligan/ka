@@ -1,10 +1,10 @@
 xs = {0.2*i : i in [0,100]};
 plot(
-	options(
-		integer_x_ticks: true,
-		xlabel: "x",
-		ylabel: "y",
-		grid: true,
-		legend: true),
-	line(xs, {sin(x) : x in xs}, label: "sin(x)", colour: "blue"),
-	line(xs, {cos(x) : x in xs}, label: "cos(x)", colour: "red"));
+    options(
+        integer_x_ticks: true,
+        xlabel: "x",
+        ylabel: "y",
+        grid: true,
+        legend: true),
+    line(xs, {sin(x) : x in xs}, label: "sin(x)", colour: "blue"),
+    line(xs, {cos(x) : x in xs}, label: "cos(x)", colour: "red"));
