@@ -13,6 +13,7 @@ Featuring...
 * **Probability** distributions and sampling, with a math-like syntax: `X = Bernoulli(0.3); P(X=1)`.
 * **Arrays**, also with math-like syntax: `{3*x : x in [1,3]}` gives `{3,6,9}`.
 * **Lazy combinatorics**: `10000000!/9999999!` gives `10000000` rather than hanging.
+* **Dates and times**: `(#2024-12-25# - now()) to days` gives the number of days until Christmas.
 * **Plotting**: comes with an ergonomic interface to Python's matplotlib.
 * Other boring stuff: Variable assignment. Common math functions and constants.
 
@@ -51,6 +52,7 @@ More examples.
   - [Units](#units)
   - [Probability and Randomness](#probability-and-randomness)
   - [Arrays](#arrays)
+  - [Dates and times](#dates-and-times)
   - [Plotting](#plotting)
   - [Lazy Combinatorics](#lazy-combinatorics)
   - [Configuration](#configuration)
@@ -127,7 +129,7 @@ The hierarchy of numerical types goes: `Number` > `Real` > `Rational` (Fraction)
 
 'Real' numbers are represented as floating point numbers. If a fraction can be simplified to an integer, such as 2/2, then this will happen automatically. In the other direction, a type that is lower down the hierarchy, such as an integer, can be cast into a type that's further up the hierarchy in order to match a function signature.
 
-`Bool` (stands for Boolean) is essentially an alias for the `Number` type. Non-zero values represent true. The variables `true` and `false` are provided as syntax sugar, but you can pass 1 and 0 wherever they're used.
+`Bool` (stands for Boolean) is essentially an alias for the `Number` type. Non-zero values represent true. The variables `true` and `false` are provided for convenience, but they're just proxies for the values 1 and 0.
 
 Quantities consist of two components: a magnitude and a unit (see: the section on units). Any quantities can be multiplied together or divided into each other, but only quantities of the same unit type can be added or subtracted. For example, you can add `1 metre` and `1 foot`, but not `1 metre` and `1 second`. This is enforced by the binary operators themselves (addition and subtraction).
 
@@ -249,6 +251,28 @@ Array-related functions, given an array `A`:
 * `min(A)` -- need I say more?
 * `range(lo,hi)` returns an array of all integers between the integers `lo` and `hi` (bounds are inclusive). `[lo,hi]` is syntax sugar for calling this function.
 * `range(lo,hi,step)` returns numbers between `lo` and `hi` in steps of size `step`.
+
+### Dates and times
+The `Instant` type represents a particular moment in time. An instance of this type can be created using the syntax `#1984-01-25#`, where any [ISO-8601](https://en.wikipedia.org/wiki/ISO_8601)-formatted string can be substituted between the "#" delimiter.
+
+The following functions and operations are also available for working with time:
+
+* `now()` gives the current date & time in the local timezone.
+* `today()` gives the current date in the local timezone, with the time set to 00:00:00 (midnight).
+* `floor(instant)` returns a copy of the Instant with the time set to midnight at the *START* of the day..
+* `ceil(instant)` returns a copy of the Instant with the time set to midnight at the *END* of the day.
+* Time quantities (like `10 seconds`) can be added to an Instant to get a new Instant. Same for integers, in which case the integer represents a number of days. You can also subtract time quantities and integers from an Instant.
+
+The following examples show how to calculate: 1. the number of days until Christmas, 2. the number of hours until 9am tomorrow, and 3. the number of seconds until 16:21:10, March 8th, 2025.
+
+```
+>>> (#2024-12-25# - now()) to days
+5
+>>> (today() + 1 day + 9 hours) - now() to hours
+10.8956
+>>> #2025-03-08T16:21:10#-now()
+6718341.204931 s
+```
 
 ### Plotting
 The following interface is basically a shim over Python's matplotlib from Python. The drawing functions, like `line(...)` and `histogram(...)`, return a `Plot`, which can then be passed to the `plot(...)` function in order to actually render a plot. Alternatively, if a `Plot` is the last value in a script, or is returned at the REPL, it implicitly gets passed to `plot(...)`. Wherever a `colour` parameter is expected (as a String), it should follow the format expected by the matplotlib API ("red", "#0f0f0f", ...). The same applies for other String-type arguments that get passed along to matplotlib. 

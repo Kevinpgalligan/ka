@@ -7,7 +7,10 @@ import random
 
 from .types import (simplify_type, Quantity, get_external_type_name,
     Array, Combinatoric, IntRange, fraction_divide, is_true,
-    String, Bool, get_type_as_string, is_type)
+    String, Bool, get_type_as_string, is_type, now, Instant,
+    instant_plus_quantity, instant_plus_int, instant_minus_quantity,
+    instant_minus_int, today, floor_instant, ceil_instant,
+    instant_minus_instant)
 from .units import QSPACE
 from .probability import (Binomial, Poisson, Geometric, Bernoulli,
                           UniformInt, Exponential, Uniform, Gaussian,
@@ -190,6 +193,12 @@ def register_function(f, name, arg_types,
 
 def register_binary_op(name, op, docstring=None):
     register_function(op, name, (Number, Number), docstring=docstring)
+
+def register_commutative_op(f, name, type1, type2):
+    def reverse_f(y, x):
+        return f(x, y)
+    register_function(f, name, (type1, type2))
+    register_function(reverse_f, name, (type2, type1))
 
 def register_numeric_function(name, f, num_args=1, docstring=None):
     register_function(f, name, num_args*(Number,), docstring=docstring)
@@ -611,6 +620,26 @@ register_function(text, "text", (Number, Number, String),
                   "Write text with top-left corner at the given x & y coordinate.",
                   kw_args=dict(colour=String, size=Number))
 
+#################
+# Dates & times #
+#################
+register_function(
+    now, "now", tuple(),
+    "Returns an Instant representing the current time in the local timezone.")
+
+register_function(
+    today, "today", tuple(),
+    "Returns an Instant representing the start of the current day.")
+
+register_function(floor_instant, "floor", (Instant,))
+register_function(ceil_instant, "ceil", (Instant,))
+
+register_function(instant_minus_instant, "-", (Instant, Instant))
+register_commutative_op(instant_plus_quantity, "+", Instant, Quantity)
+register_commutative_op(instant_plus_int, "+", Instant, Integral)
+register_function(instant_minus_quantity, "-", (Instant, Quantity))
+register_function(instant_minus_int, "-", (Instant, Integral))
+
 FUNCTION_NAMES = list(FUNCTIONS.keys())
 
 if __name__ == "__main__":
@@ -619,3 +648,4 @@ if __name__ == "__main__":
                      ds=[IntRange(3,7), IntRange(5,6)])))
     print(dispatch("sin", (Combinatoric(ns=[IntRange(1,3)]),)))
     print(repr(str(FunctionSignature(tuple(), vararg=Plot))))
+    print(dispatch("now", tuple()))

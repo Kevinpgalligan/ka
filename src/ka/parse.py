@@ -1,5 +1,5 @@
 from .tokens import Tokens
-from .types import simplify_number
+from .types import simplify_number, instant_from_iso
 from .eval import EvalModes
 
 class ParseNode:
@@ -210,6 +210,8 @@ def parse_factor(t):
 def parse_term(t):
     if t.next_is(Tokens.STRING):
         return parse_string(t)
+    if t.next_is(Tokens.INSTANT):
+        return parse_instant(t)
     if t.next_is(Tokens.ARRAY_OPEN):
         return parse_array(t)
     if t.next_is(Tokens.INTERVAL_OPEN):
@@ -219,6 +221,10 @@ def parse_term(t):
 def parse_string(t):
     s = t.read(Tokens.STRING).meta("value")
     return ParseNode(label="\"" + s + "\"", value=s)
+
+def parse_instant(t):
+    raw_inst = t.read(Tokens.INSTANT).meta("value")
+    return ParseNode(label=raw_inst, value=instant_from_iso(raw_inst))
 
 def parse_array(t):
     t.read(Tokens.ARRAY_OPEN)

@@ -62,6 +62,7 @@ class Tokens:
     INTERVAL_SEPARATOR = ","
     KW_SEPARATOR = ":"
     STRING = "string"
+    INSTANT = "instant"
 
 CONST_TOKENS = [
     # Need to make sure that if token A is a prefix of token B, then it
@@ -94,6 +95,7 @@ CONST_TOKENS = [
     Tokens.INTERVAL_CLOSE,
     Tokens.INTERVAL_SEPARATOR,
     Tokens.KW_SEPARATOR,
+    Tokens.INSTANT,
 ]
 
 ALPHA_TOKENS = set(t for t in CONST_TOKENS if t.isalpha())
@@ -107,6 +109,10 @@ class BadNumberError(Exception):
         self.index = index
 
 class UnclosedStringError(Exception):
+    def __init__(self, index):
+        self.index = index
+
+class UnclosedInstantError(Exception):
     def __init__(self, index):
         self.index = index
 
@@ -133,6 +139,8 @@ def skip_whitespace(i, s):
 def read_token(i, s):
     if s[i] == "\"":
         return read_string(i, s)
+    if s[i] == "#":
+        return read_instant(i, s)
     if s[i].isnumeric() or s[i] == '.':
         return read_num_token(i, s)
     for t in CONST_TOKENS:
@@ -161,6 +169,14 @@ def read_string(i, s):
         else:
             j += 1
     raise UnclosedStringError(i)
+
+def read_instant(i, s):
+    j = i+1
+    while j < len(s):
+        if s[j] == "#":
+            return Token(Tokens.INSTANT, i, j+1, value=s[i+1:j])
+        j += 1
+    raise UnclosedInstantError(i)
 
 def read_num_token(i, s):
     m = NUM_REGEX.match(s, i)

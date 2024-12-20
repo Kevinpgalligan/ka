@@ -2,6 +2,10 @@ import math
 import numbers
 from fractions import Fraction as frac
 from numbers import Number
+from datetime import datetime, timedelta
+import re
+
+from .units import S as SECONDS
 
 class KaRuntimeError(Exception):
     def __init__(self, msg):
@@ -194,6 +198,69 @@ class Combinatoric(numbers.Number):
             " ".join(map(str, self.ds)),
             "}"
         ])
+
+class Instant:
+    def __init__(self, dt):
+        self.dt = dt
+
+    def __str__(self):
+        return self.dt.isoformat()
+
+    def __repr__(self):
+        return str(self)
+
+JUST_YEAR = re.compile(r"\d{4}$")
+JUST_YEAR_AND_MONTH = re.compile(r"\d{4}-\d{2}$")
+
+def instant_from_iso(s):
+    # datetime's ISO-8601 parser doesn't support YYYY or YYYY-MM, for some reason.
+    if JUST_YEAR.match(s):
+        s += "-01-01"
+    if JUST_YEAR_AND_MONTH.match(s):
+        s += "-01"
+    try:
+        return Instant(datetime.fromisoformat(s))
+    except ValueError as e:
+        raise KaRuntimeError("Invalid ISO-8601 format for Instant.")
+
+def now():
+    return Instant(datetime.now())
+
+def today():
+    return floor_instant(now())
+
+def floor_instant(inst):
+    dt = inst.dt
+    return Instant(datetime(dt.year, dt.month, dt.day))
+    
+def ceil_instant(inst):
+    dt = inst.dt
+    return Instant(datetime(dt.year, dt.month, dt.day+1))
+
+def instant_minus_instant(i1, i2):
+    return Quantity((i1.dt-i2.dt).total_seconds(), SECONDS)
+
+def instant_plus_quantity(inst, q):
+    validate_time(q)
+    delta = timedelta(seconds=q.mag)
+    return Instant(inst.dt + delta)
+
+def instant_plus_int(inst, i):
+    delta = timedelta(days=i)
+    return Instant(inst.dt + delta)
+
+def instant_minus_quantity(inst, q):
+    validate_time(q)
+    delta = timedelta(seconds=q.mag)
+    return Instant(inst.dt - delta)
+
+def instant_minus_int(inst, i):
+    delta = timedelta(days=i)
+    return Instant(inst.dt - delta)
+
+def validate_time(quantity):
+    if not (SECONDS == quantity.qv):
+        raise KaRuntimeError("Tried to use a non-time quantity when time was expected: " + quantity.qv.prettified())
 
 class TypeAlias:
     def __init__(self, name, actual_type):

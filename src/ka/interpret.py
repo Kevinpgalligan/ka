@@ -3,7 +3,7 @@ from fractions import Fraction as frac
 import sys
 
 from .tokens import (tokenise, UnknownTokenError, BadNumberError,
-    UnclosedStringError)
+    UnclosedStringError, UnclosedInstantError)
 from .parse import parse_tokens, ParsingError
 from .eval import eval_parse_tree, EvalError, EvalEnvironment, EvalModes
 from .types import Quantity, Array, Combinatoric, KaRuntimeError
@@ -178,6 +178,9 @@ def execute(s, env=None, out=sys.stdout,
     except UnclosedStringError as e:
         error("String is missing closing delimiter.", e.index, s, errout)
         return 1
+    except UnclosedInstantError as e:
+        error("Instant/date is missing closing delimiter.", e.index, s, errout)
+        return 1
     try:
         parse_tree = parse_tokens(tokens)
     except ParsingError as e:
@@ -192,6 +195,9 @@ def execute(s, env=None, out=sys.stdout,
         else:
             index = tokens[e.token_index].begin_index_incl
         error(e.message, index, s, errout)
+        return 1
+    except KaRuntimeError as e:
+        print_err(errout, e.msg)
         return 1
     statements = parse_tree.children
     if len(statements)>0:
