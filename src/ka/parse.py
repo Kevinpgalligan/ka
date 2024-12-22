@@ -181,7 +181,8 @@ def parse_comparison(t):
     comparison_ops = []
     for _ in range(2):
         if not t.next_is_one_of(Tokens.EQ, Tokens.LT, Tokens.GT,
-                                Tokens.LEQ, Tokens.GEQ, Tokens.ASSIGNMENT_OP):
+                                Tokens.LEQ, Tokens.GEQ, Tokens.ASSIGNMENT_OP,
+                                Tokens.ELEMENT_OF):
             break
         comparison_ops.append(t.read_any())
         terms.append(parse_sum(t))
@@ -216,7 +217,7 @@ def parse_term(t):
         return parse_array(t)
     if t.next_is(Tokens.INTERVAL_OPEN):
         return parse_interval(t)
-    return parse_maybe_quantity(t)
+    return parse_maybe_range(t)
 
 def parse_string(t):
     s = t.read(Tokens.STRING).meta("value")
@@ -259,10 +260,18 @@ def parse_clause(t):
 def parse_interval(t):
     t.read(Tokens.INTERVAL_OPEN)
     lo = parse_expression(t)
-    t.read(Tokens.INTERVAL_SEPARATOR)
+    t.read(Tokens.INTERVAL_SEP)
     hi = parse_expression(t)
     t.read(Tokens.INTERVAL_CLOSE)
-    return funcall_node("range", (lo, hi))
+    return funcall_node("interval", (lo, hi))
+
+def parse_maybe_range(t):
+    lo = parse_maybe_quantity(t)
+    if t.next_is(Tokens.RANGE_SEPARATOR):
+        t.read_any()
+        hi = parse_maybe_quantity(t)
+        return funcall_node("range", (lo, hi))
+    return lo
 
 def parse_maybe_quantity(t):
     term = parse_unitless_term(t)

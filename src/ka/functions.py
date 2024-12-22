@@ -10,7 +10,7 @@ from .types import (simplify_type, Quantity, get_external_type_name,
     String, Bool, get_type_as_string, is_type, now, Instant,
     instant_plus_quantity, instant_plus_int, instant_minus_quantity,
     instant_minus_int, today, floor_instant, ceil_instant,
-    instant_minus_instant, Interval)
+    instant_minus_instant, Interval, Any, KaRuntimeError)
 from .units import QSPACE
 from .probability import (Binomial, Poisson, Geometric, Bernoulli,
                           UniformInt, Exponential, Uniform, Gaussian,
@@ -221,11 +221,14 @@ def coerce_to(x, t):
         return resolve_combinatoric(x)
     return x
 
+def is_fractional(x):
+    return not is_true(dispatch("==", (dispatch("int", (x,)), x)))
+
 def strict_pow(x, y):
     # Fractional power, and negative number.
-    if ((not is_true(dispatch("==", (dispatch("int", (y,)), y))))
-            and is_true(dispatch("<", (x, 0)))):
+    if is_fractional(y) and is_true(dispatch("<", (x, 0))):
         raise KaRuntimeError("Tried to take fractional power of a negative number.")
+    return x**y
 
 BINARY_OPS = [
     ("+", operator.add, "Addition binary operator."),
@@ -233,7 +236,7 @@ BINARY_OPS = [
     ("*", operator.mul, "Multiplication binary operator."),
     ("/", operator.truediv, "Division binary operator. Passing 2 integers results in a fraction."),
     ("%", operator.mod, "Modulo binary operator. 4%3=1."),
-    ("^", operator.pow, "Exponentiation binary operator. 2^3=8."),
+    ("^", strict_pow, "Exponentiation binary operator. 2^3=8."),
     ("<", intify(operator.lt), "Less than."),
     ("<=", intify(operator.le), "Less than or equal to."),
     ("==", intify(operator.eq), "Equals."),
@@ -273,14 +276,23 @@ register_function(comb_div_frac, "/", (Combinatoric, Rational))
 register_function(frac_times_comb, "*", (Rational, Combinatoric))
 register_function(frac_div_comb, "/", (Rational, Combinatoric))
 
+def ka_ln(x): return ka_log(x, math.e)
+def ka_log10(x): return ka_log(x, 10)
+def ka_log2(x): return ka_log(x, 2)
+
+def ka_log(x, base):
+    if x <= 0:
+        raise KaRuntimeError(f"Non-positive value passed to log: {x}")
+    return math.log(x, base)
+
 NUMERIC_FUNCTIONS = [
     ("sin", math.sin, "Trigonometric sine function."),
     ("cos", math.cos, "Trigonometric cosine function."),
     ("tan", math.tan, "Trigonometric tangent function."),
     ("sqrt", math.sqrt, "Square root of a number."),
-    ("ln", math.log, "Natural log, base e."),
-    ("log10", math.log10, "Logarithm base 10."),
-    ("log2", math.log2, "Logarithm base 2."),
+    ("ln", ka_ln, "Natural log, base e."),
+    ("log10", ka_log10, "Logarithm base 10."),
+    ("log2", ka_log2, "Logarithm base 2."),
     ("abs", abs, "Absolute value of a number."),
     ("floor", math.floor, "Rounds a number down to the next smallest integer."),
     ("ceil", math.ceil, "Rounds a number up to the next largest integer."),
@@ -293,9 +305,17 @@ NUMERIC_FUNCTIONS = [
 for name, f, docstring in NUMERIC_FUNCTIONS:
     register_numeric_function(name, f, docstring=docstring)
 register_numeric_function("log",
-                          lambda base, x: math.log(x, base),
+                          ka_log,
                           num_args=2,
                           docstring="Logarithm function. The first argument determines the base.")
+
+def max_vararg(*args):
+    return max(*args)
+def min_vararg(*args):
+    return min(*args)
+register_function(max_vararg, "max", tuple(), vararg_type=Number)
+register_function(min_vararg, "min", tuple(), vararg_type=Number)
+
 register_function(lazy_choose,
                   "C",
                   (Integral, Integral),
@@ -458,6 +478,9 @@ def array_mean(arr):
         raise FunctionArgError("Tried to take mean of empty array.")
     return dispatch("/", (dispatch("sum", (arr,)), len(arr.contents)))
 
+def in_array(x, arr):
+    return any(dispatch("==", (x, e)) for e in arr)
+
 def ka_cmp(x, y):
     if dispatch("<", (x, y)):
         return -1
@@ -482,8 +505,9 @@ register_function(array_sum, "sum", (Array,), "Sum of the elements of an array."
 register_function(array_mean, "mean", (Array,), "Mean of the elements of an array.")
 register_function(array_median, "median", (Array,), "Median of the elements of an array.")
 register_function(array_size, "size", (Array,), "Number of elements in an array.")
-register_function(array_max, "max", (Array,), "Maximum element of an array.")
-register_function(array_min, "min", (Array,), "Minimum element of an array.")
+register_function(array_max, "max", (Array,), "Maximum of a selection of numbers.")
+register_function(array_min, "min", (Array,), "Minimum of a selection of numbers.")
+register_function(in_array, "in", (Any, Array), "Whether an element is present in a set/array.")
 
 register_function(lambda lo, hi: Array(list(range(lo, hi+1))),
                   "range",
@@ -671,17 +695,90 @@ for n in ["+", "*"]:
     register_commutative_op(make_interval_with_num_op(n), n, Interval, Number)
 for n in ["-", "/"]:
     register_function(make_interval_with_num_op(n), n, (Interval, Number))
-    register_function(make_num_with_interval_op(n), n, (Interval, Number))
+
+def make_interval(a, b):
+    if not dispatch("<=", (a, b)):
+        return Interval(0, 0)
+    return Interval(a, b)
+register_function(make_interval, "interval", (Number, Number),
+    docstring="Creates an interval within the given bounds.")
 
 def interval_contains(intr, x):
     return dispatch("<=", (intr.a, x)) * dispatch("<=", (x, intr.b))
+register_function(interval_contains, "contains", (Interval, Number),
+    docstring="Whether an interval contains the given number.")
 
-" TODO
+def interval_has_negative(intr):
+    return dispatch("<", (intr.a, 0))
+
 def interval_to_power(intr, exponent):
-    if is_true(interval_contains(intr, 0)):
-        return Interval(dispatch("min", (
+    if interval_has_negative(intr) and is_fractional(exponent):
+        raise KaRuntimeError("Tried to raise an interval to fractional power when it contains negative numbers.")
+    candidates = [intr.a, intr.b]
+    if interval_contains(intr, 0):
+        if dispatch("<", (exponent, 0)):
+            raise KaRuntimeError("Tried to raise interval to negative power when it contains zero.")
+        candidates.append(0)
+    args = tuple(dispatch("^", (x, exponent)) for x in candidates)
+    return Interval(dispatch("min", args), dispatch("max", args))
 register_function(interval_to_power, "^", (Interval, Number))
-"
+
+register_function(lambda x: x, "+", (Interval,))
+def interval_flip(intr):
+    return Interval(dispatch("-", (intr.b,)), dispatch("-", (intr.a,)))
+register_function(interval_flip, "-", (Interval,))
+
+def interval_sqrt(intr):
+    if interval_has_negative(intr):
+        raise KaRuntimeError("Tried to take square root of interval with negative numbers: {intr}")
+    return Interval(dispatch("sqrt", (intr.a,)), dispatch("sqrt", (intr.b,)))
+register_function(interval_sqrt, "sqrt", (Interval,))
+
+def interval_ln(intr):
+    return interval_log(intr, math.e)
+def interval_log10(intr):
+    return interval_log(intr, 10)
+def interval_log2(intr):
+    return interval_log(intr, 2)
+def interval_log(intr, base):
+    if dispatch("<=", (base, 0)):
+        raise KaRuntimeError(f"Tried to take log with non-positive base: {base}")
+    if dispatch("<=", (intr.a, 0)):
+        raise KaRuntimeError(f"Tried to take log of interval containing non-positive numbers: {intr}")
+    return Interval(dispatch("log", (intr.a, base)),
+                    dispatch("log", (intr.b, base)))
+register_function(interval_ln, "ln", (Interval,))
+register_function(interval_log10, "log10", (Interval,))
+register_function(interval_log2, "log2", (Interval,))
+register_function(interval_log, "log", (Interval, Number))
+
+def interval_abs(intr):
+    vs = tuple(dispatch("abs", (x,)) for x in (intr.a, intr.b))
+    return Interval(
+        0 if interval_contains(intr, 0) else dispatch("min", vs),
+        dispatch("max", vs))
+register_function(interval_abs, "abs", (Interval,))
+
+def register_interval_cmp(name, reverse_name):
+    def swap(f):
+        def swapped_f(y, x):
+            return f(x, y)
+        return swapped_f
+    def interval_num(intr, x):
+        return dispatch(name, (intr.b, x))
+    def num_interval(x, intr):
+        return dispatch(name, (x, intr.a))
+    # This is a brainmelter, but wanted to avoid duplication.
+    register_function(interval_num, name, (Interval, Number))
+    register_function(swap(num_interval), reverse_name, (Interval, Number))
+    register_function(num_interval, name, (Number, Interval))
+    register_function(swap(interval_num), reverse_name, (Number, Interval))
+register_interval_cmp("<", ">")
+register_interval_cmp("<=", ">=")
+
+def in_interval(x, intr):
+    return dispatch("<=", (intr.a, x)) * dispatch("<=", (x, intr.b))
+register_function(in_interval, "in", (Number, Interval))
 
 FUNCTION_NAMES = list(FUNCTIONS.keys())
 

@@ -17,7 +17,7 @@ Featuring...
 * **Plotting**: comes with an ergonomic interface to Python's matplotlib.
 * Other boring stuff: Variable assignment. Common math functions and constants.
 
-Ka aims to be convenient: you can start the GUI, do your sums, and close the GUI with Ctrl-W -- no keyboard needed! Or if you're pottering about in the terminal, you can do a quick one-off calculation with `ka '1+1'`.
+Ka aims to be convenient: you can start the GUI with a keyboard shortcut, do your sums, and close the GUI with Ctrl-W -- no mouse needed! Or if you're pottering about in the terminal, you can do a quick one-off calculation with `ka '1+1'`.
 
 More examples.
 

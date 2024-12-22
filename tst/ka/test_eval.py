@@ -7,7 +7,7 @@ from ka.tokens import tokenise
 from ka.functions import UnknownFunctionError, NoMatchingFunctionSignatureError
 from ka.parse import parse_tokens, ParsingError
 from ka.eval import eval_parse_tree, EvalError
-from ka.types import Quantity, Array
+from ka.types import Quantity, Array, Interval, KaRuntimeError
 from ka.units import M, S, K
 
 def validate_result(s, expected):
@@ -178,10 +178,10 @@ def test_probability_fails():
               ]:
         validate_fail(s, **(dict() if err is None else dict(error_type=err)))
 
-def test_interval():
+def test_range():
     validate_results([
-        ("[1,5]", Array([1,2,3,4,5])),
-        ("N=5; [-5,5]", Array(list(range(-5,6))))
+        ("1..5", Array([1,2,3,4,5])),
+        ("N=5; -5..5", Array(list(range(-5,6))))
     ])
 
 def test_array():
@@ -196,8 +196,8 @@ def test_array():
 
 def test_array_with_conditions():
     validate_results([
-        ("{x:x in [1,3]}", Array([1,2,3])),
-        ("{x:x in [1,3], x <= 2}", Array([1,2])),
+        ("{x:x in 1..3}", Array([1,2,3])),
+        ("{x:x in 1..2, x <= 2}", Array([1,2])),
     ])
 
 def test_comparison():
@@ -217,3 +217,36 @@ def test_comparison():
         ("-1 > 0", 0),
         ("0 > 0", 0),
     ])
+
+def test_interval():
+    validate_results([
+        ("-1 in [-1,5]", 1),
+        ("5 in [-5,5]", 1),
+        ("5.1 in [-5,5]", 0),
+        ("-5.1 in [-5,5]", 0),
+        ("1 + [1,5]", Interval(2, 6)),
+        ("[1,5] - 1", Interval(0, 4)),
+        ("[-2, 2] * 2", Interval(-4, 4)),
+        ("[-4, 4] / 2", Interval(-2, 2)),
+        ("[-2, 2] ^ 2", Interval(0, 4)),
+        ("[1, 5] ^ 0", Interval(1, 1)),
+        ("sqrt([0, 100])", Interval(0, 10)),
+        ("log2([2, 8])", Interval(1, 3)),
+        ("abs([-5, 10])", Interval(0, 10)),
+        ("[0,1] < 1.2", 1),
+        ("[0,1.5] < 1.2", 0),
+        ("-1 < [0,1.5]", 1),
+        ("0.1 < [0,1.5]", 0),
+        ("0 <= [0,1]", 1),
+        ("[0,1] <= -0.1", 0),
+        ("-0.9 > [-2, -1]", 1),
+        ("0 > [-2, 0]", 0),
+        ("0 >= [-2, 0]", 1),
+        ("0 >= [-2, 0.001]", 0),
+        ("[5, 2]", Interval(0, 0))
+    ])
+
+def test_bad_interval_expressions():
+    for s in ["sqrt([-1, 1])", "log([0, 5], 7)",
+              "log2([-0.1, 100])", "[-2, 4]^-0.2"]:
+        validate_fail(s, KaRuntimeError)

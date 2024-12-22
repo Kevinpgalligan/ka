@@ -262,11 +262,24 @@ def validate_time(quantity):
     if not (SECONDS == quantity.qv):
         raise KaRuntimeError("Tried to use a non-time quantity when time was expected: " + quantity.qv.prettified())
 
-
 class Interval:
     def __init__(self, a, b):
         self.a = a
         self.b = b
+
+    def __eq__(self, other):
+        # This is really just for internal use, i.e. testing.
+        # In reality the bounds should be compared using
+        # the dispatch mechanism of the language.
+        return isinstance(other, Interval) \
+            and self.a == other.a \
+            and self.b == other.b
+
+    def __str__(self):
+        return f"[{self.a}, {self.b}]"
+
+    def __repr__(self):
+        return str(self)
 
 class TypeAlias:
     def __init__(self, name, actual_type):
@@ -281,6 +294,7 @@ class TypeAlias:
 
 String = TypeAlias("String", str)
 Bool = TypeAlias("Bool", Number)
+Any = TypeAlias("Any", object)
 
 def is_type(x, t):
     if isinstance(t, TypeAlias):

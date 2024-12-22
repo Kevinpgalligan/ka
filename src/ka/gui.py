@@ -264,7 +264,7 @@ def run_gui():
                              assigned_box=assigned_box,
                              post_display_action_box=post_display_action_box,
                              unit_format_fn=gui_unit_format)
-            add_display_text(txt)
+            add_display_text("  " + txt)
             add_display_text(out.getvalue(), colour="red" if status != 0 else "gray")
             update_display()
             if assigned_box.value is not None:

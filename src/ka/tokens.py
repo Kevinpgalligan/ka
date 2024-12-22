@@ -1,11 +1,6 @@
 import re
 from fractions import Fraction as frac
 
-NUM_REGEX = re.compile(
-    r"""(0(x|o|b|d)([0-9a-fA-F]+))               # Integer with base prefix
-        | (([0-9]+\.?[0-9]*)|([0-9]*\.?[0-9]+))  # Decimal, float or integer
-          (e\-?[0-9]+)?                          # Scientific notation""",
-    re.VERBOSE)
 VAR_REGEX = re.compile(r"[a-zA-Z][_a-zA-Z0-9]*")
 
 class Token:
@@ -56,17 +51,22 @@ class Tokens:
     ARRAY_CLOSE = '}'
     ARRAY_SEPARATOR = ','
     ARRAY_CONDITION_SEP = ':'
-    ELEMENT_OF = "in"
-    INTERVAL_OPEN = "["
-    INTERVAL_CLOSE = "]"
-    INTERVAL_SEPARATOR = ","
-    KW_SEPARATOR = ":"
-    STRING = "string"
-    INSTANT = "instant"
+    ELEMENT_OF = 'in'
+    RANGE_SEPARATOR = '..'
+    KW_SEPARATOR = ':'
+    STRING = 'string'
+    INSTANT = 'instant'
+    INTERVAL_OPEN = '['
+    INTERVAL_SEP = ','
+    INTERVAL_CLOSE = ']'
 
 CONST_TOKENS = [
     # Need to make sure that if token A is a prefix of token B, then it
     # comes after token B in the list.
+    Tokens.RANGE_SEPARATOR,
+    Tokens.INTERVAL_OPEN,
+    Tokens.INTERVAL_SEP,
+    Tokens.INTERVAL_CLOSE,
     Tokens.EQ,
     Tokens.LEQ,
     Tokens.GEQ,
@@ -91,9 +91,6 @@ CONST_TOKENS = [
     Tokens.ARRAY_SEPARATOR,
     Tokens.ARRAY_CONDITION_SEP,
     Tokens.ELEMENT_OF,
-    Tokens.INTERVAL_OPEN,
-    Tokens.INTERVAL_CLOSE,
-    Tokens.INTERVAL_SEPARATOR,
     Tokens.KW_SEPARATOR,
     Tokens.INSTANT,
 ]
@@ -141,7 +138,7 @@ def read_token(i, s):
         return read_string(i, s)
     if s[i] == "#":
         return read_instant(i, s)
-    if s[i].isnumeric() or s[i] == '.':
+    if s[i].isnumeric() or (s[i] == '.' and i+1<len(s)and s[i+1].isnumeric()):
         return read_num_token(i, s)
     for t in CONST_TOKENS:
         if s.startswith(t, i) and (
@@ -178,31 +175,49 @@ def read_instant(i, s):
         j += 1
     raise UnclosedInstantError(i)
 
+BASED_INT_REGEX = re.compile("0(x|o|b|d)([0-9a-fA-F]+)")
+NUM_REGEX = re.compile(r"""
+    (([0-9]+\.?[0-9]*)|([0-9]*\.?[0-9]+))  # Decimal, float or integer
+    (e\-?[0-9]+)?                          # Scientific notation""",
+    re.VERBOSE)
+
 def read_num_token(i, s):
-    m = NUM_REGEX.match(s, i)
-    with_base = m.group(1)
-    if with_base:
+    m = BASED_INT_REGEX.match(s, i)
+    if m:
         base = 10
-        raw_base = m.group(2)
+        raw_base = m.group(1)
         if raw_base:
             if "b" == raw_base: base = 2
             elif "o" == raw_base: base = 8
             elif "x" == raw_base: base = 16
         try:
-            value = int(m.group(3), base=base)
+            return Token(Tokens.NUM, m.start(), m.end(),
+                         value=int(m.group(2), base=base))
         except ValueError:
             raise BadNumberError(i)
+
+    m = NUM_REGEX.match(s, i)
+    if not m:
+        raise BadNumberError(i)
+    raw_value = m.group(1)
+    # Need special handling for the case where an
+    # integer is followed by a range, e.g. '1..5'.
+    # Otherwise, we'll end up with two floats, '1.' and
+    # '.5', and a parsing error will follow.
+    if (m.group(0)[-1] == "."
+            and m.end() < len(s)
+            and s[m.end()] == "."):
+        return Token(Tokens.NUM, m.start(),
+                     m.end()-1, value=int(raw_value[:-1]))
+    # Keep it as an integer if possible.
+    if '.' not in raw_value:
+        value = int(raw_value)
     else:
-        raw_value = m.group(4)
-        # Keep it as an integer if possible.
-        if '.' in raw_value:
-            value = float(raw_value)
+        value = float(raw_value)
+    if m.group(4):
+        exponent = int(m.group(4)[1:])
+        if exponent < 0:
+            value *= frac(1, 10**-exponent)
         else:
-            value = int(raw_value)
-        if m.group(7):
-            exponent = int(m.group(7)[1:])
-            if exponent < 0:
-                value *= frac(1, 10**-exponent)
-            else:
-                value *= 10**exponent
+            value *= 10**exponent
     return Token(Tokens.NUM, m.start(), m.end(), value=value)

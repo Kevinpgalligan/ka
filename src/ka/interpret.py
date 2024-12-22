@@ -6,7 +6,8 @@ from .tokens import (tokenise, UnknownTokenError, BadNumberError,
     UnclosedStringError, UnclosedInstantError)
 from .parse import parse_tokens, ParsingError
 from .eval import eval_parse_tree, EvalError, EvalEnvironment, EvalModes
-from .types import Quantity, Array, Combinatoric, KaRuntimeError
+from .types import (Quantity, Array, Combinatoric, KaRuntimeError,
+                    Interval, Instant)
 from .functions import (FUNCTIONS, UnknownFunctionError,
     UnknownKeywordError, BadTypeKeywordError,
     NoMatchingFunctionSignatureError, IncompatibleQuantitiesError,
@@ -379,6 +380,10 @@ def stringify_result(r, brackets_for_frac=False):
                 + "}")
     elif isinstance(r, str):
         return "\"" + r + "\""
+    elif isinstance(r, Interval):
+        return "[" + stringify_result(r.a) + ", " + stringify_result(r.b) + "]"
+    elif isinstance(r, Instant):
+        return "#" + str(r) + "#"
     return str(r)
 
 def precisionify_float(f):

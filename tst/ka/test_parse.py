@@ -148,13 +148,11 @@ def test_fails_more_than_two_compares():
          t(Tokens.LEQ),
          t(Tokens.NUM, value=5)])
 
-def test_parse_interval():
+def test_parse_range():
     validate_parse(
-        [t(Tokens.INTERVAL_OPEN),
-         t(Tokens.NUM, value=1),
-         t(Tokens.INTERVAL_SEPARATOR),
-         t(Tokens.NUM, value=10),
-         t(Tokens.INTERVAL_CLOSE)],
+        [t(Tokens.NUM, value=1),
+         t(Tokens.RANGE_SEPARATOR),
+         t(Tokens.NUM, value=10)],
         pn("range", [pn(1), pn(10)]))
 
 def test_parse_array():
@@ -175,11 +173,9 @@ def test_parse_array_with_conditions():
          t(Tokens.ARRAY_CONDITION_SEP),
          t(Tokens.VAR, name="x"),
          t(Tokens.ELEMENT_OF),
-         t(Tokens.INTERVAL_OPEN),
          t(Tokens.NUM, value=1),
-         t(Tokens.INTERVAL_SEPARATOR),
+         t(Tokens.RANGE_SEPARATOR),
          t(Tokens.NUM, value=3),
-         t(Tokens.INTERVAL_CLOSE),
          t(Tokens.ARRAY_SEPARATOR),
          t(Tokens.VAR, name="x"),
          t(Tokens.LEQ),

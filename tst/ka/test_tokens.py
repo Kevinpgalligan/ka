@@ -1,6 +1,7 @@
 import pytest
 
-from ka.tokens import tokenise, Tokens, UnknownTokenError, BadNumberError
+from ka.tokens import (tokenise, Tokens, UnknownTokenError, BadNumberError,
+                       UnclosedInstantError)
 
 def test_tokenise_valid_tokens():
     expected = [
@@ -30,14 +31,14 @@ def test_tokenise_valid_tokens():
         (Tokens.GEQ, ">="),
         (Tokens.EQ, "=="),
         (Tokens.ELEMENT_OF, "in"),
-        (Tokens.INTERVAL_OPEN, "["),
-        (Tokens.INTERVAL_CLOSE, "]"),
         (Tokens.ARRAY_OPEN, "{"),
         (Tokens.ARRAY_CLOSE, "}"),
         (Tokens.ARRAY_CONDITION_SEP, ":"),
         (Tokens.ARRAY_SEPARATOR, ","),
+        (Tokens.RANGE_SEPARATOR, ".."),
+        (Tokens.KW_SEPARATOR, ":"),
     ]
-    s = "=;()+-*/%^123+abc1-22x!| 1e-4 to <=<>>= == in[]{}:,"
+    s = "=;()+-*/%^123+abc1-22x!| 1e-4 to <=<>>= == in{}:,..:"
     tokens = tokenise(s)
     actual = [(token.tag, s[token.begin_index_incl:token.end_index_excl])
               for token in tokens]
@@ -64,3 +65,34 @@ def test_bad_digit_for_base():
     for s in ["0b2", "0o8", "0da"]:
         with pytest.raises(BadNumberError):
             tokenise(s)
+
+def get_tags(ts):
+    return list(map(lambda t: t.tag, ts))
+
+def test_string():
+    ts = tokenise("\"hello world 123\"")
+    assert [Tokens.STRING] == get_tags(ts)
+    t, = ts
+    assert "hello world 123" == t.meta("value")
+
+def test_range():
+    s = "1.."
+    ts = tokenise(s)
+    assert [Tokens.NUM, Tokens.RANGE_SEPARATOR] == get_tags(ts)
+    assert 1 == ts[0].meta("value")
+    assert "1" == s[ts[0].begin_index_incl:ts[0].end_index_excl]
+
+    ts = tokenise("1..5")
+    assert [Tokens.NUM, Tokens.RANGE_SEPARATOR, Tokens.NUM] == get_tags(ts)
+
+def test_instant():
+    s = "#1984-01-01#"
+    ts = tokenise(s)
+    assert [Tokens.INSTANT] == get_tags(ts)
+    t, = ts
+    assert s == s[t.begin_index_incl:t.end_index_excl]
+    assert "1984-01-01" == t.meta("value")
+
+def test_unclosed_instant():
+    with pytest.raises(UnclosedInstantError):
+        tokenise("#1984-01-01")
