@@ -1,4 +1,4 @@
-xs = {0.2*i : i in [0,100]};
+xs = {0.2*i : i in 0..100};
 plot(
     options(
         integer_x_ticks: true,

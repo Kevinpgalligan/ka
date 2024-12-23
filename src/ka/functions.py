@@ -10,7 +10,10 @@ from .types import (simplify_type, Quantity, get_external_type_name,
     String, Bool, get_type_as_string, is_type, now, Instant,
     instant_plus_quantity, instant_plus_int, instant_minus_quantity,
     instant_minus_int, today, floor_instant, ceil_instant,
-    instant_minus_instant, Interval, Any, KaRuntimeError)
+    instant_minus_instant, Interval, Any, KaRuntimeError,
+    instant_lt, instant_leq, instant_gt, instant_geq,
+    interval_get_upper, interval_get_lower, get_year, get_month,
+    get_day, get_hour, get_minute, get_second)
 from .units import QSPACE
 from .probability import (Binomial, Poisson, Geometric, Bernoulli,
                           UniformInt, Exponential, Uniform, Gaussian,
@@ -246,6 +249,10 @@ BINARY_OPS = [
 ]
 for name, op, docstring in BINARY_OPS:
     register_binary_op(name, op, docstring=docstring)
+# This ensures that, if isn't a more specific equals operator to compare two
+# items, then they'll be considered unequal.
+register_function(lambda x, y: False, "==", (Any, Any))
+register_function(lambda x, y: True, "!=", (Any, Any))
 # Override division for integers so that
 # it returns a fraction.
 register_function(fraction_divide, "/", (Integral, Integral))
@@ -281,15 +288,20 @@ def ka_log10(x): return ka_log(x, 10)
 def ka_log2(x): return ka_log(x, 2)
 
 def ka_log(x, base):
-    if x <= 0:
+    if dispatch("<=", (x, 0)):
         raise KaRuntimeError(f"Non-positive value passed to log: {x}")
     return math.log(x, base)
+
+def ka_sqrt(x):
+    if dispatch("<", (x, 0)):
+        raise KaRuntimeError(f"Negative value passed to sqrt: {x}")
+    return math.sqrt(x)
 
 NUMERIC_FUNCTIONS = [
     ("sin", math.sin, "Trigonometric sine function."),
     ("cos", math.cos, "Trigonometric cosine function."),
     ("tan", math.tan, "Trigonometric tangent function."),
-    ("sqrt", math.sqrt, "Square root of a number."),
+    ("sqrt", ka_sqrt, "Square root of a number."),
     ("ln", ka_ln, "Natural log, base e."),
     ("log10", ka_log10, "Logarithm base 10."),
     ("log2", ka_log2, "Logarithm base 2."),
@@ -670,6 +682,20 @@ register_commutative_op(instant_plus_int, "+", Instant, Integral)
 register_function(instant_minus_quantity, "-", (Instant, Quantity))
 register_function(instant_minus_int, "-", (Instant, Integral))
 
+register_function(operator.eq, "==", (Instant, Instant))
+register_function(operator.ne, "!=", (Instant, Instant))
+register_function(instant_lt, "<", (Instant, Instant))
+register_function(instant_leq, "<=", (Instant, Instant))
+register_function(instant_gt, ">", (Instant, Instant))
+register_function(instant_geq, ">=", (Instant, Instant))
+
+register_function(get_year, "year", (Instant,))
+register_function(get_month, "month", (Instant,))
+register_function(get_day, "day", (Instant,))
+register_function(get_hour, "hour", (Instant,))
+register_function(get_minute, "minute", (Instant,))
+register_function(get_second, "second", (Instant,))
+
 #############
 # Intervals #
 #############
@@ -730,7 +756,7 @@ register_function(interval_flip, "-", (Interval,))
 
 def interval_sqrt(intr):
     if interval_has_negative(intr):
-        raise KaRuntimeError("Tried to take square root of interval with negative numbers: {intr}")
+        raise KaRuntimeError(f"Tried to take square root of interval with negative numbers: {intr}")
     return Interval(dispatch("sqrt", (intr.a,)), dispatch("sqrt", (intr.b,)))
 register_function(interval_sqrt, "sqrt", (Interval,))
 
@@ -768,17 +794,51 @@ def register_interval_cmp(name, reverse_name):
         return dispatch(name, (intr.b, x))
     def num_interval(x, intr):
         return dispatch(name, (x, intr.a))
+    def interval_interval(I1, I2):
+        return dispatch(name, (I1.b, I2.a))
     # This is a brainmelter, but wanted to avoid duplication.
     register_function(interval_num, name, (Interval, Number))
     register_function(swap(num_interval), reverse_name, (Interval, Number))
     register_function(num_interval, name, (Number, Interval))
     register_function(swap(interval_num), reverse_name, (Number, Interval))
+    register_function(interval_interval, name, (Interval, Interval))
+    register_function(swap(interval_interval), reverse_name, (Interval, Interval))
 register_interval_cmp("<", ">")
 register_interval_cmp("<=", ">=")
 
 def in_interval(x, intr):
     return dispatch("<=", (intr.a, x)) * dispatch("<=", (x, intr.b))
 register_function(in_interval, "in", (Number, Interval))
+
+def interval_eq(I1, I2):
+    return dispatch("==", (I1.a, I2.a)) * dispatch("==", (I1.b, I2.b))
+register_function(interval_eq, "==", (Interval, Interval))
+
+register_function(interval_get_lower, "lower", (Interval,),
+                  "Get the lower bound of an interval.")
+register_function(interval_get_upper, "upper", (Interval,),
+                  "Get the upper bound of an interval.")
+
+def interval_min(I, x):
+    if dispatch("<=", (I.b, x)):
+        return I
+    if dispatch("<=", (x, I.a)):
+        return Interval(x, x)
+    return Interval(I.a, x)
+
+def interval_max(I, x):
+    if dispatch("<=", (I.b, x)):
+        return Interval(x, x)
+    if dispatch("<=", (x, I.a)):
+        return I
+    return Interval(x, I.b)
+
+register_commutative_op(interval_min, "min", Interval, Number)
+register_commutative_op(interval_max, "max", Interval, Number)
+
+def interval_size(I):
+    return dispatch("abs", (dispatch("-", (I.b, I.a)),))
+register_function(interval_size, "size", (Interval,))
 
 FUNCTION_NAMES = list(FUNCTIONS.keys())
 

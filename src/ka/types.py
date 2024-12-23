@@ -203,11 +203,20 @@ class Instant:
     def __init__(self, dt):
         self.dt = dt
 
+    def __eq__(self, other):
+        return (isinstance(other, Instant)
+                and self.dt == other.dt)
+
     def __str__(self):
         return self.dt.isoformat()
 
     def __repr__(self):
         return str(self)
+
+def instant_lt(I1, I2): return I1.dt < I2.dt
+def instant_leq(I1, I2): return I1.dt <= I2.dt
+def instant_gt(I1, I2): return I1.dt > I2.dt
+def instant_geq(I1, I2): return I1.dt >= I2.dt
 
 JUST_YEAR = re.compile(r"\d{4}$")
 JUST_YEAR_AND_MONTH = re.compile(r"\d{4}-\d{2}$")
@@ -228,6 +237,13 @@ def now():
 
 def today():
     return floor_instant(now())
+
+def get_year(I): return I.dt.year
+def get_month(I): return I.dt.month
+def get_day(I): return I.dt.day
+def get_hour(I): return I.dt.hour
+def get_minute(I): return I.dt.minute
+def get_second(I): return I.dt.second
 
 def floor_instant(inst):
     dt = inst.dt
@@ -280,6 +296,12 @@ class Interval:
 
     def __repr__(self):
         return str(self)
+
+def interval_get_lower(I):
+    return I.a
+
+def interval_get_upper(I):
+    return I.b
 
 class TypeAlias:
     def __init__(self, name, actual_type):

@@ -43,6 +43,7 @@ class Tokens:
     UNIT_DIVIDE = '|'
     UNIT_CONVERT = 'to'
     EQ = '=='
+    NEQ = '!='
     LT = '<'
     LEQ = '<='
     GT = '>'
@@ -68,6 +69,7 @@ CONST_TOKENS = [
     Tokens.INTERVAL_SEP,
     Tokens.INTERVAL_CLOSE,
     Tokens.EQ,
+    Tokens.NEQ,
     Tokens.LEQ,
     Tokens.GEQ,
     Tokens.LT,

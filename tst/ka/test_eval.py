@@ -7,7 +7,8 @@ from ka.tokens import tokenise
 from ka.functions import UnknownFunctionError, NoMatchingFunctionSignatureError
 from ka.parse import parse_tokens, ParsingError
 from ka.eval import eval_parse_tree, EvalError
-from ka.types import Quantity, Array, Interval, KaRuntimeError
+from ka.types import (Quantity, Array, Interval, KaRuntimeError,
+    instant_from_iso)
 from ka.units import M, S, K
 
 def validate_result(s, expected):
@@ -218,6 +219,28 @@ def test_comparison():
         ("0 > 0", 0),
     ])
 
+def test_instant():
+    validate_results([
+        ("#1994# == #1994-01-01#", 1),
+        ("#1994# == #1995#", 0),
+        ("#1994# != #1995#", 1),
+        ("#1994# != #1994#", 0),
+        ("#1994# < #1994-01-02#", 1),
+        ("#1984# < #1944#", 0),
+        ("#1984# <= #1984#", 1),
+        ("#1984# <= #1983-12-30#", 0),
+        ("#1984# >= #1983-12-30#", 1),
+        ("#1984# >= #1984-01-01T00:00:01#", 0),
+        ("#1984# > #1983-12-31T23:59:59#", 1),
+        ("#1984# > #1984-01-01T00:00:01#", 0),
+        ("#1984-01-02# - 1", instant_from_iso("1984")),
+        ("#1984-01-02# + 1", instant_from_iso("1984-01-03")),
+        ("#1984-01-02# + 1 day", instant_from_iso("1984-01-03")),
+        ("floor(#1984-01-01T20:01:05#)", instant_from_iso("1984")),
+        ("ceil(#1984-01-01T20:01:05#)", instant_from_iso("1984-01-02")),
+        ("d=#1984-01-01T20:01:05#; {year(d), month(d), day(d), hour(d), minute(d), second(d)}", Array([1984, 1, 1, 20, 1, 5])),
+    ])
+
 def test_interval():
     validate_results([
         ("-1 in [-1,5]", 1),
@@ -243,7 +266,20 @@ def test_interval():
         ("0 > [-2, 0]", 0),
         ("0 >= [-2, 0]", 1),
         ("0 >= [-2, 0.001]", 0),
-        ("[5, 2]", Interval(0, 0))
+        ("[5, 2]", Interval(0, 0)),
+        ("[0,1] < [1.1, 2.0]", 1),
+        ("[0,1] < [0.9,1.1]", 0),
+        ("[-100, -99] < [-500, 0]", 0),
+        ("[0,1] <= [1,2]", 1),
+        ("[0,1.1] <= [1,2]", 0),
+        ("[-1,2] > [-100,-99]", 1),
+        ("[-1,2]>[-5,-1]", 0),
+        ("[-1,2] >= [-2,-1]", 1),
+        ("[-1,2] >= [-2,-.9]", 0),
+        ("I=[1,2]; {lower(I), upper(I)}", Array([1,2])),
+        ("size([-1,1])", 2),
+        ("min([-1,1], 0)", Interval(-1,0)),
+        ("max([-1,1], 0)", Interval(0,1)),
     ])
 
 def test_bad_interval_expressions():

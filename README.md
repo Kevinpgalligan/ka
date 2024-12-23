@@ -11,9 +11,10 @@ Featuring...
 * **Fractions**: `(5/3) * 3` gives `5`.
 * **Units** and unit conversion: `5 ft to m`.
 * **Probability** distributions and sampling, with a math-like syntax: `X = Bernoulli(0.3); P(X=1)`.
-* **Arrays**, also with math-like syntax: `{3*x : x in [1,3]}` gives `{3,6,9}`.
+* **Arrays**, also with math-like syntax: `{3*x : x in 1..3}` gives `{3,6,9}`.
 * **Lazy combinatorics**: `10000000!/9999999!` gives `10000000` rather than hanging.
 * **Dates and times**: `(#2024-12-25# - now()) to days` gives the number of days until Christmas.
+* **Intervals**: `2*(1±0.1)` gives an interval from 1.8 to 2.2.
 * **Plotting**: comes with an ergonomic interface to Python's matplotlib.
 * Other boring stuff: Variable assignment. Common math functions and constants.
 
@@ -28,7 +29,7 @@ More examples.
 4.28084
 >>> p = 0.7; C(10,3) * p^3 * (1-p)^7
 0.00900169
->>> p=.7; N=10; sum({C(N,k)*p^k*(1-p)^(N-k) : k in [0,4]})
+>>> p=.7; N=10; sum({C(N,k)*p^k*(1-p)^(N-k) : k in 0..4})
 0.047349
 >>> sin(90 deg)
 1 
@@ -92,7 +93,7 @@ ka version 1.2
 $
 ```
 
-Execute a script file using the `--script` argument. Remember that each statement must be separated by a semi-colon; the value of the last statement will be printed to the console.
+Execute a script file using the `--script` argument. Each statement must be separated by a semi-colon, and the value of the last statement will be printed to the console.
 
 ```
 $ ka --script path/to/script.ka
@@ -113,12 +114,14 @@ An individual statement can be either an assignment (`a = 3`) or an expression (
 
 An assignment consists of a variable name (such as `a`), followed by `=`, followed by an expression (such as `3` or `1+1` or `sin(90 deg)`). Assignments are not expressions, so you can't nest assignments like `a=(b=3)`. You can, however, assign the value of one variable to another: `a=3; b=a;`.
 
-An expression is a sequence of math operations that returns a value. Addition, subtraction, function calls, and so on. If the value of an expression is a quantity (a number with a unit attached), then the unit can be converted to something else using the operator `to`. For example, this assigns `a` the magnitude of 3 metres when it's converted to feet: `a = 3m to ft`.
+An expression is a sequence of math operations that returns a value: addition, subtraction, function calls, and so on. If the value of an expression is a quantity (a number with a unit attached), then the unit can be converted to something else using the operator `to`. For example, this assigns `a` the magnitude of 3 metres when it's converted to feet: `a = 3m to ft`.
 
 ### Constants and Numbers
-`pi` and `e` are the only constants provided. Currently, they're treated like variables and can be overwritten: `pi=3`, woops.
+`pi` and `e` are the only mathematical constants provided. They're treated like variables and can be overwritten: `pi=3`, woops. `true` and `false` are also variables, with the values `1` and `0`, respectively.
 
-The typical selection of number bases are supported: use the `0b` prefix for binary, `0o` for octal, and `0x` for hexadecimal. So `0x10` is 16 in base-10. Note that alternative bases can only be integers, and can't be mixed with scientific notation (otherwise, there's a parsing ambiguity in something like `0x1e-10`).
+Numbers can be integers (`123`), floats (`-1.23`), fractions (`1/3`), and they can be provided in scientific notation (`1.23e-7`).
+
+The typical selection of number bases are supported: use the `0b` prefix for binary, `0o` for octal, and `0x` for hexadecimal. So `0x10` is 16 in base-10. Note that numbers with alternative bases can only be integers, and can't be mixed with scientific notation (otherwise, there's a parsing ambiguity in something like `0x1e-10`).
 
 ### Types
 Ka is strongly typed, not statically typed. This means that when you pass a fractional number to a function that expects an integer, the type system will complain. But you don't have to declare the type of anything in advance.
@@ -133,9 +136,11 @@ The hierarchy of numerical types goes: `Number` > `Real` > `Rational` (Fraction)
 
 Quantities consist of two components: a magnitude and a unit (see: the section on units). Any quantities can be multiplied together or divided into each other, but only quantities of the same unit type can be added or subtracted. For example, you can add `1 metre` and `1 foot`, but not `1 metre` and `1 second`. This is enforced by the binary operators themselves (addition and subtraction).
 
-Most functions can be applied to both Numbers and Quantities.
+Most arithmetic functions can be applied to both Numbers and Quantities.
 
 `String`s, like `"hello world"`, are (so far) only used as configuration parameters for the plotting interface, and there's no way to manipulate or combine them.
+
+Other types like `Instant`s, `Interval`s and `Array`s are discussed in later sections.
 
 ### Functions and operators
 Functions accept positional arguments and keyword arguments. A function call can look something like the following: `f(x, y, keyword_arg: 1, another: "hi")`. Some functions, like `plot`, accept a variable number of the same argument type; `plot` happens to accept any number of `Plot`-type arguments.
@@ -236,9 +241,9 @@ Arrays are written like so: `{1,2,3}`. They're basically a shim over Python list
 
 The elements can be arbitrary expressions: `{1+1,2*x, 1 m}`.
 
-The interval `[lo,hi]` generates a range of integers `lo`, `lo+1`, ..., `hi`.
+The interval `lo..hi` generates a range of integers `lo`, `lo+1`, ..., `hi`.
 
-Based on the mathematical notation for sets, arrays can also be generated from a series of clauses / conditions. For example, to calculate the sum of the squares of all odd numbers between 1 and 10: `sum({x^2 : x in [1,10], (x%2)==1})`. 
+Based on the mathematical notation for sets, arrays can also be generated from a series of clauses / conditions. For example, to calculate the sum of the squares of all odd numbers between 1 and 10: `sum({x^2 : x in 1..10, (x%2)==1})`. 
 
 Array-related functions, given an array `A`:
 
@@ -249,8 +254,9 @@ Array-related functions, given an array `A`:
 * `size(A)` returns the number of elements in the array.
 * `max(A)` returns the maximum element in the array.
 * `min(A)` -- need I say more?
-* `range(lo,hi)` returns an array of all integers between the integers `lo` and `hi` (bounds are inclusive). `[lo,hi]` is syntax sugar for calling this function.
+* `range(lo,hi)` returns an array of all integers between the integers `lo` and `hi` (bounds are inclusive). `lo..hi` is syntax sugar for calling this function.
 * `range(lo,hi,step)` returns numbers between `lo` and `hi` in steps of size `step`.
+* `x in A` returns whether `x` is in the Array `A`.
 
 ### Dates and times
 The `Instant` type represents a particular moment in time. An instance of this type can be created using the syntax `#1984-01-25#`, where any [ISO-8601](https://en.wikipedia.org/wiki/ISO_8601)-formatted string can be substituted between the "#" delimiter.
@@ -262,6 +268,8 @@ The following functions and operations are also available for working with time:
 * `floor(instant)` returns a copy of the Instant with the time set to midnight at the *START* of the day.
 * `ceil(instant)` returns a copy of the Instant with the time set to midnight at the *END* of the day.
 * Time quantities (like `10 seconds`) can be added to an Instant to get a new Instant. Same for integers, in which case the integer represents a number of days. You can also subtract time quantities and integers from an Instant.
+* `Instant`s can be compared using the usual operators: `==`, `!=`, `<`, `>=`, ...
+* `year(I)`, `month(I)`, `day(I)`, `hour(I)`, `minute(I)`, `second(I)` extract the different components of an Instant.
 
 The following examples show how to calculate: 1. the number of days until Christmas, 2. the number of hours until 9am tomorrow, and 3. the number of seconds until 16:21:10, March 8th, 2025.
 
@@ -275,12 +283,12 @@ The following examples show how to calculate: 1. the number of days until Christ
 ```
 
 ### Plotting
-The following interface is basically a shim over Python's matplotlib from Python. The drawing functions, like `line(...)` and `histogram(...)`, return a `Plot`, which can then be passed to the `plot(...)` function in order to actually render a plot. Alternatively, if a `Plot` is the last value in a script, or is returned at the REPL, it implicitly gets passed to `plot(...)`. Wherever a `colour` parameter is expected (as a String), it should follow the format expected by the matplotlib API ("red", "#0f0f0f", ...). The same applies for other String-type arguments that get passed along to matplotlib. 
+The following interface is basically a shim over Python's matplotlib plotting library. The drawing functions, like `line(...)` and `histogram(...)`, return a `Plot`, which can then be passed to the `plot(...)` function in order to render it. Alternatively, if a `Plot` is the last value in a script, or is returned at the REPL, it will be rendered implicitly. Wherever a `colour` parameter is expected (as a String) (yes, British English spelling, sorry), it should follow the format expected by the matplotlib API ("red", "#0f0f0f", ...). The same applies for other String-type arguments that get passed along to matplotlib. 
 
 Here's an example. Executing this script (`ka --script examples/trigplot.ka`) will render a plot of sin(x) versus cos(x).
 
 ```
-xs = {0.2*i : i in [0,100]};
+xs = {0.2*i : i in 0..100};
 plot(
     options(
         integer_x_ticks: true,
@@ -294,32 +302,32 @@ plot(
 
 `plot(*ps)` accepts a variable number of `Plot`-type arguments and uses them to produce a plot, as seen above.
 
-`options(...)` configures the appearance of the plot, and returns a `Plot` type. That `Plot` should be passed to the `plot(...)` function to have any effect. The following keyword arguments are accepted:
+`options(...)` configures the appearance of the plot, and returns a `Plot` type. Its output should be passed to the `plot(...)` function to have any effect. The following keyword arguments are accepted:
 
 * `xlabel` (String) Label for the x-axis.
-* `ylabel` (String)       "       y-axis.
+* `ylabel` (String) Same, but for y-axis.
 * `xlo` (Number) Lower bound for x-axis.
-* `xhi` (Number) Upper        "
+* `xhi` (Number) Upper bound for x-axis.
 * `ylo` (Number) Same, but for y-axis.
-* `yhi` (Number)          "
+* `yhi` (Number) Same, but for y-axis.
 * `grid` (Bool) Whether to display a grid of lines over the plot.
 * `title` (String) Plot title.
 * `xlog` (Bool) Whether to use log10 scale in x dimension.
-* `ylog` (Bool)            "                  y     ".
+* `ylog` (Bool) Same, but for y dimension.
 * `legend` (Bool) Whether to display a legend, showing plot labels.
 * `xticks` (Array) Where to place ticks on the x-axis.
 * `yticks` (Array) Same, but for y-axis.
 * `integer_x_ticks` (Bool) Whether to use integer-rounded ticks for the x-axis.
 * `integer_y_ticks` (Bool) Same, but for y-axis.
 
-`line(xs, ys, ...)` does a line plot with the given x & y values (passed as Arrays`. It returns a `Plot`, which, if it's the last value in a script or is returned at the REPL, will produce a matplotlib plot. It accepts all the keywords that can be passed to `options`, as well as:
+`line(xs, ys, ...)` does a line plot with the given x & y values (passed as Arrays`. It returns a `Plot`, which, if it's the last value in a script or is returned at the REPL, will be rendered as a matplotlib plot. It accepts all the keywords that can be passed to `options`, as well as:
 
 * `label` (String) Label for the line.
 * `colour` (String) The colour of the line itself.
 * `marker` (String) Determines the appearance of the marker. See the matplotlib API for which values are acceptable, but e.g. `"o"` gives a circle, `"s"` gives a square, and `"."` gives a small dot.
 * `markercolour` (String) The colour of the marker.
 
-`histogram(xs, ...)` returns a `Plot` that can be used to render a histogram based on the values in `xs`. The range of the values is divided up into bins, the number of values falling in each bin is counted, and then a bar is plotted for each bin showing the number of values it contains. Like `line`, it accepts all the same keyword arguments as `options`, as well as:
+`histogram(xs, ...)` returns a `Plot` that can be used to render a histogram based on the values in `xs`. The range spanned by the values is divided up into bins; the number of values falling into each bin is counted; and then a bar is plotted for each bin showing the number of values it contains. Like `line`, it accepts all the same keyword arguments as `options`, as well as:
 
 * `label` (String) Label for the histogram.
 * `cumulative` (Bool) Whether the count should accumulate across the bins. If `true`, the bars will always increase in height. 
@@ -329,6 +337,7 @@ plot(
 * `bin_width` (Number) The width of the bins.
 * `start` (Number) Where the bins should start. If not given, this is based on the minimum of the values.
 * `align` (String) How the bars should be aligned with the center of the bin. Acceptable values are `"left"`, `"mid"` (default), and `"right"`.
+* `border_colour` (String) The border colour of the histogram bars.
 
 Here's an example that uses `histogram(...)` to plot the CDF of a Poisson distribution.
 
@@ -377,9 +386,35 @@ scatter(
 `text(x, y, s, colour: String, size: String)` displays the String `s` at the given `x` & `y` coordinates. The keyword argument `size` sets the font size.
 
 ### Lazy Combinatorics
-Some functions and operators, like the factorial (`5!`) and binomial coefficient function (`C(5,3)`), return a Combinatoric type instead of a number. This type can be used wherever the Number type can be used, but is evaluated lazily. For example, if `a=100!` is entered at the REPL, the factorial won't be evaluated at all, because its value hasn't been used anywhere. If `a/99!` is then entered, the Combinatoric will finally be evaluated, but not before the numerator and denominator mostly cancel out, leaving just `100`. Basically no multiplication is required to compute the final value.
+Some functions and operators, like the factorial (`5!`) and binomial coefficient function (`C(5,3)`), return a Combinatoric type instead of a number. This type can be used wherever the Number type can be used, but is evaluated lazily. For example, if `a=100!` is entered at the REPL, the factorial won't be evaluated at all, because its value hasn't been used anywhere. If `a/99!` is then entered, the Combinatoric will finally be evaluated, but not before the numerator and denominator mostly cancel out, leaving just `100`. No multiplication is required to compute the final value.
 
 The value won't always be resolved automatically, e.g. currently you'll get an error if you pass a Combinatoric type in an Array to the plotting interface. This can be resolved by explicitly resolving the value with `int(c)` or `float(c)`.
+
+### Intervals
+Interval arithmetic is supported by the language via the `Interval` type. `[-5,10]` is an interval containing all real numbers between -5 and 10, hence why `3.123123 in [-5,10]` returns `1` (meaning "true").
+
+Most numeric operations can be performed with, or on, intervals. Some examples...
+
+```
+[0,1] + 1          --> [1, 2]
+2 * [5,10]         --> [10, 20]
+5 in [0,10]        --> 1
+5 in [6,10]        --> 0
+3 < [2,10]         --> 0    
+   (only true if true for all elements in interval)
+3 < [5, 10]        --> 1
+[0,3] < [5, 10]    --> 1   
+   (true if true for all pairwise combinations of elements)
+[-1, 1]^2          --> [0, 1]
+log2([4, 16])      --> [2, 4]
+sqrt([-1,1])       --> (Error, square root of negative numbers)
+abs([-10, 1])      --> [0, 1]
+min([-5, 5], 0)    --> [-5, 0]
+   (it's like taking the minmum of 0 and each element)
+lower([0,1])       --> 0
+upper([0,1])       --> 1
+size([-1,.5])      --> 1.5
+```
 
 ### Configuration
 Ka can be configured through a config file at `${YOUR_HOME_DIR}/.config/ka/config`. All available properties are shown below with their default values. `precision` determines the floating point precision; the other properties determine various characteristics of the GUI like its dimensions and keyboard shortcuts.

@@ -180,7 +180,7 @@ def parse_comparison(t):
     terms = [parse_sum(t)]
     comparison_ops = []
     for _ in range(2):
-        if not t.next_is_one_of(Tokens.EQ, Tokens.LT, Tokens.GT,
+        if not t.next_is_one_of(Tokens.EQ, Tokens.NEQ, Tokens.LT, Tokens.GT,
                                 Tokens.LEQ, Tokens.GEQ, Tokens.ASSIGNMENT_OP,
                                 Tokens.ELEMENT_OF):
             break
