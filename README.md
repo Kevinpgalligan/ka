@@ -56,6 +56,7 @@ More examples.
   - [Dates and times](#dates-and-times)
   - [Plotting](#plotting)
   - [Lazy Combinatorics](#lazy-combinatorics)
+  - [Intervals](#intervals)
   - [Configuration](#configuration)
 * [FAQ](#faq)
 * [Development](#development)
@@ -391,7 +392,7 @@ Some functions and operators, like the factorial (`5!`) and binomial coefficient
 The value won't always be resolved automatically, e.g. currently you'll get an error if you pass a Combinatoric type in an Array to the plotting interface. This can be resolved by explicitly resolving the value with `int(c)` or `float(c)`.
 
 ### Intervals
-Interval arithmetic is supported by the language via the `Interval` type. `[-5,10]` is an interval containing all real numbers between -5 and 10, hence why `3.123123 in [-5,10]` returns `1` (meaning "true").
+Interval arithmetic is supported by the language via the `Interval` type. `[-5,10]` is an interval containing all real numbers between -5 and 10, hence why `3.123123 in [-5,10]` returns `1` (meaning "true"). Intervals can be used to perform calculations with uncertainty.
 
 Most numeric operations can be performed with, or on, intervals. Some examples...
 
