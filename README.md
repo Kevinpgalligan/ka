@@ -146,12 +146,6 @@ Most arithmetic functions can be applied to both Numbers and Quantities.
 Other types like `Instant`s, `Interval`s and `Array`s are discussed in later sections.
 
 ### Functions and operators
-Functions accept positional arguments and keyword arguments. A function call can look something like the following: `f(x, y, keyword_arg: 1, another: "hi")`. Some functions, like `plot`, accept a variable number of the same argument type; `plot` happens to accept any number of `Plot`-type arguments.
-
-Here's a selection of functions and operators in the language. To list all the functions, run `ka --functions`. To find out more about any particular function (including what types of arguments it accepts), run the CLI command `ka --function {name}`, or run the interpreter commands `%f {name}` or `%fun {name}`.
-
-* +, -, *, /, %, ^, <, <=, ==, !=, >, >=, sin, cos, tan, sqrt, ln, log10, log2, abs, floor, ceil, round, int, float, log, C, !, quit
-
 Ka has functions and 3 types of operators: binary operators, prefix operators, and postfix operators.
 
 The binary operators, like addition (`+`), exponentiation (`^`) and division (`/`), take two arguments and come between those arguments, like `1+1`.
@@ -169,6 +163,12 @@ Operator precedence goes:
 * `<`, `<=`, `>`, `>=`, `==`, `!=`
 
 This means that `2^3!*5+1` gets parsed the same as `((2^(3!))*5)+1`.
+
+Functions accept positional arguments and keyword arguments. A function call can look something like the following: `f(x, y, keyword_arg: 1, another: "hi")`. Some functions, like `plot`, accept a variable number of the same argument type; `plot` happens to accept any number of `Plot`-type arguments.
+
+Here's a selection of functions and operators in the language. To list all the functions, run `ka --functions`. To find out more about any particular function (including what types of arguments it accepts), run the CLI command `ka --function {name}`, or run the interpreter commands `%f {name}` or `%fun {name}`.
+
+* +, -, *, /, %, ^, <, <=, ==, !=, >, >=, sin, cos, tan, sqrt, ln, log10, log2, abs, floor, ceil, round, int, float, log, C, !, quit
 
 ### Units
 Here are most of the units supported by the language. To see a complete list (excluding currencies), run `ka --units` from the command-line.
@@ -216,7 +216,6 @@ The following examples show that: 1. if you worked 24/7 for 2000 years, earning 
 >>> 100 bitcoin to million euro
 8.9007
 >>> mass_per_dollar = 0.001 kg | dollar
-0.001 kg eur^-1
 >>> G = 9.81 m|s^2
 >>> 1 million dollars * mass_per_dollar * G to newtons
 9810
@@ -267,7 +266,7 @@ Arrays are written like so: `{1,2,3}`. They're basically a shim over Python list
 
 The elements can be arbitrary expressions: `{1+1,2*x, 1 m}`.
 
-The interval `lo..hi` generates a range of integers `lo`, `lo+1`, ..., `hi`.
+The special synax `lo..hi` generates a range of integers `lo`, `lo+1`, ..., `hi`.
 
 Based on the mathematical notation for sets, arrays can also be generated from a series of clauses / conditions. For example, to calculate the sum of the squares of all odd numbers between 1 and 10: `sum({x^2 : x in 1..10, (x%2)==1})`. 
 
@@ -294,6 +293,7 @@ The following functions and operations are also available for working with time:
 * `floor(instant)` returns a copy of the Instant with the time set to midnight at the *START* of the day.
 * `ceil(instant)` returns a copy of the Instant with the time set to midnight at the *END* of the day.
 * Time quantities (like `10 seconds`) can be added to an Instant to get a new Instant. Same for integers, in which case the integer represents a number of days. You can also subtract time quantities and integers from an Instant.
+* Subtract two instants to get the time between them.
 * `Instant`s can be compared using the usual operators: `==`, `!=`, `<`, `>=`, ...
 * `year(I)`, `month(I)`, `day(I)`, `hour(I)`, `minute(I)`, `second(I)` extract the different components of an Instant.
 
@@ -346,7 +346,7 @@ plot(
 * `integer_x_ticks` (Bool) Whether to use integer-rounded ticks for the x-axis.
 * `integer_y_ticks` (Bool) Same, but for y-axis.
 
-`line(xs, ys, ...)` does a line plot with the given x & y values (passed as Arrays`. It returns a `Plot`, which, if it's the last value in a script or is returned at the REPL, will be rendered as a matplotlib plot. It accepts all the keywords that can be passed to `options`, as well as:
+`line(xs, ys, ...)` does a line plot with the given x & y values (passed as Arrays). It returns a `Plot`, which, if it's the last value in a script or is returned at the REPL, will be rendered as a matplotlib plot. It accepts all the keywords that can be passed to `options`, as well as:
 
 * `label` (String) Label for the line.
 * `colour` (String) The colour of the line itself.
@@ -361,11 +361,11 @@ plot(
 * `colour` (String) Colour of the bars.
 * `num_bins` (Number) How many bins.
 * `bin_width` (Number) The width of the bins.
-* `start` (Number) Where the bins should start. If not given, this is based on the minimum of the values.
+* `start` (Number) Where the bins should start on the x-axis. If not given, this is based on the minimum of the values.
 * `align` (String) How the bars should be aligned with the center of the bin. Acceptable values are `"left"`, `"mid"` (default), and `"right"`.
 * `border_colour` (String) The border colour of the histogram bars.
 
-Here's an example that uses `histogram(...)` to plot the CDF of a Poisson distribution.
+Here's an example that uses `histogram(...)` to plot the CDF of a Poisson distribution (see `examples/cdf.ka`).
 
 ```
 X = Poisson(7);
