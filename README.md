@@ -203,7 +203,7 @@ The unit system also incorporates currencies. They exist in an 8th dimension: th
 
 A pre-scraped database of currencies and exchange rates are shipped with Ka, which are current as of December 23rd, 2024. To re-scrape this data, run `ka --scrape-currency-to /path/to/file`, and then move the resulting file to `~/.config/ka/currency` - at least, that's the default path, but you can change it with the `currency-path` configuration parameter.
 
-Another configuration parameter is `base-currency`, which is set to `eur` (for "euro") by default. All cash amounts are represented in the base currency.
+Another configuration parameter is `base-currency`, which is set to `eur` (the ISO-4217 code name of the Euro) by default. All cash amounts are represented in the base currency, so `1 usd` will automatically be converted to `0.961345 eur` (or whatever).
 
 The introspection commands of the interpreter/CLI do not display currencies alongside the other units, since there are too many currencies. Instead, use `ka --currencies`, or, in the interpreter, `%cs` / `%currencies`. This will show you the exchange rates as well as the currency names and symbols.
 
