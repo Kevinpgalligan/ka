@@ -36,6 +36,7 @@ class Tokens:
     DIV = '/'
     MOD = '%'
     EXP = '^'
+    PLUSMINUS = '±'
     VAR = 'identifier'
     NUM = 'number'
     FUNCTION_ARG_SEPARATOR = ','
@@ -84,6 +85,7 @@ CONST_TOKENS = [
     Tokens.DIV,
     Tokens.MOD,
     Tokens.EXP,
+    Tokens.PLUSMINUS,
     Tokens.FUNCTION_ARG_SEPARATOR,
     Tokens.FACTORIAL,
     Tokens.UNIT_DIVIDE,

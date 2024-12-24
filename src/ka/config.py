@@ -2,15 +2,17 @@ import os.path
 from pathlib import Path
 
 CONFIG_PATH = Path.home().joinpath(".config", "ka", "config")
+DEFAULT_HISTORY_PATH = Path.home().joinpath(".config", "ka", "history")
 
 CONFIG = dict()
 HAVE_READ = False
 
 class ConfigProperty:
-    def __init__(self, name, default, num=False):
+    def __init__(self, name, default, num=False, boolean=False):
         self.name = name
         self.default = default
         self.num = num
+        self.boolean = boolean
 
 class ConfigProperties:
     PRECISION = ConfigProperty("precision", 6, num=True)
@@ -23,6 +25,9 @@ class ConfigProperties:
     DEFAULT_SHORTCUT_UNITS = ConfigProperty("shortcut-units", "Ctrl+Q")
     DEFAULT_SHORTCUT_PREFIXES = ConfigProperty("shortcut-prefixes", "Ctrl+P")
     DEFAULT_SHORTCUT_CLOSE = ConfigProperty("shortcut-close", "Ctrl+W")
+    SAVE_HISTORY = ConfigProperty("save-history", True, boolean=True)
+    HISTORY_PATH = ConfigProperty("history-path", DEFAULT_HISTORY_PATH)
+    PROMPT = ConfigProperty("prompt", ">>>")
 
 def get(prop):
     global HAVE_READ
@@ -56,6 +61,14 @@ def read_config(path, error_out=None):
                         val = int(val)
                     except ValueError:
                         printerr(f"WARNING: expecting integer value for config variable '{name}'.")
+                        continue
+                if prop.boolean:
+                    if val == "true":
+                        val = True
+                    elif val == "false":
+                        val = False
+                    else:
+                        printerr(f"WARNING: expecting boolean value (true/false) for config variable '{name}'.")
                         continue
                 CONFIG[name] = val
             else:

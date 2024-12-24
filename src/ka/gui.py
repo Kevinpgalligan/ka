@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (QApplication, QWidget, QLineEdit, QLabel,
 
 from .interpret import (KA_VERSION, execute, ResultBox, stringify_result,
     get_functions_string, get_units_string, format_unit_info,
-    format_function_info)
+    format_function_info, load_history, save_history)
 from .eval import EvalEnvironment
 from .functions import FUNCTION_NAMES
 from .units import UNITS, PREFIXES
@@ -234,8 +234,17 @@ def run_gui():
     w = MainWindow(size, font_size)
     env = EvalEnvironment()
     displayed_stuff = []
-    command_history = []
-    command_index = 0
+
+    command_history = load_history()
+    new_command_history = []
+    command_index = len(command_history)
+    def add_command_history(txt):
+        nonlocal command_history, new_command_history
+        txt = txt.strip()
+        if len(txt) > 0:
+            command_history.append(txt)
+            new_command_history.append(txt)
+
     def add_display_text(txt, colour="gray"):
         displayed_stuff.extend([
             f"<font color=\"{colour}\">",
@@ -249,12 +258,13 @@ def run_gui():
     def update_display():
         displayed_str = "".join(displayed_stuff)
         w.ka_widget.output_box.setText(displayed_str)
+
     def on_key(key):
         nonlocal command_index, command_history
         if key == QtCore.Qt.Key_Return:
             out = io.StringIO()
             txt = w.ka_widget.input_widget.text()
-            command_history.append(txt)
+            add_command_history(txt)
             command_index = len(command_history)
             result_box = ResultBox()
             assigned_box = ResultBox()
@@ -284,8 +294,7 @@ def run_gui():
                 # User might be currently composing a command, don't
                 # wanna lose it.
                 txt = w.ka_widget.input_widget.text()
-                if txt:
-                    command_history.append(txt)
+                add_command_history(txt)
             command_index -= 1
             w.ka_widget.input_widget.setText(command_history[command_index])
     def next_command():
@@ -323,7 +332,9 @@ def run_gui():
     w.ka_widget.display_fn_signal.connect(display_fn)
     w.ka_widget.display_unit_signal.connect(display_unit)
     w.show()
-    sys.exit(app.exec())
+    code = app.exec()
+    save_history(new_command_history)
+    sys.exit(code)
 
 if __name__ == "__main__":
     run_gui()

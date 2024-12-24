@@ -13,7 +13,7 @@ from .types import (simplify_type, Quantity, get_external_type_name,
     instant_minus_instant, Interval, Any, KaRuntimeError,
     instant_lt, instant_leq, instant_gt, instant_geq,
     interval_get_upper, interval_get_lower, get_year, get_month,
-    get_day, get_hour, get_minute, get_second)
+    get_day, get_hour, get_minute, get_second, TypeAlias)
 from .units import QSPACE
 from .probability import (Binomial, Poisson, Geometric, Bernoulli,
                           UniformInt, Exponential, Uniform, Gaussian,
@@ -96,6 +96,12 @@ class FunctionHeader:
     def coerce_kwarg(self, k, v):
         return self.sig.coerce_kwarg(k, v)
 
+    def __str__(self):
+        return f"FunctionHeader[name='{self.name}', f={self.f}, sig={self.sig}]"
+
+    def __repr__(self):
+        return str(self)
+
 class UnknownFunctionError(Exception):
     def __init__(self, name):
         self.name = name
@@ -170,14 +176,20 @@ def get_closest_match(matching_headers):
     # (Rational, Integral).
     closest_header = matching_headers[0]
     for header in matching_headers[1:]:
-        if types_below(header.sig, header.sig):
+        if types_below(header.sig, closest_header.sig):
             closest_header = header
     return closest_header
 
 def types_below(sig_A, sig_B):
     # Returns whether the types in sig_A are clearly below the types
     # in sig_B in the type hierarchy.
-    return all(issubclass(tA, tB) for tA, tB in zip(sig_A.args, sig_B.args))
+    return all(type_below(tA, tB)
+               for tA, tB in zip(sig_A.args, sig_B.args))
+
+def type_below(t1, t2):
+    if isinstance(t1, TypeAlias): t1 = t1.actual_type
+    if isinstance(t2, TypeAlias): t2 = t2.actual_type
+    return issubclass(t1, t2)
 
 def register_function(f, name, arg_types,
         docstring=None,
@@ -251,8 +263,8 @@ for name, op, docstring in BINARY_OPS:
     register_binary_op(name, op, docstring=docstring)
 # This ensures that, if isn't a more specific equals operator to compare two
 # items, then they'll be considered unequal.
-register_function(lambda x, y: False, "==", (Any, Any))
-register_function(lambda x, y: True, "!=", (Any, Any))
+register_function(lambda x, y: 0, "==", (Any, Any))
+register_function(lambda x, y: 1, "!=", (Any, Any))
 # Override division for integers so that
 # it returns a fraction.
 register_function(fraction_divide, "/", (Integral, Integral))
@@ -739,7 +751,7 @@ def interval_has_negative(intr):
 
 def interval_to_power(intr, exponent):
     if interval_has_negative(intr) and is_fractional(exponent):
-        raise KaRuntimeError("Tried to raise an interval to fractional power when it contains negative numbers.")
+        raise KaRuntimeError("Tried to raise an interval containing negative numbers to a fractional power.")
     candidates = [intr.a, intr.b]
     if interval_contains(intr, 0):
         if dispatch("<", (exponent, 0)):
@@ -840,6 +852,12 @@ def interval_size(I):
     return dispatch("abs", (dispatch("-", (I.b, I.a)),))
 register_function(interval_size, "size", (Interval,))
 
+def interval_plusminus(x, y):
+    return make_interval_from_bounds(dispatch("-", (x, y)), dispatch("+", (x, y)))
+
+register_function(interval_plusminus, "±", (Number, Number))
+register_function(interval_plusminus, "tol", (Number, Number))
+
 FUNCTION_NAMES = list(FUNCTIONS.keys())
 
 if __name__ == "__main__":
@@ -849,3 +867,4 @@ if __name__ == "__main__":
     print(dispatch("sin", (Combinatoric(ns=[IntRange(1,3)]),)))
     print(repr(str(FunctionSignature(tuple(), vararg=Plot))))
     print(dispatch("now", tuple()))
+    print(dispatch("^", (Interval(-2, 2), 2)))

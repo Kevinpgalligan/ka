@@ -1,6 +1,8 @@
 import readline
 from fractions import Fraction as frac
 import sys
+import os
+import os.path
 
 from .tokens import (tokenise, UnknownTokenError, BadNumberError,
     UnclosedStringError, UnclosedInstantError)
@@ -19,7 +21,6 @@ from .probability import InvalidParameterException
 from .config import ConfigProperties
 import ka.config
 
-PROMPT = ">>> "
 INTERPRETER_COMMAND_PREFIX = "%"
 KA_VERSION = "1.2"
 
@@ -117,22 +118,68 @@ INTERPRETER_COMMANDS = [
 def run_interpreter():
     env = EvalEnvironment()
     print("ka version", KA_VERSION)
+    prompt = ka.config.get(ConfigProperties.PROMPT) + " "
+    readline_load_history()
+    history = []
     while True:
         try:
-            s = input(PROMPT)
+            s = input(prompt).strip()
         except KeyboardInterrupt:
             print()
+            save_history(history)
             break
+        if len(s) > 0:
+            history.append(s)
         try:
             if s.startswith(INTERPRETER_COMMAND_PREFIX):
                 execute_interpreter_command(s)
             else:
                 execute(s, env, reraise_signals=True)
         except ExitKaSignal:
+            save_history(history)
             break
         except KeyboardInterrupt:
             print()
             pass
+
+def readline_load_history():
+    for line in load_history():
+        readline.add_history(line.strip())
+
+def load_history():
+    path = ka.config.get(ConfigProperties.HISTORY_PATH)
+    # Wrap everything in try-except because this is non-essential, don't
+    # want to crash the whole app and prevent it from running because of
+    # a bug here.
+    if history_enabled():
+        try:
+            if os.path.exists(path):
+                with open(path, "r") as f:
+                    return [line.strip() for line in f.readlines()
+                            if len(line.strip())>0]
+        except Exception as e:
+            print("Failed to load history because: " + str(e), out=sys.stderr)
+    return []
+
+def history_enabled():
+    return ka.config.get(ConfigProperties.SAVE_HISTORY)
+
+def save_history(history):
+    try:
+        path = ka.config.get(ConfigProperties.HISTORY_PATH)
+        if history_enabled():
+            if os.path.exists(path):
+                with open(path, "a") as f:
+                    f.write("\n")
+                    f.write("\n".join(history))
+            else:
+                base, filename = os.path.split(path)
+                if not os.path.exists(base):
+                    os.makedirs(base)
+                with open(path, "w") as f:
+                    f.write("\n".join(history))
+    except Exception as e:
+        print("Failed to save history because: " +  str(e), out=sys.stderr)
 
 def execute_interpreter_command(s):
     args = s[len(INTERPRETER_COMMAND_PREFIX):].split()

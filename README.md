@@ -397,6 +397,9 @@ Interval arithmetic is supported by the language via the `Interval` type. `[-5,1
 Most numeric operations can be performed with, or on, intervals. Some examples...
 
 ```
+1 ± 0.1            --> [0.9, 1.1]
+tol(1, 0.1)        --> [0.9, 1.1]
+   (same as ±)
 [0,1] + 1          --> [1, 2]
 2 * [5,10]         --> [10, 20]
 5 in [0,10]        --> 1
@@ -431,6 +434,9 @@ shortcut-functions=Ctrl+F
 shortcut-units=Ctrl+Q
 shortcut-prefixes=Ctrl+P
 shortcut-close=Ctrl+W
+save-history=true
+history-path=[home directory]/.config/ka/history
+prompt=>>>
 ```
 
 ## FAQ

@@ -280,6 +280,8 @@ def test_interval():
         ("size([-1,1])", 2),
         ("min([-1,1], 0)", Interval(-1,0)),
         ("max([-1,1], 0)", Interval(0,1)),
+        ("tol(1, 1)", Interval(0, 2)),
+        ("1±1", Interval(0, 2)),
     ])
 
 def test_bad_interval_expressions():

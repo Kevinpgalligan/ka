@@ -192,7 +192,7 @@ def parse_comparison(t):
                                 list(map(lambda t: t.tag, comparison_ops)))
 
 def parse_sum(t):
-    return parse_binary_op(t, parse_product, [Tokens.PLUS, Tokens.MINUS])
+    return parse_binary_op(t, parse_product, [Tokens.PLUS, Tokens.MINUS, Tokens.PLUSMINUS])
 
 def parse_binary_op(t, parse_operand, operator_tokens):
     left = parse_operand(t)
