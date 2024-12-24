@@ -2,6 +2,10 @@ import collections
 from fractions import Fraction as frac
 import math
 
+import ka.config
+from .config import ConfigProperties
+from .currency import load_currency_data
+
 QUANTITY_TO_QV = {} # <-- this is used only to check for mistakes
 QV_TO_QUANTITY = collections.defaultdict(list)
 NAME_TO_UNIT = {}
@@ -154,6 +158,9 @@ class QuantitySpace:
             Vector(tuple(1 if name==basis_name else 0 for name in self.base_units)),
             self.base_units)
 
+    def has_basis_vector(self, name):
+        return any(name==basis_name for basis_name in self.base_units)
+
     def get_zero(self):
         return QuantityVector(Vector(tuple(0 for _ in self.base_units)), self.base_units)
 
@@ -217,9 +224,23 @@ def register_derived_unit(symbol, singular_name, base_unit, multiple=1, plural_n
                          base_unit.quantity_vector, multiple=base_unit.multiple*multiple,
                          plural_name=plural_name)
 
+DEFAULT_BASE_CURRENCY = "eur"
+CURRENCY_DATA = load_currency_data()
+BASE_CURRENCY = ka.config.get(ConfigProperties.BASE_CURRENCY)
+def has_currency(sym, currency_data):
+    return any(c.symbol == sym for c in currency_data)
+if not has_currency(BASE_CURRENCY, CURRENCY_DATA):
+    if has_currency(DEFAULT_BASE_CURRENCY, CURRENCY_DATA):
+        BASE_CURRENCY = DEFAULT_BASE_CURRENCY
+    else:
+        BASE_CURRENCY = None
+
 ## Here's the "space" based on the base units we wanna use.
 ## All quantities exist within this space.
-QSPACE = QuantitySpace(["kg", "m", "s", "A", "K", "mol", "cd"])
+BASE_UNITS = ["kg", "m", "s", "A", "K", "mol", "cd"]
+if BASE_CURRENCY is not None:
+    BASE_UNITS.append(BASE_CURRENCY)
+QSPACE = QuantitySpace(BASE_UNITS)
 KG = QSPACE.get_basis_vector("kg")
 M = QSPACE.get_basis_vector("m")
 S = QSPACE.get_basis_vector("s")
@@ -336,3 +357,54 @@ register_unit("thousand", "thousand", "quantity",UNITLESS, multiple=1000)
 register_unit("million", "million", "quantity", UNITLESS, multiple=1000000)
 register_unit("billion", "billion", "quantity", UNITLESS, multiple=1000000000)
 register_unit("trillion", "trillion", "quantity", UNITLESS, multiple=1000000000000)
+
+SPECIAL_CURRENCY_SYMBOLS = {
+    # There's special handling in the tokeniser to read these characters.
+    # Should really come up with a more general solution and allow unicode
+    # variable names.
+    "usd": "$",
+    "eur": "€",
+    "gbp": "£",
+    "jpy": "¥"
+}
+# Making sure we use common names for these big currency rather
+# than the verbose "usdollar", "japaneseyen", "britishpound".
+SPECIAL_NAMES = {
+    "usd": "dollar",
+    # actually, this clashes with the unit of weight, so "britishpound" it
+    # will be.
+    #"gbp": "pound",  
+    "jpy": "yen",
+}
+
+if BASE_CURRENCY is not None:
+    CASH = QSPACE.get_basis_vector(BASE_CURRENCY)
+    base = next(c for c in CURRENCY_DATA if c.symbol == BASE_CURRENCY)
+    # Rates say how much of the currency each dollar is worth:
+    #   c_to_dollar = currency/dollar
+    # We want to convert that to how much of the currency each base
+    # currency unit is worth:
+    #   c_to_base = base/currency
+    # We have:
+    #   base_to_dollar = base/dollar
+    # So:
+    #   c_to_base = base_to_dollar/c_to_dollar
+    #             = (base/dollar)/(currency/dollar)
+    #             = base/currency
+    for c in CURRENCY_DATA:
+        mul = base.dollar_rate/c.dollar_rate
+        if c.name in NAME_TO_UNIT and c.symbol in SYMBOL_TO_UNIT:
+            # I found that some currencies have duplicate names.
+            # E.g. there are two Venezuelan currencies with the
+            # same name, but different symbols. Also, some currency
+            # symbols clash with existing units (Cuban peso = "cup").
+            # So we try to handle that as elegantly as possible.
+            continue
+        name = c.symbol if c.name in NAME_TO_UNIT else c.name
+        sym = c.name if c.symbol in SYMBOL_TO_UNIT else c.symbol
+        if sym in SPECIAL_NAMES:
+            name = SPECIAL_NAMES[sym]
+        register_unit(sym, name, "cash", CASH, multiple=mul)
+        if sym in SPECIAL_CURRENCY_SYMBOLS:
+            special_sym = SPECIAL_CURRENCY_SYMBOLS[sym]
+            register_unit(special_sym, special_sym, "cash", CASH, multiple=mul)

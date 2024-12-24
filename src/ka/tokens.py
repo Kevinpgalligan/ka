@@ -1,7 +1,7 @@
 import re
 from fractions import Fraction as frac
 
-VAR_REGEX = re.compile(r"[a-zA-Z][_a-zA-Z0-9]*")
+VAR_REGEX = re.compile(r"[a-zA-Z€$£¥][_a-zA-Z0-9€$£¥]*")
 
 class Token:
     def __init__(self, tag, begin_index_incl, end_index_excl, **kwargs):
@@ -155,8 +155,8 @@ def read_token(i, s):
                 or i+len(t)>=len(s)
                 or not s[i+len(t)].isalpha()):
             return Token(t, i, i+len(t))
-    if s[i].isalpha():
-        m = VAR_REGEX.match(s, i)
+    m = VAR_REGEX.match(s, i)
+    if m:
         return Token(Tokens.VAR, m.start(), m.end(), name=m.group(0))
     return None
 

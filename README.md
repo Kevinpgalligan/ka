@@ -9,7 +9,7 @@ Featuring...
 
 * A **GUI** and **CLI**.
 * **Fractions**: `(5/3) * 3` gives `5`.
-* **Units** and unit conversion: `5 ft to m`.
+* **Units** and unit conversion (including currency): `5 ft to m`.
 * **Probability** distributions and sampling, with a math-like syntax: `X = Bernoulli(0.3); P(X=1)`.
 * **Arrays**, also with math-like syntax: `{3*x : x in 1..3}` gives `{3,6,9}`.
 * **Lazy combinatorics**: `10000000!/9999999!` gives `10000000` rather than hanging.
@@ -51,6 +51,7 @@ More examples.
   - [Types](#types)
   - [Functions and operators](#functions-and-operators)
   - [Units](#units)
+  - [Currency](#currency)
   - [Probability and Randomness](#probability-and-randomness)
   - [Arrays](#arrays)
   - [Dates and times](#dates-and-times)
@@ -169,7 +170,7 @@ Operator precedence goes:
 This means that `2^3!*5+1` gets parsed the same as `((2^(3!))*5)+1`.
 
 ### Units
-Here are most of the units supported by the language. To see a complete list, run `ka --units` from the command-line. 
+Here are most of the units supported by the language. To see a complete list (excluding currencies), run `ka --units` from the command-line.
 
 * second (s), metre (m), gram (g), ampere (A), kelvin (K), mole (mol), candela (cd), hertz (Hz), radian (rad), steradian (sr), newton (N), pascal (Pa), joule (J), watt (W), coulomb (C), volt (V), farad (F), ohm (ohm), siemens (S), weber (Wb), tesla (T), henry (H), degC (degC), lumen (lm), lux (lx), becquerel (Bq), gray (Gy), sievert (Sv), katal (kat), minute (min), hour (h), day (d), astronomicalunit (au), degree (deg), hectare (ha), acre (acre), litre (l), tonne (t), dalton (Da), electronvolt (eV), lightyear (lj), parsec (pc), inch (in), foot (ft), yard (yd), mile (mi), nauticalmile (sm), teaspoon (tsp), tablespoon (tbsp), fluidounce (floz), cup (cup), gill (gill), pint (pt), quart (qt), gallon (gal), grain (gr), dram (dr), ounce (oz), pound (lb), horsepower (hp), bar (bar), calorie (cal)
 
@@ -187,7 +188,7 @@ Notes on units:
 * A unit can be a multiple of base units (a pound is 0.45 kilograms), but it can also have an offset, as in the case of the degree Celcius, which is offset from the kelvin by -273.15. This makes degC tricky to work with and as a result you can't generally combine it with other units.
 * UK / Imperial measures are used for the teaspoon and other ambiguous (mostly cooking-related) units, see: <https://en.wikipedia.org/wiki/Cooking_weights_and_measures>
 
-As for how the unit system works, it's based on the [International System of Units (SI)](https://en.wikipedia.org/wiki/International_System_of_Units). All units are represented in terms of the 7 SI base units: second, metre, gram, ampere, kelvin, mole and candela. Feet are a multiple of the metre, and their "signature" in base units is `m^1`. Frequency, measured in hertz, is `s^-1`. Area is `m^2`. Velocity is `m s^-1`. Internally, the "unit signature" of a quantity is a 7-dimensional vector of integers, with each dimension corresponding to one of the SI base units. For example, 1 metre may have a unit signature of (1, 0, 0, 0, 0, 0, 0). 1 metre per second may have a unit signature of (1, -1, 0, 0, 0, 0, 0, 0). When you multiply two quantities together, their unit signatures are added together. When you divide, the unit signature of the divisor is subtracted.
+As for how the unit system works, it's based on the [International System of Units (SI)](https://en.wikipedia.org/wiki/International_System_of_Units). All units are represented in terms of the 7 SI base units: second, metre, gram, ampere, kelvin, mole and candela. (Update -- see the next section for a newly-added base unit: cash). Feet are a multiple of the metre, and their "signature" in base units is `m^1`. Frequency, measured in hertz, is `s^-1`. Area is `m^2`. Velocity is `m s^-1`. Internally, the "unit signature" of a quantity is a 7-dimensional vector of integers, with each dimension corresponding to one of the SI base units. For example, 1 metre may have a unit signature of (1, 0, 0, 0, 0, 0, 0). 1 metre per second may have a unit signature of (1, -1, 0, 0, 0, 0, 0, 0). When you multiply two quantities together, their unit signatures are added together. When you divide, the unit signature of the divisor is subtracted.
 
 Further reading for the interested:
 
@@ -196,6 +197,29 @@ Further reading for the interested:
 * <https://en.wikipedia.org/wiki/Dimensional_analysis>
 * <https://www.hillelwayne.com/post/frink/>
 * <https://gmpreussner.com/research/dimensional-analysis-in-programming-languages>
+
+### Currency
+The unit system also incorporates currencies. They exist in an 8th dimension: the dimension of cold, hard cash. Currencies can be referenced using their [ISO-4217](https://en.wikipedia.org/wiki/ISO_4217#List_of_ISO_4217_currency_codes) code names (like eur and gbp). Special symbols are provided for some currencies: € for eur, $ for usd, $ for gbp, and ¥ for jpy. Currencies can also be referenced by longer names (e.g. "mexicanpeso"), but these are verbose and subject to change.
+
+A pre-scraped database of currencies and exchange rates are shipped with Ka, which are current as of December 23rd, 2024. To re-scrape this data, run `ka --scrape-currency-to /path/to/file`, and then move the resulting file to `~/.config/ka/currency` - at least, that's the default path, but you can change it with the `currency-path` configuration parameter.
+
+Another configuration parameter is `base-currency`, which is set to `eur` (for "euro") by default. All cash amounts are represented in the base currency.
+
+The introspection commands of the interpreter/CLI do not display currencies alongside the other units, since there are too many currencies. Instead, use `ka --currencies`, or, in the interpreter, `%cs` / `%currencies`. This will show you the exchange rates as well as the currency names and symbols.
+
+The following examples show that: 1. if you worked 24/7 for 2000 years, earning $1000 per hour, you still wouldn't be the richest person in the world; 2. if you happened to find a USB stick containing 100 bitcoins, you'd be a multi-millionaire; and 3. if you dropped 1 million dollars in 1-dollar bills on your head, you'd be hit with a force of 9810 newtons. Another reason not to hoard wealth.
+
+```
+>>> 1000 dollars|hour * 2000 years to billion dollars
+17.52
+>>> 100 bitcoin to million euro
+8.9007
+>>> mass_per_dollar = 0.001 kg | dollar
+0.001 kg eur^-1
+>>> G = 9.81 m|s^2
+>>> 1 million dollars * mass_per_dollar * G to newtons
+9810
+```
 
 ### Probability and Randomness
 First, the usual utilities for randomness:
@@ -421,7 +445,13 @@ size([-1,.5])      --> 1.5
 ```
 
 ### Configuration
-Ka can be configured through a config file at `${YOUR_HOME_DIR}/.config/ka/config`. All available properties are shown below with their default values. `precision` determines the floating point precision; the other properties determine various characteristics of the GUI like its dimensions and keyboard shortcuts.
+Ka can be configured through a config file at `${YOUR_HOME_DIR}/.config/ka/config`. All available properties are shown below with their default values.
+
+* `precision` determines the floating point precision.
+* Various properties determine characteristics of the GUI like its appearance and keyboard shortcuts.
+* `save-history` determines whether to save a history of commands to the history file, and can be `true` or `false`; `history-path` determines where this file is located. (Note: loading and saving the history fails softly, since it's non-essential).
+* `prompt` defines the interpreter prompt.
+* `base-currency` is the currency in which all cash amounts will be represented; `currency-path` will be used to look for a file containing a table of currencies and their exchange rates.
 
 ```
 precision=6
@@ -437,6 +467,8 @@ shortcut-close=Ctrl+W
 save-history=true
 history-path=[home directory]/.config/ka/history
 prompt=>>>
+base-currency=eur
+currency-path=[home directory]/.config/ka/currency
 ```
 
 ## FAQ

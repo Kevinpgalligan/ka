@@ -51,14 +51,23 @@ def interp_help():
         print(" ", ",".join(names) + ":", cmd.desc)
 
 def print_units():
-    print("\n".join(sorted(["  " + format_unit(unit) for unit in UNITS])))
+    print("\n".join(sorted(["  " + format_unit(unit) for unit in UNITS
+                            if "cash" not in unit.quantities])))
+
+def print_cash_units():
+    print("\n".join(sorted(["  " + format_unit(unit, with_mul=True)
+                            for unit in UNITS
+                            if "cash" in unit.quantities])))
 
 def print_prefixes():
     for prefix in PREFIXES:
         print("  ", prefix.name_prefix + ",", prefix.symbol_prefix + ",", str(prefix.exponent) + ", base", prefix.base)
 
-def format_unit(u):
-    return f"{u.singular_name} ({u.symbol}) [{', '.join(u.quantities)}]"
+def format_unit(u, with_mul=False):
+    s = f"{u.singular_name} ({u.symbol}) [{', '.join(u.quantities)}]"
+    if with_mul:
+        s += f" {u.multiple}"
+    return s
 
 def get_units_string():
     return ", ".join(format_unit(unit) for unit in UNITS)
@@ -110,7 +119,8 @@ INTERPRETER_COMMANDS = [
     (("q", "quit"), interp_cmd(interp_quit, 0, "exit the interpreter")),
     (("h", "help"), interp_cmd(interp_help, 0, "display help")),
     (("u", "unit"), interp_cmd(print_unit_info, 1, "describe given unit")),
-    (("us", "units"), interp_cmd(print_units, 0, "list all units")),
+    (("us", "units"), interp_cmd(print_units, 0, "list all units (except currencies)")),
+    (("cs", "currencies"), interp_cmd(print_cash_units, 0, "list all currency units")),
     (("f", "function"), interp_cmd(print_function_info, 1, "describe given function")),
     (("fs", "functions"), interp_cmd(print_functions, 0, "list all functions")),
 ]
@@ -384,9 +394,15 @@ def display_result(r, out, brackets_for_frac=False, newline=True, unit_format_fn
                   end="",
                   file=out)
         else:
-            print(r.mag, unit_format_fn(r.qv), end="", file=out)
+            display_result(r.mag, out, newline=False)
+            print(" ", end="", file=out)
+            print(unit_format_fn(r.qv), end="", file=out)
         if isinstance(r.mag, frac):
-            print("    (" + str(float(r.mag)) + " " + unit_format_fn(r.qv) + ")", end="", file=out)
+            print("    ("
+                    + str(precisionify_float(float(r.mag))) + " "
+                    + unit_format_fn(r.qv) + ")",
+                  end="",
+                  file=out)
         print(file=out, **newline_args)
     elif isinstance(r, frac):
         print(prettify_frac(r),
@@ -404,7 +420,6 @@ def display_result(r, out, brackets_for_frac=False, newline=True, unit_format_fn
         print("}", file=out, **newline_args)
     else:
         print(r, file=out, **newline_args)
-
 
 def stringify_result(r, brackets_for_frac=False):
     """Stringify result so that it's syntactically valid, not just

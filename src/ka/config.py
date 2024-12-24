@@ -3,6 +3,7 @@ from pathlib import Path
 
 CONFIG_PATH = Path.home().joinpath(".config", "ka", "config")
 DEFAULT_HISTORY_PATH = Path.home().joinpath(".config", "ka", "history")
+DEFAULT_CURRENCY_PATH = Path.home().joinpath(".config", "ka", "currency")
 
 CONFIG = dict()
 HAVE_READ = False
@@ -28,6 +29,8 @@ class ConfigProperties:
     SAVE_HISTORY = ConfigProperty("save-history", True, boolean=True)
     HISTORY_PATH = ConfigProperty("history-path", DEFAULT_HISTORY_PATH)
     PROMPT = ConfigProperty("prompt", ">>>")
+    CURRENCY_PATH = ConfigProperty("currency-path", DEFAULT_CURRENCY_PATH)
+    BASE_CURRENCY = ConfigProperty("base-currency", "eur")
 
 def get(prop):
     global HAVE_READ

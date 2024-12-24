@@ -4,7 +4,9 @@ import sys
 from .interpret import (run_interpreter, execute,
     print_units, print_functions, print_unit_info,
     print_function_info, print_prefixes)
+from .currency import scrape_and_store_rates_to
 import ka.config
+from .config import ConfigProperties
 
 def add_and_store_argument(parser, flaglist, name, **kwargs):
     flaglist.append(name)
@@ -17,6 +19,7 @@ def main():
 
     flaglist = ["-h", "--help"]
     add_and_store_argument(parser, flaglist, "--script", help="Run a script file containing Ka code.")
+    add_and_store_argument(parser, flaglist, "--scrape-currency-to", help="Scrape currency data and dump to the given file.")
     add_and_store_argument(parser, flaglist, "--units", action="store_true", help="List all available units.")
     add_and_store_argument(parser, flaglist, "--functions", action="store_true", help="List all available functions.")
     add_and_store_argument(parser, flaglist, "--unit", help="See the details of a particular unit.")
@@ -45,6 +48,9 @@ def main():
         run_gui()
     elif args.script:
         run_script(args.script)
+    elif args.scrape_currency_to:
+        print("Scraping currency data...")
+        scrape_and_store_rates_to(args.scrape_currency_to)
     else:
         run_interpreter()
 
