@@ -9,16 +9,17 @@ Featuring...
 
 * A **GUI** and **CLI**.
 * **Fractions**: `(5/3) * 3` gives `5`.
-* **Units** and unit conversion (including currency): `5 ft to m`.
+* **Units** and unit conversion: `5 ft to m`.
+* **Currencies** and exchange rates: `5€ to $`.
 * **Probability** distributions and sampling, with a math-like syntax: `X = Bernoulli(0.3); P(X=1)`.
-* **Arrays**, also with math-like syntax: `{3*x : x in 1..3}` gives `{3,6,9}`.
-* **Lazy combinatorics**: `10000000!/9999999!` gives `10000000` rather than hanging.
-* **Dates and times**: `(#2024-12-25# - now()) to days` gives the number of days until Christmas.
-* **Intervals**: `2*(1±0.1)` gives an interval from 1.8 to 2.2.
 * **Plotting**: comes with an ergonomic interface to Python's matplotlib.
+* **Arrays**, also with math-like syntax: `{3*x : x in 1..3}` gives `{3,6,9}`.
+* **Lazy combinatorics**: `10000000!/9999999!` gives `10000000` rather than hanging like it would in other languages.
+* **Dates and times**: `(#2024-12-25# - now()) to days` gives the number of days until Christmas.
+* **Intervals** and interval arithmetic: `2*(1±0.1)` gives an interval from 1.8 to 2.2.
 * Other boring stuff: Variable assignment. Common math functions and constants.
 
-Ka aims to be convenient: you can start the GUI with a keyboard shortcut, do your sums, and close the GUI with Ctrl-W -- no mouse needed! Or if you're pottering about in the terminal, you can do a quick one-off calculation with `ka '1+1'`.
+Ka aims to be convenient: you can start the GUI with a keyboard shortcut, fire off a quick calculation, and close the GUI with Ctrl-W -- no mouse needed! Or if you're pottering about in the terminal, you can do a one-off calculation with `ka '1+1'`.
 
 More examples.
 
