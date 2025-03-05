@@ -8,12 +8,16 @@ setup(
     url="https://github.com/Kevinpgalligan/ka",
     author="Kevin Galligan",
     author_email="galligankevinp@gmail.com",
-    entry_points=["scripts/ka"],
+    entry_points={
+        "console_scripts": [
+            "ka = ka.cli:main"
+        ]
+    },
     packages=find_packages("src"),
     package_dir={'': 'src'},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License"
     ],
-    install_requires=["PyQt5", "matplotlib"]
+    install_requires=["PyQt5", "matplotlib", "pyreadline3"]
 )

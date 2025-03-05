@@ -64,12 +64,17 @@ More examples.
 * [Development](#development)
 
 ## Installation
+Ka is currently distributed through the [Python Package Index](https://pypi.org/project/ka-cli/). To install, run:
+
+* `pip3 install ka-cli`
+
 Requirements:
 
-* Qt 5 GUI framework (try: `apt install qt5-default`).
 * Python 3.6+.
+* (For the GUI) Qt 5 GUI framework. If your system uses the Aptitude package manager, try: `apt install qt5-default`.
 
-To install, run: `pip3 install ka-cli`. Ka is currently distributed through the [Python Package Index](https://pypi.org/project/ka-cli/).
+#### Windows
+On Windows, an executable called 'ka.exe' should be installed under the `Scripts` subdirectory of your Python installation. You may need to add the path to this `Scripts` folder to the "PATH" environment variable (Advanced System Settings > Environment Variables). If using pyenv, you probably need to run `pyenv rehash` so that pyenv can create a shim for the new executable.
 
 ## Usage
 There are various ways to interact with Ka: executing a single expression from the CLI; running an interpreter in the terminal; executing a script file; and a GUI.
