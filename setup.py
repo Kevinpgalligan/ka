@@ -8,7 +8,7 @@ setup(
     url="https://github.com/Kevinpgalligan/ka",
     author="Kevin Galligan",
     author_email="galligankevinp@gmail.com",
-    scripts=["scripts/ka"],
+    entry_points=["scripts/ka"],
     packages=find_packages("src"),
     package_dir={'': 'src'},
     classifiers=[
