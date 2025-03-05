@@ -74,7 +74,7 @@ Requirements:
 * (For the GUI) Qt 5 GUI framework. If your system uses the Aptitude package manager, try: `apt install qt5-default`.
 
 #### Windows
-On Windows, an executable called 'ka.exe' should be installed under the `Scripts` subdirectory of your Python installation. You may need to add the path to this `Scripts` folder to the "PATH" environment variable (Advanced System Settings > Environment Variables). If using pyenv, you probably need to run `pyenv rehash` so that pyenv can create a shim for the new executable.
+On Windows, you'll need to run the installation command in an Administrator console. An executable called 'ka.exe' should be created under the `Scripts` subdirectory of your Python installation. You may need to add the path to this `Scripts` folder to the "PATH" environment variable (Advanced System Settings > Environment Variables). If using pyenv, you probably need to run `pyenv rehash` so that pyenv can create a shim for the new executable.
 
 ## Usage
 There are various ways to interact with Ka: executing a single expression from the CLI; running an interpreter in the terminal; executing a script file; and a GUI.
