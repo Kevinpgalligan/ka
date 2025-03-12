@@ -1,9 +1,17 @@
+import os
 import os.path
 from pathlib import Path
 
-CONFIG_PATH = Path.home().joinpath(".config", "ka", "config")
-DEFAULT_HISTORY_PATH = Path.home().joinpath(".config", "ka", "history")
-DEFAULT_CURRENCY_PATH = Path.home().joinpath(".config", "ka", "currency")
+if os.name == "nt":
+    # Windows.
+    SYSTEM_CONFIG_DIR = Path(Path.home().joinpath("AppData", "Local", "ka"))
+else:
+    # Posix.
+    SYSTEM_CONFIG_DIR = Path(Path.home().joinpath(".config", "ka"))
+
+CONFIG_PATH = SYSTEM_CONFIG_DIR.joinpath("config")
+DEFAULT_HISTORY_PATH = SYSTEM_CONFIG_DIR.joinpath("history")
+DEFAULT_CURRENCY_PATH = SYSTEM_CONFIG_DIR.joinpath("currency")
 
 CONFIG = dict()
 HAVE_READ = False

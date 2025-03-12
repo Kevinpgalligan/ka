@@ -22,6 +22,8 @@ import ka.config
 REPO_URL = "https://github.com/Kevinpgalligan/ka"
 HELP_SIZE = (400, 200)
 DOC_SIZE = (500, 300)
+# Courier seems to be more portable than "monospace".
+FONT = "Courier"
 
 WHITESPACE_AT_START = re.compile("^[ ]+", re.MULTILINE)
 
@@ -62,7 +64,7 @@ class MainWindow(QMainWindow):
 
 def add_help_text(w, txt):
     w.label = QLabel(w)
-    w.label.setFont(QtGui.QFont('monospace', 15))
+    w.label.setFont(QtGui.QFont(FONT, 15))
     w.label.setStyleSheet("background-color: white;")
     w.label.setTextInteractionFlags(Qt.TextSelectableByMouse)
     w.label.resize(w.size())
@@ -153,7 +155,7 @@ class KaWidget(QWidget):
     def initUI(self, size, font_size):
         width, height = size
 
-        font = QtGui.QFont('monospace', font_size)
+        font = QtGui.QFont(FONT, font_size)
         
         #self.output_box.resize(*wsize)
         self.output_box = QLabel()
@@ -230,6 +232,9 @@ def run_gui():
     size = (ka.config.get(ConfigProperties.WINDOW_WIDTH),
             ka.config.get(ConfigProperties.WINDOW_HEIGHT))
     font_size = ka.config.get(ConfigProperties.FONT_SIZE)
+    # This prevents the window/font from shrinking when
+    # the scale factor is increased in display settings.
+    QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     app = QApplication([])
     w = MainWindow(size, font_size)
     env = EvalEnvironment()

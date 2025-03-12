@@ -64,17 +64,23 @@ More examples.
 * [Development](#development)
 
 ## Installation
-Ka is currently distributed through the [Python Package Index](https://pypi.org/project/ka-cli/). To install, run:
+Ka is currently distributed through the Python Package Index, see [here](https://pypi.org/project/ka-cli/).
+
+To install Ka, first make sure you have the following prerequisites:
+
+* Python 3.6+.
+* (For the GUI) Qt 5 GUI framework. If your system uses the APT package manager, try: `apt install qt5-default`.
+
+Then run this from the command line:
 
 * `pip3 install ka-cli`
 
-Requirements:
+You should now be able to run the `ka` command -- see Usage below for various ways to use Ka.
 
-* Python 3.6+.
-* (For the GUI) Qt 5 GUI framework. If your system uses the Aptitude package manager, try: `apt install qt5-default`.
-
-#### Windows
-On Windows, you'll need to run the installation command in an Administrator console. An executable called 'ka.exe' should be created under the `Scripts` subdirectory of your Python installation. You may need to add the path to this `Scripts` folder to the "PATH" environment variable (Advanced System Settings > Environment Variables). If using pyenv, you probably need to run `pyenv rehash` so that pyenv can create a shim for the new executable.
+#### Notes on Windows
+* You'll need to run the installation command in an Administrator console.
+* Following installation, an executable called 'ka.exe' should be created under the `Scripts` subdirectory of your Python installation. You may need to add the path to this `Scripts` folder to the "PATH" environment variable (Advanced System Settings > Environment Variables).
+* If using pyenv, you probably need to run `pyenv rehash` so that pyenv can create a shim for the new executable.
 
 ## Usage
 There are various ways to interact with Ka: executing a single expression from the CLI; running an interpreter in the terminal; executing a script file; and a GUI.
@@ -207,7 +213,7 @@ Further reading for the interested:
 ### Currency
 The unit system also incorporates currencies. They exist in an 8th dimension: the dimension of cold, hard cash. Currencies can be referenced using their [ISO-4217](https://en.wikipedia.org/wiki/ISO_4217#List_of_ISO_4217_currency_codes) code names (like eur and gbp). Special symbols are provided for some currencies: € for eur, $ for usd, $ for gbp, and ¥ for jpy. Currencies can also be referenced by longer names (e.g. "mexicanpeso"), but these are verbose and subject to change.
 
-A pre-scraped database of currencies and exchange rates are shipped with Ka, which are current as of December 23rd, 2024. To re-scrape this data, run `ka --scrape-currency-to /path/to/file`, and then move the resulting file to `~/.config/ka/currency` - at least, that's the default path, but you can change it with the `currency-path` configuration parameter.
+A pre-scraped database of currencies and exchange rates are shipped with Ka, which are current as of December 23rd, 2024. To re-scrape this data, run `ka --scrape-currency-to /path/to/file`, and then move the resulting file to `~/.config/ka/currency` (or, on Windows, `%userprofile%\AppData\Local\ka\currency`) - at least, that's the default path, but you can change it with the `currency-path` configuration parameter.
 
 Another configuration parameter is `base-currency`, which is set to `eur` (the ISO-4217 code name of the Euro) by default. All cash amounts are represented in the base currency, so `1 usd` will automatically be converted to `0.961345 eur` (or whatever).
 
@@ -442,7 +448,7 @@ tol(1, 0.1)        --> [0.9, 1.1]
 [-1, 1]^2          --> [0, 1]
 log2([4, 16])      --> [2, 4]
 sqrt([-1,1])       --> (Error, square root of negative numbers)
-abs([-10, 1])      --> [0, 1]
+abs([-10, 1])      --> [0, 10]
 min([-5, 5], 0)    --> [-5, 0]
    (it's like taking the minmum of 0 and each element)
 lower([0,1])       --> 0
@@ -451,7 +457,7 @@ size([-1,.5])      --> 1.5
 ```
 
 ### Configuration
-Ka can be configured through a config file at `${YOUR_HOME_DIR}/.config/ka/config`. All available properties are shown below with their default values.
+Ka can be configured through a config file at `${YOUR_HOME_DIR}/.config/ka/config` (Posix) or `${YOUR_HOME_DIR}\AppData\Local\ka\config` (Windows). All available properties are shown below with their default values.
 
 * `precision` determines the floating point precision.
 * Various properties determine characteristics of the GUI like its appearance and keyboard shortcuts.
