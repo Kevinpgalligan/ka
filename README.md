@@ -69,7 +69,7 @@ Ka is currently distributed through the Python Package Index, see [here](https:/
 To install Ka, first make sure you have the following prerequisites:
 
 * Python 3.6+.
-* (For the GUI) Qt 5 GUI framework. If your system uses the APT package manager, try: `apt install qt5-default`.
+* Qt 5 (for the GUI). If your system uses the APT package manager, try: `apt install qt5-default`.
 
 Then run this from the command line:
 
