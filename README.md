@@ -116,6 +116,8 @@ $ ka --script path/to/script.ka
 To start the GUI, run `ka --gui`.
 
 ## Manual
+Note: This manual includes the latest changes to the language, and won't necessarily correspond to the version you've installed. To find a "frozen" version of the manual, check out the branches of the repository, like `1.1.0` and `1.2.0`.
+
 ### Grammar
 The basic unit of grammar is the statement. Multiple statements can be executed at once, separated by semi-colons:
 
