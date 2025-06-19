@@ -1,0 +1,9 @@
+Some links I gathered while trying to figure out how to package Ka for Debian.
+
+https://stackoverflow.com/questions/20101834/pip-install-from-git-repo-branch
+https://wiki.debian.org/HowToPackageForDebian
+https://stackoverflow.com/questions/56331362/how-can-i-publish-my-software-to-public-linux-repos-to-be-available-with-apt-i#56527843
+https://stackoverflow.com/questions/7110604/is-there-a-standard-way-to-create-debian-packages-for-distributing-python-progra?noredirect=1&lq=1
+https://ubuntuforums.org/showthread.php?t=968399
+https://pypi.org/project/stdeb/#quickstart-2-just-tell-me-the-fastest-way-to-make-a-deb
+https://www.internalpointers.com/post/build-binary-deb-package-practical-guide
